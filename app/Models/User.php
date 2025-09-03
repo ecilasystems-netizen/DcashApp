@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'fname',
+        'lname',
+        'username',
+        'email',
+        'phone',
+        'password',
+        'kyc_status',
+        'is_admin',
+        'pin'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    public function exchangeTransactions(): HasMany
+    {
+        return $this->hasMany(ExchangeTransaction::class);
+    }
+
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+
+    public function virtualBankAccount(): HasOne
+    {
+        return $this->hasOne(VirtualBankAccount::class)->where('is_active', true);
+    }
+
+    public function beneficiaries(): HasMany
+    {
+        return $this->hasMany(Beneficiary::class);
+    }
+
+    public function virtualBankAccounts(): HasMany
+    {
+        return $this->hasMany(VirtualBankAccount::class);
+    }
+
+    /**
+     * Get all Kyc submission attempts for the user.
+     */
+    public function kycVerifications(): HasMany
+    {
+        return $this->hasMany(KycVerification::class);
+    }
+
+    /**
+     * Get the latest Kyc submission for the user.
+     */
+    public function latestKyc(): HasOne
+    {
+        return $this->hasOne(KycVerification::class)->latestOfMany();
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+}
