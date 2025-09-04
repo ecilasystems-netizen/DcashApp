@@ -18,8 +18,11 @@ class Register extends Component
     public string $phone = '';
     public string $password_confirmation = '';
     public string $pin = '';
+    public string $referral;
+    public $referrerName;
 
     protected array $rules = [
+        'referral' => ['nullable', 'exists:users,referral_code'],
         'fname' => ['required', 'string', 'max:255'],
         'lname' => ['required', 'string', 'max:255'],
         'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -27,6 +30,23 @@ class Register extends Component
         'phone' => ['required', 'string', 'max:15'],
         'pin' => ['required', 'digits:4'],
     ];
+
+    public function updatedReferral($value)
+    {
+        if (!empty($value)) {
+            $referrer = User::where('referral_code', $value)->first();
+            if ($referrer) {
+                $this->referrerName = $referrer->fname.' '.$referrer->lname;
+                $this->resetValidation('referral');
+            } else {
+                $this->referrerName = null;
+                $this->addError('referral', 'Invalid referral code.');
+            }
+        } else {
+            $this->referrerName = null;
+            $this->resetValidation('referral');
+        }
+    }
 
     public function register()
     {
@@ -41,7 +61,9 @@ class Register extends Component
             'is_admin' => 0,
             'password' => Hash::make($this->password),
             'username' => strtolower($this->fname.rand(1000, 9999)),
-            'kyc_status' => 'unverified'
+            'kyc_status' => 'unverified',
+            'referral_code' => strtolower(mb_substr(trim($this->fname), 0, 5).rand(1000, 9999)),
+            'referred_by' => $this->referral,
         ]);
 
 
@@ -56,7 +78,7 @@ class Register extends Component
 
     public function render()
     {
-        return view('livewire.app.auth.register')->layout('app.auth.layout.app', [
+        return view('livewire.app.auth.register')->layout('layouts.auth.app', [
             'title' => 'Register',
         ]);
     }

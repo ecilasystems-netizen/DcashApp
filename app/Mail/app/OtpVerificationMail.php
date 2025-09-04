@@ -32,7 +32,7 @@ class OtpVerificationMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            markdown: 'app.emails.auth.otp-verification',
+            markdown: 'emails.auth.otp-verification',
         );
     }
 

@@ -2,7 +2,7 @@
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="w-full max-w-md">
             <div class="text-center mb-8">
-                <img src="/imgs/logo-only.png" alt="Dcash Logo" class="w-16 h-16 mx-auto mb-4">
+                <x-logo class="w-[80px] h-[80px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Verify Your Email</h1>
                 <p class="text-gray-400">Enter the OTP sent to {{ $email }}</p>
             </div>

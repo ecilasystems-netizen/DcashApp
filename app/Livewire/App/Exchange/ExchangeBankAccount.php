@@ -332,7 +332,7 @@ class ExchangeBankAccount extends Component
     {
         //get all banks
         $banks = Bank::all(); // Fetch all currencies
-        return view('livewire.app.exchange.exchange-bank-account', compact('banks'))->layout('app.exchange.layouts.app',
+        return view('livewire.app.exchange.exchange-bank-account', compact('banks'))->layout('layouts.app.app',
             [
                 'title' => 'Enter Bank Account - Dcash Wallet',
             ]);

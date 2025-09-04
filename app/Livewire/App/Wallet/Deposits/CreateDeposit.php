@@ -20,6 +20,6 @@ class CreateDeposit extends Component
 
     public function render()
     {
-        return view('livewire.app.wallet.deposits.create-deposit')->layout('app.exchange.layouts.app')->title('Make a Deposit');
+        return view('livewire.app.wallet.deposits.create-deposit')->layout('layouts.app.app')->title('Make a Deposit');
     }
 }

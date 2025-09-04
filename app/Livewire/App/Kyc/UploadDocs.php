@@ -62,11 +62,13 @@ class UploadDocs extends Component
 
             $passportUrl = $this->passportPage->store('kyc/documents', 'public');
 
-            session(['kyc_documents' => [
-                'idType' => $validated['idType'],
-                'idNumber' => $validated['idNumber'],
-                'frontId' => $passportUrl
-            ]]);
+            session([
+                'kyc_documents' => [
+                    'idType' => $validated['idType'],
+                    'idNumber' => $validated['idNumber'],
+                    'frontId' => $passportUrl
+                ]
+            ]);
         } else {
             $validated = $this->validate([
                 'idType' => 'required|string',
@@ -78,12 +80,14 @@ class UploadDocs extends Component
             $frontUrl = $this->frontId->store('kyc/documents', 'public');
             $backUrl = $this->backId->store('kyc/documents', 'public');
 
-            session(['kyc_documents' => [
-                'idType' => $validated['idType'],
-                'idNumber' => $validated['idNumber'],
-                'frontId' => $frontUrl,
-                'backId' => $backUrl
-            ]]);
+            session([
+                'kyc_documents' => [
+                    'idType' => $validated['idType'],
+                    'idNumber' => $validated['idNumber'],
+                    'frontId' => $frontUrl,
+                    'backId' => $backUrl
+                ]
+            ]);
         }
 
         return $this->redirect(route('kyc.selfie'), navigate: true);
@@ -92,7 +96,7 @@ class UploadDocs extends Component
     public function render()
     {
         return view('livewire.app.kyc.upload-docs')
-            ->layout('app.exchange.layouts.app')
+            ->layout('layouts.app.app')
             ->title('Upload Documents');
     }
 }

@@ -141,6 +141,6 @@ class PaymentPage extends Component
         return view('livewire.app.exchange.payment-page', [
             'companyBankAccount' => $companyBankAccount,
             'deadline' => $this->expirationTime->getPreciseTimestamp(3)
-        ])->layout('app.exchange.layouts.app')->title('Exchange Payment');
+        ])->layout('layouts.app.app')->title('Exchange Payment');
     }
 }

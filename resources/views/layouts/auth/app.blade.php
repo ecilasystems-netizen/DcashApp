@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Default Title' }} - Dcash Wallet</title>
+    <title>{{ $title ?? 'Dcash Wallet' }} - Dcash Wallet</title>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -39,5 +39,6 @@
 {{$slot}}
 @stack('scripts')
 @livewireScripts
+
 </body>
 </html>

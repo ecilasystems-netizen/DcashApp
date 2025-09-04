@@ -75,7 +75,7 @@ class Selfie extends Component
     public function render()
     {
         return view('livewire.app.kyc.selfie')
-            ->layout('app.exchange.layouts.app')
+            ->layout('layouts.app.app')
             ->title('Selfie Verification');
     }
 }

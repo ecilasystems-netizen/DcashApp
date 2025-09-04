@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <img src="/imgs/logo-only.png" alt="Dcash Logo" class="w-16 h-16 mx-auto mb-4">
+                <x-logo class="w-[80px] h-[80px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Create Your Account</h1>
                 <p class="text-gray-400">Join us to start exchanging currency with ease.</p>
             </div>
@@ -11,6 +11,23 @@
             <!-- Registration Form -->
             <div class="bg-gray-800/2 border border-gray-800 rounded-lg p-5 shadow-lg">
                 <form wire:submit="register" class="space-y-6">
+
+                    <div>
+                        <label for="referral" class="block text-sm font-medium text-gray-400 mb-2">Referral Code
+                            (optional)</label>
+                        <div class="relative">
+                            <i data-lucide="link"
+                               class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                            <input wire:model.blur="referral" type="text" id="referral" placeholder="Referral Code"
+                                   maxlength="66"
+                                   class="w-full bg-gray-800/2 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] @error('referral') border-red-500 @enderror">
+                        </div>
+                        @if($referrerName)
+                            <div class="text-green-400 text-xs mt-1">Referred by: {{ $referrerName }}</div>
+                        @endif
+                        @error('referral') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                    </div>
+
                     <div>
                         <label for="fname" class="block text-sm font-medium text-gray-400 mb-2">First Name</label>
                         <div class="relative">
@@ -91,6 +108,7 @@
                         </div>
                         @error('pin') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
+
 
                     <div class="text-xs text-gray-500">
                         By registering, you agree to our <a href="#" class="text-[#E1B362] hover:underline">Terms of

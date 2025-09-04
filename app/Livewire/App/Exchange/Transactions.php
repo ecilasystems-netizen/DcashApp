@@ -48,6 +48,6 @@ class Transactions extends Component
 
     public function render()
     {
-        return view('livewire.app.exchange.transactions')->layout('app.exchange.layouts.app')->title('Transactions History');
+        return view('livewire.app.exchange.transactions')->layout('layouts.app.app')->title('Transactions History');
     }
 }

@@ -28,6 +28,8 @@ class User extends Authenticatable
         'password',
         'kyc_status',
         'is_admin',
+        'referral_code',
+        'referred_by',
         'pin'
     ];
 
@@ -94,5 +96,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    //referred by user
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by', 'referral_code');
     }
 }

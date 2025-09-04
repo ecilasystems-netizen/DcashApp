@@ -23,7 +23,8 @@ class ExchangeReceipt extends Component
             ->where('user_id', auth()->id())
             ->first();
         if (!$transaction) {
-            return redirect()->route('dashboard')->with('error', 'Transaction not found or you do not have permission to view it.');
+            return redirect()->route('dashboard')->with('error',
+                'Transaction not found or you do not have permission to view it.');
         }
 
         $this->transactionData = [
@@ -66,6 +67,6 @@ class ExchangeReceipt extends Component
 
     public function render()
     {
-        return view('livewire.app.exchange.exchange-receipt')->layout('app.exchange.layouts.app')->title('Transaction Receipt');
+        return view('livewire.app.exchange.exchange-receipt')->layout('layouts.app.app')->title('Transaction Receipt');
     }
 }

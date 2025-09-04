@@ -9,8 +9,8 @@ class PasswordResetSuccessful extends Component
     public function render()
     {
         return view('livewire.app.auth.password-reset-successful')->
-            layout('app.auth.layout.app', [
-                'title' => 'Password Reset Successful',
-            ]);
+        layout('layouts.auth.app', [
+            'title' => 'Password Reset Successful',
+        ]);
     }
 }

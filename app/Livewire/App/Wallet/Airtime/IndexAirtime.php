@@ -60,7 +60,7 @@ class IndexAirtime extends Component
     public function render()
     {
         return view('livewire.app.wallet.airtime.index-airtime')
-            ->layout('app.exchange.layouts.app', [
+            ->layout('layouts.app.app', [
                 'title' => 'Airtime Purchase',
             ]);
     }

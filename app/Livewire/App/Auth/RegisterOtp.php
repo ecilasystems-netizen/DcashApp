@@ -26,7 +26,7 @@ class RegisterOtp extends Component
     {
         $this->validate();
 
-        $cachedOtp = Cache::get('otp_for_' . $this->email);
+        $cachedOtp = Cache::get('otp_for_'.$this->email);
 
         if ($cachedOtp && $cachedOtp === $this->otp) {
             $user = User::where('email', $this->email)->first();
@@ -34,7 +34,7 @@ class RegisterOtp extends Component
             $user->save();
 
             auth()->login($user);
-            Cache::forget('otp_for_' . $this->email);
+            Cache::forget('otp_for_'.$this->email);
 
             return $this->redirect(route('success', [
                 'title' => 'Account Verified',
@@ -52,7 +52,7 @@ class RegisterOtp extends Component
     {
         $user = User::where('email', $this->email)->first();
         $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        Cache::put('otp_for_' . $this->email, $otp, now()->addMinutes(5));
+        Cache::put('otp_for_'.$this->email, $otp, now()->addMinutes(5));
 
         Mail::to($user->email)->send(new OtpVerificationMail($otp, $user->fname));
 
@@ -61,7 +61,7 @@ class RegisterOtp extends Component
 
     public function render()
     {
-        return view('livewire.app.auth.register-otp')->layout('app.auth.layout.app', [
+        return view('livewire.app.auth.register-otp')->layout('layouts.auth.app', [
             'title' => 'Verify Email',
         ]);
     }

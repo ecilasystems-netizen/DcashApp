@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Default Title' }} - Dcash Wallet</title>
+    <title>{{ $title ?? 'Dcash Wallet' }} - Dcash Wallet</title>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -78,7 +78,7 @@
 
 <div class="flex min-h-screen">
     {{-- Sidebar --}}
-    @include('app.exchange.partials.sidebar')
+    @include('layouts.app.partials.sidebar')
 
     <main class="w-full lg:ml-20">
         <div class="lg:max-w-none lg:w-4/5 lg:mx-auto lg:px-8">
@@ -93,7 +93,7 @@
             </div>
 
             {{-- Footer (for mobile) --}}
-            @include('app.exchange.partials.footer')
+            @include('layouts.app.partials.footer')
         </div>
     </main>
 </div>
@@ -141,6 +141,21 @@
         });
     });
 </script>
+
+<script type="text/javascript" id="zohodeskasap">var d = document;
+    s = d.createElement("script"), s.type = "text/javascript", s.id = "zohodeskasapscript", s.defer = !0, s.nonce = "{place_your_nonce_value_here}", s.src = "https://desk.zoho.com/portal/api/web/asapApp/1177161000000371017?orgId=898626392", t = d.getElementsByTagName("script")[0], t.parentNode.insertBefore(s, t), window.ZohoDeskAsapReady = function (s) {
+        var e = window.ZohoDeskAsap__asyncalls = window.ZohoDeskAsap__asyncalls || [];
+        window.ZohoDeskAsapReadyStatus ? (s && e.push(s), e.forEach(s => s && s()), window.ZohoDeskAsap__asyncalls = null) : s && e.push(s)
+    };</script>
+
+<script>window.$zoho = window.$zoho || {};
+    $zoho.salesiq = $zoho.salesiq || {
+        ready: function () {
+        }
+    }</script>
+<script id="zsiqscript"
+        src="https://salesiq.zoho.com/widget?wc=siqeaa0cc165ffea61546e760ef13ff15a5f76ff8a20c7dc8e903d6e8386b023f98"
+        defer></script>
 
 </body>
 </html>

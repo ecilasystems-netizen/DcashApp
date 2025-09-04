@@ -13,7 +13,6 @@ use App\Livewire\Admin\Kyc\KycList;
 use App\Livewire\Admin\Transactions\TransactionList;
 use App\Livewire\Admin\Users\EditUser;
 use App\Livewire\Admin\Users\UserList;
-use App\Livewire\App\Auth\CheckEmail;
 use App\Livewire\App\Auth\Login;
 use App\Livewire\App\Auth\NewPassword;
 use App\Livewire\App\Auth\PasswordResetSuccessful;
@@ -21,6 +20,7 @@ use App\Livewire\App\Auth\Register;
 use App\Livewire\App\Auth\RegisterOtp;
 use App\Livewire\App\Auth\ResetPassword;
 use App\Livewire\App\Auth\SuccessPage;
+use App\Livewire\App\Auth\VerifyOtp;
 use App\Livewire\App\Exchange\Dashboard;
 use App\Livewire\App\Exchange\ExchangeBankAccount;
 use App\Livewire\App\Exchange\ExchangeCompleted;
@@ -63,9 +63,9 @@ Route::get('/admin/bank-accounts', BankAccountList::class)->name('admin.bank-acc
 //USer Authentication Routes
 Route::get('/login', Login::class)->name('login');
 Route::get('/reset-password', ResetPassword::class)->name('reset-password');
-Route::post('/reset-password/check-email', CheckEmail::class)->name('reset-password.check-email');
+Route::get('/reset-password/verify-otp', VerifyOtp::class)->name('reset-password.verify-otp');
 Route::get('/reset-password/new-password', NewPassword::class)->name('reset-password.new-password');
-Route::post('/reset-password/success', PasswordResetSuccessful::class)->name('reset-password.success');
+Route::get('/reset-password/success', PasswordResetSuccessful::class)->name('reset-password.success');
 Route::post('/logout', AuthenticatedSessionController::class.'@destroy')->name('logout');
 
 Route::get('/register', Register::class)->name('register');

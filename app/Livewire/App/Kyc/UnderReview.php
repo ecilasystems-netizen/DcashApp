@@ -9,6 +9,6 @@ class UnderReview extends Component
 
     public function render()
     {
-        return view('livewire.app.kyc.under-review')->layout('app.exchange.layouts.app')->title('KYC Under Review');
+        return view('livewire.app.kyc.under-review')->layout('layouts.app.app')->title('KYC Under Review');
     }
 }

@@ -10,10 +10,10 @@ class KycStart extends Component
     {
         return $this->redirect(route('kyc.personal-info'));
     }
-    
+
     public function render()
     {
-        return view('livewire.app.kyc.kyc-start')->layout('app.exchange.layouts.app')->title('Start KYC Verification');
+        return view('livewire.app.kyc.kyc-start')->layout('layouts.app.app')->title('Start KYC Verification');
     }
 
 

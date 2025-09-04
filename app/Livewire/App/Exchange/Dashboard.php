@@ -367,7 +367,7 @@ class Dashboard extends Component
         $processedPairs = $processedPairs->sortByDesc('priority');
 
         return view('livewire.app.exchange.dashboard', compact('currencies', 'processedPairs'))
-            ->layout('app.exchange.layouts.app')
+            ->layout('layouts.app.app')
             ->title('Dashboard');
     }
 

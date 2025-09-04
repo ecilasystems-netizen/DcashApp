@@ -21,6 +21,6 @@ class SuccessPage extends Component
     public function render()
     {
         return view('livewire.app.auth.success-page')
-            ->layout('app.auth.layout.app');
+            ->layout('layouts.auth.app');
     }
 }
