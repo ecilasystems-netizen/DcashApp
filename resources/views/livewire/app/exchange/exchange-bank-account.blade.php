@@ -82,7 +82,7 @@
                                         x-model="search"
                                         @click="open = true"
                                         @click.away="open = false"
-                                        placeholder="Banks..."
+                                        placeholder="Select bank..."
                                         class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
                                     >
                                     <div x-show="open"
@@ -110,7 +110,7 @@
                                         x-model="search"
                                         @click="open = true"
                                         @click.away="open = false"
-                                        placeholder="Banks..."
+                                        placeholder="Select bank..."
                                         class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
                                     >
                                     <div x-show="open"
@@ -252,6 +252,48 @@
                     </div>
                 </form>
             @endif
+
+            <div class="mt-6 bg-yellow-900/20  rounded-lg p-0">
+                <div class="flex items-start space-x-3 mb-3">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                    <h3 class="text-sm font-semibold text-red-400">Important notice</h3>
+                </div>
+
+                <ul class="text-xs space-y-2 text-yellow-100">
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="user-check" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Verify recipient details; transfers are non-refundable.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Check your daily transfer limit before proceeding.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Review transfer fees in advance.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="refresh-ccw" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Know the expected transfer processing time.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Wait for confirmation before exiting the app.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="file-text" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Save the order number for future reference.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Be wary of unexpected money requests.</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <i data-lucide="link-2" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                        <span>Avoid phishing scams and suspicious links.</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 

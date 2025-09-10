@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <x-logo class="w-[80px] h-[80px] mx-auto mb-4"/>
+                <x-logo class="w-[150px] h-[70px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Create Your Account</h1>
                 <p class="text-gray-400">Join us to start exchanging currency with ease.</p>
             </div>
@@ -110,10 +110,16 @@
                     </div>
 
 
-                    <div class="text-xs text-gray-500">
-                        By registering, you agree to our <a href="#" class="text-[#E1B362] hover:underline">Terms of
-                            Service</a> and <a href="#" class="text-[#E1B362] hover:underline">Privacy Policy</a>.
+                    <div class="flex items-start text-xs text-gray-500">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" wire:model="terms" required
+                                   class="w-4 h-4 text-[#E1B362] bg-gray-800 border-gray-600 rounded focus:ring-0">
+                            <span>By registering, you agree to our <a href="#" class="text-[#E1B362] hover:underline">Terms of Service</a> and <a
+                                    href="#" class="text-[#E1B362] hover:underline">Privacy Policy</a>.</span>
+                        </label>
                     </div>
+                    @error('terms')
+                    <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
 
                     <div class="space-y-2">
                         <button type="submit" wire:loading.attr="disabled"

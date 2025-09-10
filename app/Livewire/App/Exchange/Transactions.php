@@ -13,10 +13,19 @@ class Transactions extends Component
 
     public function mount()
     {
-        $this->transactions = auth()->user()->exchangeTransactions()
-            ->with(['fromCurrency', 'toCurrency'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $activeTab = session('exchange_active_tab', 'exchange'); // default to 'exchange'
+
+        if ($activeTab === 'wallet') {
+            $this->transactions = auth()->user()->walletTransactions()
+                ->with(['wallet'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $this->transactions = auth()->user()->exchangeTransactions()
+                ->with(['fromCurrency', 'toCurrency'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         $this->calculateStats();
     }
@@ -24,25 +33,36 @@ class Transactions extends Component
     private function calculateStats()
     {
         $thirtyDaysAgo = now()->subDays(30);
+        $activeTab = session('exchange_active_tab', 'exchange');
 
-        // Group transactions by currency for volume calculation
-        $volumes = $this->transactions
-            ->where('created_at', '>=', $thirtyDaysAgo)
-//            ->where('status', 'completed')
-            ->groupBy('from_currency_id')
-            ->map(function ($transactions) {
-                return [
-                    'amount' => $transactions->sum('amount_from'),
-                    'currency' => $transactions->first()->fromCurrency
-                ];
-            });
+        if ($activeTab === 'wallet') {
+            // Calculate stats for wallet transactions
+            $this->stats = [
+                'total' => $this->transactions->count(),
+                'volumes' => collect(), // No currency volumes for wallet transactions
+                'successful' => $this->transactions->where('status', 'completed')->count(),
+                'pending' => $this->transactions->where('status', 'pending')->count(),
+            ];
+        } else {
+            // Existing exchange transaction stats
+            $volumes = $this->transactions
+                ->where('created_at', '>=', $thirtyDaysAgo)
+                ->groupBy('from_currency_id')
+                ->map(function ($transactions) {
+                    return [
+                        'amount' => $transactions->sum('amount_from'),
+                        'currency' => $transactions->first()->fromCurrency
+                    ];
+                });
 
-        $this->stats = [
-            'total' => $this->transactions->count(),
-            'volumes' => $volumes,
-            'successful' => $this->transactions->where('status', 'completed')->count(),
-            'pending' => $this->transactions->whereIn('status', ['pending_payment', 'pending_confirmation'])->count(),
-        ];
+            $this->stats = [
+                'total' => $this->transactions->count(),
+                'volumes' => $volumes,
+                'successful' => $this->transactions->where('status', 'completed')->count(),
+                'pending' => $this->transactions->whereIn('status',
+                    ['pending_payment', 'pending_confirmation'])->count(),
+            ];
+        }
     }
 
 

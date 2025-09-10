@@ -9,12 +9,14 @@ class FlutterwaveBillsService
 {
     protected $baseUrl;
     protected $secretKey;
+    protected $webhookUrl;
 
     // Constructor to initialize Flutterwave API credentials from config
     public function __construct()
     {
         $this->secretKey = config('services.flutterwave.secret_key');
         $this->baseUrl = config('services.flutterwave.base_url', 'https://api.flutterwave.com/v3');
+        $this->webhookUrl = config('services.flutterwave.webhook_url');
     }
 
     // Retrieve top bill categories for a given country
@@ -69,7 +71,10 @@ class FlutterwaveBillsService
                     'statusCode' => $response->status()
                 ]);
             }
-
+            \Log::info("Flutterwave Transaction Payload", [
+                'payload' => $responseData,
+                'statusCode' => $response->status()
+            ]);
             return $responseData;
         } catch (\Exception $e) {
             // Log detailed exception information
@@ -113,7 +118,7 @@ class FlutterwaveBillsService
         $reference,
         $type = null,
         $isDataPurchase = false,
-        $callbackUrl = 'https://webhook.site/your-webhook-url',
+        $callbackUrl = 'https://app.dcashwallet.com/api/webhooks/flutterwave',
 
 
     ) {
@@ -145,7 +150,7 @@ class FlutterwaveBillsService
             'customer_id' => $customerId,
             'amount' => $amount,
             'reference' => $reference,
-            'callback_url' => $callbackUrl
+            'callback_url' => $this->webhookUrl ?? $callbackUrl,
         ];
 
         // Add type field for data purchases

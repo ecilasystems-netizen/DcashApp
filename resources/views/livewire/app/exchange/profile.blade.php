@@ -1,7 +1,7 @@
 <div>
 
     <x-slot name="header">
-        <header class="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700/80">
+        <header class="bg-gray-950 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700/80">
             <div class="px-4 lg:px-0 py-4 flex justify-between items-center">
                 <!-- Mobile Header -->
                 <div class="lg:hidden flex items-center space-x-4">
@@ -203,19 +203,15 @@
 
             <!-- Action Links -->
             <div class="mt-8 pt-8 border-t border-gray-800 space-y-4 text-sm">
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-300">Finished with your session?</span>
+                <div class="flex flex-col items-center justify-center space-y-4">
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
-                        <a href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); this.closest('form').submit();"
-                           class="font-semibold text-[#E1B362] hover:underline">
+                        <button type="submit"
+                                class="font-semibold text-[#E1B362] hover:underline">
                             Logout
-                        </a>
+                        </button>
                     </form>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-300">Permanently remove your account.</span>
+
                     <a href="#" class="font-semibold text-red-500 hover:underline">
                         Delete Account
                     </a>

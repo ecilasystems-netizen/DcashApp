@@ -9,13 +9,14 @@ class FlutterwaveService
 {
     protected $baseUrl;
     protected $secretKey;
+    protected $webhookUrl;
 
+    // Constructor to initialize Flutterwave API credentials from config
     public function __construct()
     {
-
         $this->secretKey = config('services.flutterwave.secret_key');
-        $this->baseUrl = config('services.flutterwave.base_url');
-
+        $this->baseUrl = config('services.flutterwave.base_url', 'https://api.flutterwave.com/v3');
+        $this->webhookUrl = config('services.flutterwave.webhook_url');
     }
 
     public function verifyNigerianBankAccount($accountNumber, $bankCode)
@@ -101,4 +102,30 @@ class FlutterwaveService
             ];
         }
     }
+
+    public function verifyTransactionStatus($transactionId)
+    {
+        try {
+            $response = $this->sendFlutterwaveRequest("/transactions/{$transactionId}/verify", [], 'GET');
+
+            if ($response && $response->successful() && $response->json('status') === 'success') {
+                return [
+                    'success' => true,
+                    'data' => $response->json('data')
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $response ? ($response->json('message') ?? 'Unable to verify transaction') : 'Unable to verify transaction'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Flutterwave transaction verification failed: '.$e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Transaction verification failed. Please try again.'
+            ];
+        }
+    }
+
 }

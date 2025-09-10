@@ -22,7 +22,7 @@ class WalletTransaction extends Model
         'status',
         'balance_before',
         'balance_after',
-        'metadata'
+        'metadata',
     ];
 
     protected $casts = [
@@ -37,5 +37,10 @@ class WalletTransaction extends Model
     {
         return $this->belongsTo(Wallet::class);
     }
-    
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

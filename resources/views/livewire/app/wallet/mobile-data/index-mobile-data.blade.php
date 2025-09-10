@@ -109,18 +109,7 @@
     <!-- Confirmation Modal -->
     <div
         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop {{ $showConfirmModal ? '' : 'hidden' }}"
-        x-data="{
-            intentionallyCancelling: false,
-            setupBeforeUnload() {
-                window.addEventListener('beforeunload', (e) => {
-                    if (!this.intentionallyCancelling) {
-                        e.preventDefault();
-                        e.returnValue = '';
-                    }
-                });
-            }
-        }"
-        x-init="setupBeforeUnload()">
+    >
         <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-6 border border-gray-700 shadow-xl">
             <h2 class="text-2xl font-bold text-center text-white mb-2">Confirm Purchase</h2>
             <div class="space-y-3 text-sm my-6">

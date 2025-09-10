@@ -19,7 +19,14 @@
             href="{{ route('admin.transactions') }}"
             class="flex items-center px-4 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.transactions') ? 'text-white bg-[#E1B362]' : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">
             <i data-lucide="arrow-left-right" class="w-5 h-5 mr-3"></i>
-            <span>Transactions</span>
+            <span>Exchange Trxns</span>
+        </a>
+
+        <a
+            href="{{ route('admin.wallet-transactions') }}"
+            class="flex items-center px-4 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.wallet-transactions') ? 'text-white bg-[#E1B362]' : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">
+            <i data-lucide="arrow-left" class="w-5 h-5 mr-3"></i>
+            <span>Wallet Trxns</span>
         </a>
         <a
             href="{{ route('admin.users') }}"

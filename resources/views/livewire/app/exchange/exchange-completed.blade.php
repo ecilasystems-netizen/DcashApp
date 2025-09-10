@@ -19,11 +19,33 @@
 
         <!-- Transaction Summary -->
         <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 my-8 text-left space-y-4 text-sm">
-            <div class="flex justify-between items-center">
-                <span class="text-gray-400">Amount Sent</span>
-                <span
-                    class="font-semibold text-white">{{number_format(session('baseAmount'), 2)}} {{session('baseCurrencyCode')}}</span>
-            </div>
+            @if(session()->has('cashback_amount') && session('cashback_amount') > 0)
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Amount Sent</span>
+                    <span class="font-semibold text-gray-400 line-through">
+                        {{ number_format(session('baseAmount'), 2) }} {{ session('baseCurrencyCode') }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Cashback Reward</span>
+                    <span class="font-semibold text-green-400">
+                        - {{ number_format(session('cashback_amount'), 2) }} {{ session('baseCurrencyCode') }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-white">Total Paid</span>
+                    <span class="font-bold text-white">
+                        {{ number_format(session('baseAmount') - session('cashback_amount'), 2) }} {{ session('baseCurrencyCode') }}
+                    </span>
+                </div>
+            @else
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Amount Sent</span>
+                    <span class="font-semibold text-white">
+                        {{ number_format(session('baseAmount'), 2) }} {{ session('baseCurrencyCode') }}
+                    </span>
+                </div>
+            @endif
             <div class="flex justify-between items-center">
                 <span class="text-gray-400">Amount Received</span>
                 <span

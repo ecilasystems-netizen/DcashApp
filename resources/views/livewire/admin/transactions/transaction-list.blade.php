@@ -1,11 +1,15 @@
 <div x-data="{
-        isModalOpen: false,
-        proofImage: '',
-        proofUser: '',
-        proofId: '',
-        confirmDelete: null,
-        exportDropdown: false
-    }">
+            isModalOpen: false,
+            proofImage: '',
+            proofUser: '',
+            proofId: '',
+            confirmDelete: null,
+            confirmApprove: null,
+            confirmReject: null,
+            rejectionReason: '',
+            otherRejectionReason: '',
+            exportDropdown: false
+        }">
     <x-slot name="header">
         <!-- Header -->
         <header class="bg-gray-800/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700">
@@ -210,6 +214,13 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
+
+                            @if(!empty($transaction->note))
+                                <div
+                                    class="mb-2 p-2 bg-gray-700 border border-gray-600 rounded-lg text-xs text-gray-300">
+                                    Note: {{ $transaction->note }}
+                                </div>
+                            @endif
                             @php
                                 $statusConfig = [
                                     'pending_confirmation' => ['bg' => 'yellow', 'icon' => 'loader-2', 'text' => 'Pending'],
@@ -242,14 +253,12 @@
                                          x-transition:leave-end="transform opacity-0 scale-95"
                                          style="display: none;">
                                         <div class="py-1">
-                                            <button wire:click="approveTransaction({{ $transaction->id }})"
-                                                    @click="open = false"
+                                            <button @click="confirmApprove = {{ $transaction->id }}; open = false"
                                                     class="flex items-center gap-3 px-4 py-2 text-sm text-green-400 hover:bg-gray-600 w-full text-left transition-colors">
                                                 <i data-lucide="check-circle" class="w-4 h-4"></i>
                                                 Approve Transaction
                                             </button>
-                                            <button wire:click="rejectTransaction({{ $transaction->id }})"
-                                                    @click="open = false"
+                                            <button @click="confirmReject = {{ $transaction->id }}; open = false"
                                                     class="flex items-center gap-3 px-4 py-2 text-sm text-yellow-400 hover:bg-gray-600 w-full text-left transition-colors">
                                                 <i data-lucide="x-circle" class="w-4 h-4"></i>
                                                 Reject Transaction
@@ -264,17 +273,35 @@
                                     </div>
                                 </div>
                             @else
-                                @php
-                                    $statusConfig = [
-                                        'pending_confirmation' => ['bg' => 'yellow', 'icon' => 'loader-2', 'text' => 'Pending'],
-                                        'completed' => ['bg' => 'green', 'icon' => 'check-circle', 'text' => 'Completed'],
-                                        'failed' => ['bg' => 'red', 'icon' => 'x-circle', 'text' => 'Failed'],
-                                        'rejected' => ['bg' => 'red', 'icon' => 'x-octagon', 'text' => 'Rejected']
-                                    ][$transaction->status] ?? ['bg' => 'gray', 'icon' => 'help-circle', 'text' => 'Unknown'];
-                                @endphp
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-{{ $statusConfig['bg'] }}-500/10 text-{{ $statusConfig['bg'] }}-400">
-                                    <i data-lucide="{{ $statusConfig['icon'] }}" class="w-4 h-4"></i>
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open"
+                                            class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-700 transition-colors">
+                                        <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                                    </button>
+                                    <div x-show="open"
+                                         @click.away="open = false"
+                                         class="dropdown-menu absolute right-0 mt-2 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-xl z-50"
+                                         x-transition
+                                         style="display: none;">
+                                        <div class="py-1">
+                                            <button @click="confirmApprove = {{ $transaction->id }}; open = false"
+                                                    class="flex items-center gap-3 px-4 py-2 text-sm text-green-400 hover:bg-gray-600 w-full text-left transition-colors">
+                                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                                Approve Transaction
+                                            </button>
+                                            <button @click="confirmReject = {{ $transaction->id }}; open = false"
+                                                    class="flex items-center gap-3 px-4 py-2 text-sm text-yellow-400 hover:bg-gray-600 w-full text-left transition-colors">
+                                                <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                                Reject Transaction
+                                            </button>
+                                            <hr class="border-gray-600 my-1">
+                                            <button @click="confirmDelete = {{ $transaction->id }}; open = false"
+                                                    class="flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-600 w-full text-left transition-colors">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                Delete Transaction
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             @endif
                         </td>
@@ -298,46 +325,115 @@
 
     <!-- Proof Modal -->
     <div x-show="isModalOpen" x-transition wire:cloak
-         class="fixed inset-0 z-50 flex items-center justify-center modal-overlay style=" display: none
-    ">
-    <div @click.away="isModalOpen = false"
-         class="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 border border-gray-700">
-        <div class="flex justify-between items-center mb-4">
-            <div>
-                <h3 class="text-lg font-bold text-white" x-text="`Proof for ${proofId}`"></h3>
-                <p class="text-sm text-gray-400" x-text="`Submitted by ${proofUser}`"></p>
+         class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" style="display: none">
+        <div @click.away="isModalOpen = false"
+             class="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-white" x-text="`Proof for ${proofId}`"></h3>
+                    <p class="text-sm text-gray-400" x-text="`Submitted by ${proofUser}`"></p>
+                </div>
+                <button @click="isModalOpen = false"
+                        class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-700">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
-            <button @click="isModalOpen = false"
-                    class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-700">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-        <div class="bg-gray-900 rounded-lg overflow-hidden">
-            <img :src="proofImage"
-                 alt="Proof of Payment"
-                 class="w-full h-auto object-contain max-h-[60vh]"
-            />
+            <div class="bg-gray-900 rounded-lg overflow-hidden">
+                <img :src="proofImage"
+                     alt="Proof of Payment"
+                     class="w-full h-auto object-contain max-h-[60vh]"
+                />
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Delete Confirmation Modal -->
-<div x-show="confirmDelete" x-transition
-     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75" style="display: none">
-    <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
-        <h3 class="text-lg font-bold text-white mb-4">Confirm Delete</h3>
-        <p class="text-gray-300 mb-6">Are you sure you want to delete this transaction? This action cannot be
-            undone.</p>
-        <div class="flex justify-end gap-4">
-            <button @click="confirmDelete = null"
-                    class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg">
-                Cancel
-            </button>
-            <button @click="$wire.deleteTransaction(confirmDelete); confirmDelete = null"
-                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg">
-                Delete
-            </button>
+    <!-- Approve Confirmation Modal -->
+    <div x-show="confirmApprove" x-cloak x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-30 flex items-center justify-center modal-overlay p-4"
+         style="background-color: rgba(0,0,0,0.5);">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
+            <h3 class="text-lg font-bold text-white mb-4">Confirm Approval</h3>
+            <p class="text-gray-300 mb-6">Are you sure you want to approve this transaction?</p>
+            <div class="flex justify-end gap-4">
+                <button @click="confirmApprove = null"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    Cancel
+                </button>
+                <button @click="$wire.approveTransaction(confirmApprove); confirmApprove = null"
+                        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    Approve
+                </button>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Reject Confirmation Modal -->
+    <div x-show="confirmReject" x-cloak x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-30 flex items-center justify-center modal-overlay p-4"
+         style="background-color: rgba(0,0,0,0.5);">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
+            <h3 class="text-lg font-bold text-white mb-4">Confirm Rejection</h3>
+            <p class="text-gray-300 mb-6">Please select a reason for rejecting this transaction.</p>
+            <div class="space-y-4">
+                <select x-model="rejectionReason"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                    <option value="" disabled>Select a reason...</option>
+                    <option value="Invalid Proof of Payment">Invalid Proof of Payment</option>
+                    <option value="Incorrect Amount">Incorrect Amount</option>
+                    <option value="Fraudulent Activity Suspected">Fraudulent Activity Suspected</option>
+                    <option value="other">Other (Please specify)</option>
+                </select>
+                <div x-show="rejectionReason === 'other'">
+                    <input type="text" x-model="otherRejectionReason" placeholder="Specify other reason"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                </div>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button @click="confirmReject = null; rejectionReason = ''; otherRejectionReason = ''"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    Cancel
+                </button>
+                <button
+                    @click="() => {
+                        const reason = rejectionReason === 'other' ? otherRejectionReason : rejectionReason;
+                        $wire.rejectTransaction(confirmReject, reason);
+                        confirmReject = null;
+                        rejectionReason = '';
+                        otherRejectionReason = '';
+                    }"
+                    :disabled="!rejectionReason || (rejectionReason === 'other' && !otherRejectionReason)"
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg disabled:bg-red-800 disabled:cursor-not-allowed">
+                    Reject
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="confirmDelete" x-cloak x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-30 flex items-center justify-center modal-overlay p-4"
+         style="background-color: rgba(0,0,0,0.5);">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
+            <h3 class="text-lg font-bold text-white mb-4">Confirm Delete</h3>
+            <p class="text-gray-300 mb-6">Are you sure you want to delete this transaction? This action cannot be
+                undone.</p>
+            <div class="flex justify-end gap-4">
+                <button @click="confirmDelete = null"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    Cancel
+                </button>
+                <button @click="$wire.deleteTransaction(confirmDelete); confirmDelete = null"
+                        class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

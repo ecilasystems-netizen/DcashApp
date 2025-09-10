@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <x-logo class="w-[80px] h-[80px] mx-auto mb-4"/>
+                <x-logo class="w-[150px] h-[70px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Welcome Back</h1>
                 <p class="text-gray-400">Sign in to continue to your dashboard.</p>
             </div>

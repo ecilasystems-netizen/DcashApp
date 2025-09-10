@@ -7,22 +7,19 @@ use Livewire\Component;
 class Rewards extends Component
 {
     public $referralCode;
-    public $kycStatus;
+    public $referralLink;
+    public $totalRewards = 0.00; // Placeholder for total rewards
 
     public function mount()
     {
-        //get referral code of the authenticated user
-        $referralCode = auth()->user()->referral_code;
-        $this->referralCode = $referralCode;
-        if (auth()->user()->kyc_status == 'approved') {
-            $this->kycStatus = "approved";
-        } else {
-            $this->kycStatus = false;
-        }
+        $user = auth()->user();
+        $this->referralCode = $user->referral_code;
+        // Assuming you have a named route for registration that accepts a referral code
+        $this->referralLink = route('register');
     }
 
     public function render()
     {
-        return view('livewire.app.exchange.rewards')->layout('layouts.app.app')->title('Rewards');
+        return view('livewire.app.exchange.rewards')->layout('layouts.app.app')->title('Refer a Friend');
     }
 }

@@ -39,9 +39,10 @@ return [
         'public_key' => env('FLUTTERWAVE_PUBLIC_KEY'),
         'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
         'base_url' => env('FLUTTERWAVE_BASE_URL', 'https://api.flutterwave.com/v3'),
-        'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH'),
+        'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH', 'Playstation2Dcash2024'),
         'encryption_key' => env('FLUTTERWAVE_ENCRYPTION_KEY'),
         'secret' => env('FLUTTERWAVE_SECRET_KEY'),
+        'webhook_url' => env('FLUTTERWAVE_WEBHOOK_URL'),
     ],
 
     'virtual_account' => [

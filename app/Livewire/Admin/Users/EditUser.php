@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Users;
 
+use App\Models\KycVerification;
 use App\Models\User;
 use Livewire\Component;
 
@@ -32,11 +33,26 @@ class EditUser extends Component
         $this->validate([
             'fname' => 'required|string|max:255',
             'lname' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username,' . $this->user->id,
-            'email' => 'required|email|max:255|unique:users,email,' . $this->user->id,
+            'username' => 'required|string|max:255|unique:users,username,'.$this->user->id,
+            'email' => 'required|email|max:255|unique:users,email,'.$this->user->id,
             'phone' => 'nullable|string|max:20',
-            'kyc_status' => 'required|in:active,suspended,blocked,verified',
+            'kyc_status' => 'required|in:rejected,verified',
         ]);
+
+        // if kyc_status changed, update kyc table
+        if ($this->user->getOriginal('kyc_status') !== $this->kyc_status) {
+            if ($this->kyc_status === 'verified') {
+                KycVerification::updateOrCreate(
+                    ['user_id' => $this->user->id],
+                    ['status' => "approved"]
+                );
+            } elseif ($this->kyc_status === 'rejected') {
+                KycVerification::updateOrCreate(
+                    ['user_id' => $this->user->id],
+                    ['status' => "rejected"]
+                );
+            }
+        }
 
         $this->user->update([
             'fname' => $this->fname,
@@ -46,6 +62,7 @@ class EditUser extends Component
             'phone' => $this->phone,
             'kyc_status' => $this->kyc_status,
         ]);
+
 
         session()->flash('message', 'User updated successfully.');
 

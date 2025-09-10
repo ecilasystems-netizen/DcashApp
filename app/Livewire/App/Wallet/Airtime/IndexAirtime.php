@@ -2,6 +2,7 @@
 
 namespace App\Livewire\App\Wallet\Airtime;
 
+use App\Models\WalletTransaction;
 use App\Services\FlutterwaveBillsService;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
@@ -133,38 +134,7 @@ class IndexAirtime extends Component
                 return;
             }
 
-            $user = auth()->user();
-
-            $user->refresh();
-            if ($user->wallet->balance < $this->getSelectedAmountProperty()) {
-                $this->showError('Insufficient balance');
-                return;
-            }
-
-
-            // Debit wallet
-            $user->wallet->balance -= $this->getSelectedAmountProperty();
-            $user->wallet->save();
-
-            // Record transaction
-            $user->wallet->transactions()->create([
-                'reference' => $reference,
-                'type' => 'airtime',
-                'direction' => 'debit',
-                'user_id' => $user->id,
-                'amount' => $this->getSelectedAmountProperty(),
-                'fee' => 0,
-                'description' => 'Airtime to '.$this->phoneNumber,
-                'status' => 'pending',
-                'balance_before' => $this->userBalance,
-                'balance_after' => $user->wallet->balance,
-                'metadata' => [
-                    'phone_number' => $this->phoneNumber
-                ],
-            ]);
-
-            //validate customer details
-            // Get the item code for the selected network (AT099, etc.)
+            //validate customer details, Get the item code for the selected network (AT099, etc.)
             $itemCode = $this->getItemCodeForNetwork($this->selectedNetwork);
             $validationResponse = $flutterwave->validateCustomer($itemCode, $this->phoneNumber);
             if (isset($validationResponse['status']) && $validationResponse['status'] !== 'success') {
@@ -174,7 +144,46 @@ class IndexAirtime extends Component
                 return;
             }
 
+            $user = auth()->user();
 
+            // Atomically reserve funds and create a pending transaction
+            $amount = $this->getSelectedAmountProperty();
+            $wallet = $user->wallet;
+            $balanceBefore = $wallet->balance;
+
+            // Attempt atomic decrement to avoid race conditions
+            $updated = \DB::table('wallets')
+                ->where('id', $wallet->id)
+                ->where('balance', '>=', $amount)
+                ->decrement('balance', $amount);
+
+            if (!$updated) {
+                $this->showError('error', 'Insufficient balance');
+                $this->processing = false;
+                return;
+            }
+
+            $balanceAfter = $balanceBefore - $amount;
+            $user->refresh(); // ensure relations reflect updated balance
+
+            // Record pending transaction
+            $user->wallet->transactions()->create([
+                'reference' => $reference,
+                'type' => 'airtime',
+                'direction' => 'debit',
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'charge' => 0,
+                'description' => 'Airtime to '.$this->phoneNumber,
+                'status' => 'pending',
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'metadata' => [
+                    'phone_number' => $this->phoneNumber
+                ],
+            ]);
+
+            // Create the bill payment
             $response = $flutterwave->createBillPayment(
                 $this->selectedNetwork, // biller_code
                 $itemCode, // item_code
@@ -186,14 +195,52 @@ class IndexAirtime extends Component
 
             if (isset($response['status']) && $response['status'] === 'success') {
 
+                // Update transaction status to completed
+                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
+                if ($transaction) {
+                    $transaction->status = 'completed';
+                    $transaction->metadata = array_merge((array) $transaction->metadata, [
+                        'tx_ref' => $response['data']['tx_ref'] ?? null,
+                        'flw_ref' => $response['data']['reference'] ?? null,
+                        'network' => $response['data']['network'] ?? null,
+                    ]);
+                    $transaction->save();
+                }
+
                 $this->showConfirmModal = false;
                 $this->showSuccessModal = true;
 
             } else {
+                // On failed payment (after createBillPayment returns non-success) — refund and mark transaction failed
+                // get the pending transaction
+                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
+                if ($transaction) {
+                    $transaction->status = 'failed';
+                    $transaction->metadata = array_merge((array) $transaction->metadata, [
+                        'failure_reason' => $response['message'] ?? 'Payment failed',
+                    ]);
+                    $transaction->save();
+                }
+                // refund wallet
+                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $amount);
+
+                $user->refresh();
+
                 session()->flash('error', $response['message'] ?? 'Transaction failed');
                 $this->showConfirmModal = false;
             }
         } catch (\Exception $e) {
+            // attempt to find and mark pending transaction as failed and refund
+            $transaction = WalletTransaction::where('reference', $reference ?? null)->first();
+            if ($transaction && $transaction->status === 'pending') {
+                $transaction->status = 'failed';
+                $transaction->metadata = array_merge((array) $transaction->metadata, [
+                    'exception' => $e->getMessage(),
+                ]);
+                $transaction->save();
+
+                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $transaction->amount);
+            }
             session()->flash('error', 'Airtime purchase failed: '.$e->getMessage());
         }
 

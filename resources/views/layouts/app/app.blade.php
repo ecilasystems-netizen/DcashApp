@@ -114,48 +114,45 @@
     }
 </script>
 
+{{--<script>--}}
+{{--    // Show loader for all links and form submissions--}}
+{{--    document.addEventListener('DOMContentLoaded', function () {--}}
+{{--        const loader = document.getElementById('page-loader');--}}
+
+{{--        // Show loader on link clicks--}}
+{{--        document.addEventListener('click', function (e) {--}}
+{{--            const link = e.target.closest('a');--}}
+{{--            if (link && link.href && !link.href.includes('#') && !link.hasAttribute('target')) {--}}
+{{--                loader.classList.remove('hidden');--}}
+{{--                loader.classList.add('flex');--}}
+{{--            }--}}
+{{--        });--}}
+
+{{--        // Show loader on form submissions--}}
+{{--        document.addEventListener('submit', function (e) {--}}
+{{--            loader.classList.remove('hidden');--}}
+{{--            loader.classList.add('flex');--}}
+{{--        });--}}
+
+{{--        // Hide loader when page loads--}}
+{{--        window.addEventListener('load', function () {--}}
+{{--            loader.classList.add('hidden');--}}
+{{--            loader.classList.remove('flex');--}}
+{{--        });--}}
+{{--    });--}}
+{{--</script>--}}
+
+{{--show only on PC--}}
 <script>
-    // Show loader for all links and form submissions
-    document.addEventListener('DOMContentLoaded', function () {
-        const loader = document.getElementById('page-loader');
-
-        // Show loader on link clicks
-        document.addEventListener('click', function (e) {
-            const link = e.target.closest('a');
-            if (link && link.href && !link.href.includes('#') && !link.hasAttribute('target')) {
-                loader.classList.remove('hidden');
-                loader.classList.add('flex');
+    if (window.innerWidth >= 1024) { // Show only on desktop (lg and up)
+        window.$zoho = window.$zoho || {};
+        $zoho.salesiq = $zoho.salesiq || {
+            ready: function () {
             }
-        });
-
-        // Show loader on form submissions
-        document.addEventListener('submit', function (e) {
-            loader.classList.remove('hidden');
-            loader.classList.add('flex');
-        });
-
-        // Hide loader when page loads
-        window.addEventListener('load', function () {
-            loader.classList.add('hidden');
-            loader.classList.remove('flex');
-        });
-    });
+        }
+    }
 </script>
 
-<script type="text/javascript" id="zohodeskasap">var d = document;
-    s = d.createElement("script"), s.type = "text/javascript", s.id = "zohodeskasapscript", s.defer = !0, s.nonce = "{place_your_nonce_value_here}", s.src = "https://desk.zoho.com/portal/api/web/asapApp/1177161000000371017?orgId=898626392", t = d.getElementsByTagName("script")[0], t.parentNode.insertBefore(s, t), window.ZohoDeskAsapReady = function (s) {
-        var e = window.ZohoDeskAsap__asyncalls = window.ZohoDeskAsap__asyncalls || [];
-        window.ZohoDeskAsapReadyStatus ? (s && e.push(s), e.forEach(s => s && s()), window.ZohoDeskAsap__asyncalls = null) : s && e.push(s)
-    };</script>
-
-<script>window.$zoho = window.$zoho || {};
-    $zoho.salesiq = $zoho.salesiq || {
-        ready: function () {
-        }
-    }</script>
-<script id="zsiqscript"
-        src="https://salesiq.zoho.com/widget?wc=siqeaa0cc165ffea61546e760ef13ff15a5f76ff8a20c7dc8e903d6e8386b023f98"
-        defer></script>
 
 </body>
 </html>

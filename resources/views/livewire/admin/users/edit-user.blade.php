@@ -91,10 +91,8 @@
                             wire:model="kyc_status"
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
                         >
-                            <option value="active">Active</option>
+                            <option value="rejected">Rejected</option>
                             <option value="verified">Verified</option>
-                            <option value="suspended">Suspended</option>
-                            <option value="blocked">Blocked</option>
                         </select>
                         @error('kyc_status') <span class="text-red-400 text-sm">{{ $message }}</span> @enderror
                     </div>

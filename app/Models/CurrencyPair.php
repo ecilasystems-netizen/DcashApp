@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +17,8 @@ class CurrencyPair extends Model
         'raw_rate',
         'auto_update',
         'is_active',
+        'buy_rate',
+        'sell_rate',
     ];
 
     protected $casts = [

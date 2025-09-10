@@ -35,6 +35,7 @@ class ExchangeCompleted extends Component
             'recipientBankName' => $transaction->recipient_bank_name,
             'recipientAccountNumber' => $transaction->recipient_account_number,
             'recipientAccountName' => $transaction->recipient_account_name,
+            'cashback_amount' => $transaction->cashback ?? null,
         ]);
 
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Flutterwave\FlutterwaveBillsController;
+use App\Http\Controllers\FlutterwaveWebhookController;
 use App\Http\Controllers\TestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,3 +25,7 @@ Route::get('/bills/import',
 
 
 Route::get('/test/nigerian-banks', [TestController::class, 'index']);
+
+//flutterwave webhook route
+Route::post('/webhooks/flutterwave',
+    [FlutterwaveWebhookController::class, 'handleFlutterwaveWebhook'])->name('webhooks.flutterwave');

@@ -13,6 +13,7 @@
 
     <div class="p-6">
 
+
         <!-- Stats Section -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-gray-700/50 p-4 rounded-lg border border-gray-600">
@@ -269,6 +270,7 @@
     <!-- Update Rate Modal -->
     <div
         x-show="isRateModalOpen"
+        @close-rate-modal.window="isRateModalOpen = false"
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -276,45 +278,115 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         class="fixed inset-0 z-30 flex items-center justify-center modal-overlay"
-        style="display: none">
+        style="display: none"
+        @keydown.escape.window="isRateModalOpen = false">
+
         <div
             @click.away="isRateModalOpen = false"
             class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
-            <h3 class="text-lg font-bold text-white mb-4" x-text="`Update Rate for ${selectedRate?.pair}`"></h3>
+
+            @if (session()->has('error'))
+                <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                    <div class="flex items-center">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 mr-2"></i>
+                        <span class="text-red-400 font-medium">{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white"
+                    x-text="`Update Rate for ${selectedRate?.pair || 'Currency Pair'}`"></h3>
+                <button
+                    @click="isRateModalOpen = false"
+                    class="text-gray-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
             <form class="space-y-4" wire:submit.prevent="updateRate">
+                <!-- Current Rates Display -->
+                <div class="bg-gray-700/50 rounded-lg p-3 mb-4" x-show="selectedRate">
+                    <div class="text-xs text-gray-400 mb-2">Current Rates</div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-400">Buy:</span>
+                            <span class="text-green-400 font-medium" x-text="selectedRate?.buyRate"></span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Sell:</span>
+                            <span class="text-red-400 font-medium" x-text="selectedRate?.sellRate"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Rates Input -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">New Buy Rate</label>
                         <input
                             type="number"
                             step="0.0001"
-                            wire:model="newBuyRate"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"/>
-                        @error('newBuyRate') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                            min="0"
+                            wire:model.live="newBuyRate"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter buy rate"/>
+                        @error('newBuyRate')
+                        <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">New Sell Rate</label>
                         <input
                             type="number"
                             step="0.0001"
-                            wire:model="newSellRate"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"/>
-                        @error('newSellRate') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                            min="0"
+                            wire:model.live="newSellRate"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter sell rate"/>
+                        @error('newSellRate')
+                        <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
+
+                <!-- Rate Change Preview -->
+                <div x-show="selectedRate && ($wire.newBuyRate || $wire.newSellRate)"
+                     class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                    <div class="text-xs text-blue-400 mb-2">Rate Changes</div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div x-show="$wire.newBuyRate && $wire.newBuyRate !== selectedRate?.buyRate">
+                            <span class="text-gray-400">Buy:</span>
+                            <span class="text-green-400" x-text="selectedRate?.buyRate"></span>
+                            <span class="text-gray-400">→</span>
+                            <span class="text-green-300 font-medium" x-text="$wire.newBuyRate"></span>
+                        </div>
+                        <div x-show="$wire.newSellRate && $wire.newSellRate !== selectedRate?.sellRate">
+                            <span class="text-gray-400">Sell:</span>
+                            <span class="text-red-400" x-text="selectedRate?.sellRate"></span>
+                            <span class="text-gray-400">→</span>
+                            <span class="text-red-300 font-medium" x-text="$wire.newSellRate"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <input type="hidden" wire:model="selectedRateId">
-                <div class="pt-4 flex justify-end gap-4">
+
+                <div class="pt-4 flex justify-end gap-3">
                     <button
                         type="button"
                         @click="isRateModalOpen = false"
-                        class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg">
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        class="brand-gradient text-white font-semibold py-2 px-4 rounded-lg">
-                        Update Rate
+                        class="brand-gradient text-white font-semibold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="!$wire.newBuyRate && !$wire.newSellRate">
+                        <span wire:loading.remove wire:target="updateRate">Update Rate</span>
+                        <span wire:loading wire:target="updateRate" class=" items-center flex gap-0">
+                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                            Updating...
+                        </span>
                     </button>
                 </div>
             </form>
@@ -380,7 +452,9 @@
     @endpush
 
     @push('scripts')
+
         <script>
+
             // Alpine.js store for managing modal state
             window.addEventListener('close-currency-modal', (event) => {
                 window.dispatchEvent(new CustomEvent('close-modal'));
@@ -390,5 +464,14 @@
                 document.querySelector('[x-data]').__x.$data.isRateModalOpen = false;
             });
         </script>
+
+        @if (session()->has('error'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Assuming you have a toast notification system
+                    showToast('error', '{{ session('error') }}');
+                });
+            </script>
+        @endif
     @endpush
 </div>

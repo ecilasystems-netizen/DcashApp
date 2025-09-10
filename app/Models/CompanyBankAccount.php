@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyBankAccount extends Model
 {
@@ -23,13 +25,32 @@ class CompanyBankAccount extends Model
         'crypto_name',
         'crypto_qr_code',
         'is_active',
-        'is_crypto',
+        'position',
+        'tab_name',
         'qr'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    protected $appends = ['bank_account_qr_code_url', 'crypto_qr_code_url'];
+
+    public function getBankAccountQrCodeUrlAttribute()
+    {
+        if ($this->bank_account_qr_code) {
+            return Storage::url($this->bank_account_qr_code);
+        }
+        return null;
+    }
+
+    public function getCryptoQrCodeUrlAttribute()
+    {
+        if ($this->crypto_qr_code) {
+            return Storage::url($this->crypto_qr_code);
+        }
+        return null;
+    }
 
     public function currency(): BelongsTo
     {

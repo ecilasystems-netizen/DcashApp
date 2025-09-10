@@ -222,6 +222,20 @@
                 <!-- Receipt Details -->
                 <div class="p-6 text-sm">
                     <ul class="space-y-4">
+
+                        @if(!empty($transactionData['note']))
+                            <div
+                                class="mb-2 p-3 bg-gradient-to-r from-red-700 to-red-600 border border-red-500 rounded-lg text-xs text-white text-center shadow-lg">
+                                <div class="flex items-center justify-center gap-2">
+                                    <i data-lucide="x-circle" class="w-5 h-5"></i>
+                                    <span class="font-bold text-sm">Transaction Rejected</span>
+                                </div>
+                                <div class="mt-1 text-[12px] text-red-100">Oh no — your transaction was
+                                    rejected because: <b>{{$transactionData['note']}}</b>. Please
+                                    review the details or contact support.
+                                </div>
+                            </div>
+                        @endif
                         <li class="flex justify-between">
                             <span class="text-gray-400">Status</span>
                             <span class="font-medium flex items-center gap-1.5 {{
@@ -231,7 +245,7 @@
                                     'pending_confirmation' => 'text-yellow-400',
                                     'processing' => 'text-blue-400',
                                     'failed' => 'text-red-400',
-                                    'cancelled' => 'text-gray-400',
+                                    'rejected' => 'text-red-400',
                                     default => 'text-white'
                                 }
                             }}">
@@ -241,7 +255,7 @@
                                         'pending_payment', 'pending_confirmation' => 'clock',
                                         'processing' => 'refresh-cw',
                                         'failed' => 'x-circle',
-                                        'cancelled' => 'slash',
+                                        'rejected' => 'x-octagon',
                                         default => 'help-circle'
                                     }
                                 }}" class="w-4 h-4"></i>
@@ -260,11 +274,32 @@
                                      alt="">
                             </span>
                         </li>
-                        <li class="flex justify-between">
-                            <span class="text-gray-400">You Sent</span>
-                            <span
-                                class="font-medium text-white">{{ number_format($transactionData['baseAmount'], 2) .' '.$transactionData['baseCurrencyCode']}}</span>
-                        </li>
+                        @if(!empty($transactionData['cashback']) && $transactionData['cashback'] > 0)
+                            <li class="flex justify-between">
+                                <span class="text-gray-400">Amount Sent</span>
+                                <span class="font-medium text-gray-400 line-through">
+                                    {{ number_format($transactionData['baseAmount'], 2) }} {{ $transactionData['baseCurrencyCode'] }}
+                                </span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-400">Cashback Reward</span>
+                                <span class="font-medium text-green-400">
+                                    - {{ number_format($transactionData['cashback'], 2) }} {{ $transactionData['baseCurrencyCode'] }}
+                                </span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="font-bold text-white">Total Paid</span>
+                                <span class="font-bold text-white">
+                                    {{ number_format($transactionData['baseAmount'] - $transactionData['cashback'], 2) }} {{ $transactionData['baseCurrencyCode'] }}
+                                </span>
+                            </li>
+                        @else
+                            <li class="flex justify-between">
+                                <span class="text-gray-400">You Sent</span>
+                                <span
+                                    class="font-medium text-white">{{ number_format($transactionData['baseAmount'], 2) .' '.$transactionData['baseCurrencyCode']}}</span>
+                            </li>
+                        @endif
                         <li class="flex justify-between">
                             <span class="text-gray-400">Exchange Rate</span>
                             <span class="font-medium text-white"
@@ -283,11 +318,21 @@
                             <span class="text-gray-400">Fee</span>
                             <span class="font-medium text-white">0.00 </span>
                         </li>
-                        <li class="flex justify-between">
+                        <li class="flex justify-between items-center" x-data="{ copied: false }">
                             <span class="text-gray-400">Transaction ID</span>
-                            <span class="font-mono text-xs text-gray-300"
-                            >{{$transactionData['reference']}}</span
-                            >
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-xs text-gray-300">{{$transactionData['reference']}}</span>
+                                <button
+                                    @click="navigator.clipboard.writeText('{{$transactionData['reference']}}').then(() => {
+                                        copied = true;
+                                        setTimeout(() => copied = false, 2000);
+                                    })"
+                                    class="text-gray-400 hover:text-white transition-colors focus:outline-none"
+                                    title="Copy transaction ID">
+                                    <i x-show="!copied" data-lucide="copy" class="w-4 h-4"></i>
+                                    <i x-show="copied" data-lucide="check" class="w-4 h-4 text-green-400"></i>
+                                </button>
+                            </div>
                         </li>
                         <li class="flex justify-between">
                             <span class="text-gray-400">Date & Time</span>
@@ -295,13 +340,20 @@
                             >{{$transactionData['transactionDate']}}</span
                             >
                         </li>
+
                     </ul>
                 </div>
                 <!-- Receipt Footer -->
                 <div class="p-6 text-center border-t border-gray-700">
-                    <p class="text-xs text-gray-500">
+                    <p class="text-xs text-gray-500 mb-3">
                         Thank you for using Dcash Exchange.
                     </p>
+                    <a href="https://www.trustpilot.com/review/dcashwallet.com"
+                       target="_blank"
+                       class="inline-flex items-center text-sm text-green-500 hover:text-green-400 transition-colors">
+                        <i data-lucide="star" class="w-3 h-3 mr-1"></i>
+                        Rate us on Trustpilot
+                    </a>
                 </div>
             </div>
 

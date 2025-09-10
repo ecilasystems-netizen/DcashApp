@@ -30,6 +30,10 @@ class Dashboard extends Component
     public $walletCurrencySymbol = '₦';
     public $exchangeTransactions = [];
     public $walletTransactions = [];
+    public $weeklyInflow = 0;
+    public $weeklyOutflow = 0;
+    public $weeklyChartData = [];
+    public $maxWeeklyFlow = 0;
 
     public function acceptTermsAndCreateWallet(VirtualAccountService $virtualAccountService)
     {
@@ -107,6 +111,7 @@ class Dashboard extends Component
         $this->checkWallet();
         if ($this->hasWallet) {
             $this->loadWalletBalance();
+            $this->loadWeeklyWalletStats();
         }
 
         $this->activeTab = $tab;
@@ -146,6 +151,7 @@ class Dashboard extends Component
         $this->checkWallet();
         if ($this->hasWallet) {
             $this->loadWalletBalance();
+            $this->loadWeeklyWalletStats();
         }
 
         $this->calculateQuoteAmount();
@@ -156,6 +162,60 @@ class Dashboard extends Component
         $this->showTermsModal = false;
     }
 
+    public function formatNumberShort($num): string
+    {
+        if ($num >= 1000000) {
+            return round($num / 1000000, 1).'M';
+        }
+        if ($num >= 1000) {
+            return round($num / 1000, 1).'K';
+        }
+        return (string) $num;
+    }
+
+    private function loadWeeklyWalletStats()
+    {
+        $user = auth()->user();
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+
+        //log the dates
+        Log::info("Loading weekly wallet stats for user {$user->id} from {$startOfWeek} to {$endOfWeek}");
+
+        $transactions = WalletTransaction::where('user_id', $user->id)
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->get();
+        //log the transactions
+        Log::info('Weekly Wallet Transactions for user '.$user->id.': '.json_encode($transactions));
+
+        $this->weeklyInflow = $transactions->where('direction', 'credit')->sum('amount');
+        $this->weeklyOutflow = $transactions->where('direction', 'debit')->sum('amount');
+        //log outline and inflow
+        Log::info("Weekly Inflow: {$this->weeklyInflow}, Weekly Outflow: {$this->weeklyOutflow}");
+
+        $dailyStats = $transactions->groupBy(function ($date) {
+            return \Carbon\Carbon::parse($date->created_at)->format('D');
+        })->map(function ($dayTransactions) {
+            return [
+                'inflow' => $dayTransactions->where('direction', 'credit')->sum('amount'),
+                'outflow' => $dayTransactions->where('direction', 'debit')->sum('amount'),
+            ];
+        });
+
+        $weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $chartData = [];
+        $maxFlow = 0;
+        foreach ($weekDays as $day) {
+            $inflow = $dailyStats[$day]['inflow'] ?? 0;
+            $outflow = $dailyStats[$day]['outflow'] ?? 0;
+            $chartData[$day] = ['inflow' => $inflow, 'outflow' => $outflow];
+            $maxFlow = max($maxFlow, $inflow, $outflow);
+        }
+
+        $this->weeklyChartData = $chartData;
+        $this->maxWeeklyFlow = $maxFlow > 0 ? $maxFlow : 1; // Avoid division by zero
+    }
+
     public function calculateQuoteAmount()
     {
         $currencyPair = CurrencyPair::where('base_currency_id', $this->getCurrencyId($this->baseCurrency))
@@ -163,7 +223,7 @@ class Dashboard extends Component
             ->first();
 
         if ($currencyPair && $this->baseAmount > 0) {
-            $this->quoteAmount = number_format($this->baseAmount * $currencyPair->rate, 2, '.', '');
+            $this->quoteAmount = number_format($this->baseAmount * $currencyPair->raw_rate, 2, '.', '');
         } else {
             $this->quoteAmount = number_format(0, 2, '.', ''); // Default to 0.00 if no rate is found
         }
@@ -340,7 +400,7 @@ class Dashboard extends Component
             // Find rates for both directions
             $buyRate = $pair->baseCurrency->code === $firstCurrency->code
                 ? $pair->rate
-                : (1 / $pair->rate);
+                : ($pair->rate);
 
             $reversePair = $rawCurrencyPairs->where('base_currency_id', $secondCurrency->id)
                 ->where('quote_currency_id', $firstCurrency->id)
@@ -348,7 +408,7 @@ class Dashboard extends Component
 
             $sellRate = $reversePair
                 ? $reversePair->rate
-                : (1 / $buyRate);
+                : ($buyRate);
 
             // Create a processed pair object
             $processedPair = (object) [
@@ -403,7 +463,7 @@ class Dashboard extends Component
             'USDT-NGN' => 4,
             'USD-NGN' => 3,
             'USDT-PHP' => 2,
-//                'PHP-PHP' => 1,
+            //                'PHP-PHP' => 1,
         ];
 
         $pairKey = $firstCurrency->code.'-'.$secondCurrency->code;

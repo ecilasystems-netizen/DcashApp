@@ -123,6 +123,7 @@ class PaymentPage extends Component
             'payment_transaction_hash' => null,
             'payment_proof' => json_encode($paymentProofPaths),
             'status' => 'pending_confirmation',
+            'cashback' => $data['baseAmount'] * 0.001
         ]);
 
         // Optionally clear session or redirect
@@ -138,9 +139,16 @@ class PaymentPage extends Component
 
         $this->companyBankAccountId = $companyBankAccount->id;
 
+        //get all the available bank accounts for a currency
+        $companyBankAccounts = CompanyBankAccount::where('currency_id', $this->exchangeData['baseCurrencyId'])
+            ->where('is_active', true)
+            ->orderBy('position', 'ASC')
+            ->get();
+
         return view('livewire.app.exchange.payment-page', [
             'companyBankAccount' => $companyBankAccount,
-            'deadline' => $this->expirationTime->getPreciseTimestamp(3)
+            'deadline' => $this->expirationTime->getPreciseTimestamp(3),
+            'companyBankAccounts' => $companyBankAccounts
         ])->layout('layouts.app.app')->title('Exchange Payment');
     }
 }

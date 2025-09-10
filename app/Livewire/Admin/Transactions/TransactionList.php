@@ -16,7 +16,7 @@ class TransactionList extends Component
     public $search = '';
     public $statusFilter = '';
     public $dateFilter = '';
-    public $perPage = 15;
+    public $perPage = 50;
 
 
     protected $queryString = [
@@ -63,15 +63,21 @@ class TransactionList extends Component
     public function approveTransaction($transactionId)
     {
         $transaction = ExchangeTransaction::findOrFail($transactionId);
-        $transaction->update(['status' => 'completed']);
+        $transaction->update([
+            'status' => 'completed',
+            'note' => null
+        ]);
 
         session()->flash('message', 'Transaction approved successfully.');
     }
 
-    public function rejectTransaction($transactionId)
+    public function rejectTransaction($transactionId, $reason)
     {
         $transaction = ExchangeTransaction::findOrFail($transactionId);
-        $transaction->update(['status' => 'failed']);
+        $transaction->update([
+            'status' => 'rejected',
+            'note' => $reason
+        ]);
 
         session()->flash('message', 'Transaction rejected successfully.');
     }
@@ -108,7 +114,7 @@ class TransactionList extends Component
             foreach ($transactions as $transaction) {
                 fputcsv($handle, [
                     $transaction->reference,
-                    $transaction->user->fname . ' ' . $transaction->user->lname,
+                    $transaction->user->fname.' '.$transaction->user->lname,
                     $transaction->user->email,
                     $transaction->fromCurrency->code ?? 'N/A',
                     $transaction->toCurrency->code ?? 'N/A',
@@ -124,7 +130,7 @@ class TransactionList extends Component
         });
 
         $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="transactions_' . date('Y-m-d') . '.csv"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="transactions_'.date('Y-m-d').'.csv"');
 
         return $response;
     }
@@ -134,12 +140,12 @@ class TransactionList extends Component
         return ExchangeTransaction::with(['user', 'fromCurrency', 'toCurrency'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('reference', 'like', '%' . $this->search . '%')
-                      ->orWhereHas('user', function ($userQuery) {
-                          $userQuery->where('fname', 'like', '%' . $this->search . '%')
-                                   ->orWhere('lname', 'like', '%' . $this->search . '%')
-                                   ->orWhere('email', 'like', '%' . $this->search . '%');
-                      });
+                    $q->where('reference', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('user', function ($userQuery) {
+                            $userQuery->where('fname', 'like', '%'.$this->search.'%')
+                                ->orWhere('lname', 'like', '%'.$this->search.'%')
+                                ->orWhere('email', 'like', '%'.$this->search.'%');
+                        });
                 });
             })
             ->when($this->statusFilter, function ($query) {
@@ -183,7 +189,7 @@ class TransactionList extends Component
             foreach ($transactions as $transaction) {
                 fputcsv($handle, [
                     $transaction->reference,
-                    $transaction->user->fname . ' ' . $transaction->user->lname,
+                    $transaction->user->fname.' '.$transaction->user->lname,
                     $transaction->user->email,
                     $transaction->user->phone ?? 'N/A',
                     $transaction->fromCurrency->code ?? 'N/A',
@@ -203,7 +209,7 @@ class TransactionList extends Component
         });
 
         $response->headers->set('Content-Type', 'application/vnd.ms-excel');
-        $response->headers->set('Content-Disposition', 'attachment; filename="transactions_' . date('Y-m-d') . '.xlsx"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="transactions_'.date('Y-m-d').'.xlsx"');
 
         return $response;
     }

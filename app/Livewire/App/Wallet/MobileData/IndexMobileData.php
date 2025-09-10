@@ -2,6 +2,7 @@
 
 namespace App\Livewire\App\Wallet\MobileData;
 
+use App\Models\WalletTransaction;
 use App\Services\FlutterwaveBillsService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,7 @@ class IndexMobileData extends Component
         'BIL110' => 'AIRTEL',
         'BIL111' => '9MOBILE'
     ];
+    public $processing = false;
     public $showConfirmModal = false;
     public $pin = '';
     public $showSuccessModal = false;
@@ -64,7 +66,6 @@ class IndexMobileData extends Component
         try {
             $flutterwave = new FlutterwaveBillsService();
             $response = $flutterwave->getBillerItems($this->selectedNetwork);
-            \Log::debug('Response from getBillerItems:', ['response' => $response]);
 
             if (isset($response['data']) && is_array($response['data'])) {
                 // Filter for data plans only (is_data = true)
@@ -130,6 +131,8 @@ class IndexMobileData extends Component
     {
         $this->validate();
 
+        $this->processing = true;
+
         try {
             // Get all plans from all categories
             $allPlans = collect();
@@ -155,33 +158,61 @@ class IndexMobileData extends Component
             // verify PIN against user's stored PIN first
             if (!Hash::check($this->pin, $user->pin)) {
                 session()->flash('error', 'Invalid PIN');
+                $this->processing = false;
                 return;
             }
-
-            $user->refresh();
-            if ($user->wallet->balance < $planDetails['amount']) {
-                session()->flash('Insufficient balance');
-                $this->showErrorModal = true;
-                $this->showConfirmModal = false;
-
-                //log the error
-                Log::error('Insufficient balance for data purchase', [
-                    'user_id' => $user->id,
-                    'required_amount' => $planDetails['amount'],
-                    'current_balance' => $user->wallet->balance
-                ]);
-
-                return;
-            }
-
 
             //validate customer details
             $validationResponse = $flutterwave->validateCustomer($planDetails['item_code'], $this->mobileNumber);
             if (isset($validationResponse['status']) && $validationResponse['status'] !== 'success') {
                 session()->flash('error', 'Customer validation failed: '.$validationResponse['message']);
+                $this->processing = false;
                 $this->showConfirmModal = false;
                 return;
             }
+
+            // Atomically reserve funds and create a pending transaction
+            $amount = $planDetails['amount'];
+            $wallet = $user->wallet;
+            $balanceBefore = $wallet->balance;
+
+            // Attempt atomic decrement to avoid race conditions
+            $updated = \DB::table('wallets')
+                ->where('id', $wallet->id)
+                ->where('balance', '>=', $amount)
+                ->decrement('balance', $amount);
+
+            if (!$updated) {
+                session()->flash('error', 'Insufficient balance');
+                $this->showErrorModal = true;
+                $this->processing = false;
+                $this->showConfirmModal = false;
+                return;
+            }
+
+            $balanceAfter = $balanceBefore - $amount;
+            $user->refresh(); // ensure relations reflect updated balance
+
+            // Record transaction
+            $user->wallet->transactions()->create([
+                'reference' => $reference,
+                'type' => 'data',
+                'direction' => 'debit',
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'charge' => 0,
+                'description' => 'Data purchase to '.$this->mobileNumber,
+                'status' => 'pending',
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'metadata' => [
+                    'phone_number' => $this->mobileNumber,
+                    'network' => $this->networkNames[$this->selectedNetwork] ?? $this->selectedNetwork,
+                    'plan' => $planDetails['name'] ?? 'N/A',
+                    'item_code' => $planDetails['item_code'] ?? 'N/A',
+                    'biller_code' => $planDetails['biller_code'] ?? 'N/A'
+                ],
+            ]);
 
             // Create bill payment
             $response = $flutterwave->createBillPayment(
@@ -195,64 +226,60 @@ class IndexMobileData extends Component
                 true // isDataPurchase
             );
 
-            \Log::debug('Sent Purchase data:', [
-                'Data' => [
-                    'biller_code' => $planDetails['biller_code'],
-                    'item_code' => $planDetails['item_code'],
-                    'country' => 'NG',
-                    'customer_id' => $this->mobileNumber,
-                    'amount' => $planDetails['amount'],
-                    'reference' => $reference,
-                    'type' => $planDetails['name']
-                ]
-            ]);
-
-
             if (isset($response['status']) && $response['status'] === 'success') {
 
-                // Debit wallet
-                $user->wallet->balance -= $planDetails['amount'];
-                $user->wallet->save();
+                //log the response
+                Log::info('Data purchase successful:', ['response' => $response]);
 
-                // Record transaction
-                $user->wallet->transactions()->create([
-                    'reference' => $reference,
-                    'type' => 'data',
-                    'direction' => 'debit',
-                    'user_id' => $user->id,
-                    'amount' => $planDetails['amount'],
-                    'fee' => 0,
-                    'description' => 'Data purchase to '.$this->mobileNumber,
-                    'status' => 'pending',
-                    'balance_before' => $this->userBalance,
-                    'balance_after' => $user->wallet->balance,
-                    'metadata' => [
-                        'phone_number' => $this->mobileNumber,
-                        'network' => $this->networkNames[$this->selectedNetwork] ?? $this->selectedNetwork,
-                        'plan' => $planDetails['name'] ?? 'N/A',
-                        'item_code' => $planDetails['item_code'] ?? 'N/A',
-                        'biller_code' => $planDetails['biller_code'] ?? 'N/A'
-                    ],
-                ]);
+                // Update transaction status to completed
+                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
+                if ($transaction) {
+                    $transaction->status = 'completed';
+                    $transaction->metadata = array_merge((array) $transaction->metadata, [
+                        'tx_ref' => $response['data']['tx_ref'] ?? null,
+                        'flw_ref' => $response['data']['reference'] ?? null,
+                    ]);
+                    $transaction->save();
+                }
 
                 $this->showConfirmModal = false;
                 $this->showSuccessModal = true;
 
             } else {
+                // On failed payment (after createBillPayment returns non-success) — refund and mark transaction failed
+                // get the pending transaction
+                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
+                if ($transaction) {
+                    $transaction->status = 'failed';
+                    $transaction->metadata = array_merge((array) $transaction->metadata, [
+                        'failure_reason' => $response['message'] ?? 'Payment failed',
+                    ]);
+                    $transaction->save();
+                }
+                // refund wallet
+                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $amount);
+
+                $user->refresh();
+
                 // Handle failed transaction - show error modal
                 $this->showConfirmModal = false;
                 $this->showErrorModal = true;
-
-                // Optional: Log error details
-                Log::error('Data purchase failed', [
-                    'response' => $response,
-                    'user' => auth()->id(),
-                    'network' => $this->selectedNetwork,
-                    'plan' => $this->selectedPlan
-                ]);
             }
 
         } catch (\Exception $e) {
+
+            // attempt to find and mark pending transaction as failed and refund
+            $transaction = WalletTransaction::where('reference', $reference ?? null)->first();
+            if ($transaction && $transaction->status === 'pending') {
+                $transaction->status = 'failed';
+                $transaction->metadata = array_merge((array) $transaction->metadata, [
+                    'exception' => $e->getMessage(),
+                ]);
+                $transaction->save();
+
+                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $transaction->amount);
+            }
+
             // Handle exceptions - show error modal
             $this->showConfirmModal = false;
             $this->showErrorModal = true;
@@ -263,6 +290,8 @@ class IndexMobileData extends Component
                 'user' => auth()->id()
             ]);
         }
+        $this->processing = false;
+        $this->pin = '';
     }
 
     public function closeErrorModal()

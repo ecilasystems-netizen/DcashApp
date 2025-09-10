@@ -10,6 +10,8 @@ use App\Livewire\Admin\BankAccounts\BankAccountList;
 use App\Livewire\Admin\Currencies\CurrencyList;
 use App\Livewire\Admin\Dashboard\Index;
 use App\Livewire\Admin\Kyc\KycList;
+use App\Livewire\Admin\Transactions\IndexWalletTransactions;
+use App\Livewire\Admin\Transactions\ShowWalletTransaction;
 use App\Livewire\Admin\Transactions\TransactionList;
 use App\Livewire\Admin\Users\EditUser;
 use App\Livewire\Admin\Users\UserList;
@@ -40,6 +42,7 @@ use App\Livewire\App\Wallet\CableTv\CreateCableTv;
 use App\Livewire\App\Wallet\Deposits\CreateDeposit;
 use App\Livewire\App\Wallet\MobileData\IndexMobileData;
 use App\Livewire\App\Wallet\TermsConditions\IndexTermsConditions;
+use App\Livewire\App\Wallet\Transactions\Receipt;
 use App\Livewire\App\Wallet\Transfers\CreateTransfer;
 use Illuminate\Support\Facades\Route;
 
@@ -55,11 +58,18 @@ Route::get('/admin/users/{user}/edit', EditUser::class)->name('admin.users.edit'
 
 
 Route::get('/admin/transactions', TransactionList::class)->name('admin.transactions');
+Route::get('/admin/wallet-transactions', IndexWalletTransactions::class)->name('admin.wallet-transactions');
+Route::get('/admin/wallet-transactions/{transaction}', ShowWalletTransaction::class)
+    ->name('admin.wallet-transactions.show');
 Route::get('/admin/kyc', KycList::class)->name('admin.kyc');
 Route::get('/admin/currencies', CurrencyList::class)->name('admin.currencies');
 Route::get('/admin/announcements', AnnouncementList::class)->name('admin.announcements');
 Route::get('/admin/announcements/create', CreateAnnouncement::class)->name('admin.announcements.create');
 Route::get('/admin/bank-accounts', BankAccountList::class)->name('admin.bank-accounts');
+
+//ROUTE WALLET TRANSACTIONS
+Route::get('/wallet/transactions/receipt/{ref}', Receipt::class)->name('wallet.transactions.receipt');
+
 //USer Authentication Routes
 Route::get('/login', Login::class)->name('login');
 Route::get('/reset-password', ResetPassword::class)->name('reset-password');

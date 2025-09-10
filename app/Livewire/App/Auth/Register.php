@@ -18,8 +18,9 @@ class Register extends Component
     public string $phone = '';
     public string $password_confirmation = '';
     public string $pin = '';
-    public string $referral;
+    public ?string $referral = null;
     public $referrerName;
+    public $terms = false;
 
     protected array $rules = [
         'referral' => ['nullable', 'exists:users,referral_code'],
@@ -29,6 +30,7 @@ class Register extends Component
         'password' => ['required', 'string', 'min:8', 'confirmed'],
         'phone' => ['required', 'string', 'max:15'],
         'pin' => ['required', 'digits:4'],
+        'terms' => 'accepted',
     ];
 
     public function updatedReferral($value)

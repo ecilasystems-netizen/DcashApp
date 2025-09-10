@@ -40,7 +40,7 @@ class PersonalInfo extends Component
     public function render()
     {
         return view('livewire.app.kyc.personal-info')
-            ->layout('layouts.app.appx')
+            ->layout('layouts.app.app')
             ->title('Personal Information');
     }
 }

@@ -182,7 +182,7 @@ class CreateTransfer extends Component
             'direction' => 'debit',
             'user_id' => $user->id,
             'amount' => $this->amount,
-            'fee' => $this->transferFee,
+            'charge' => $this->transferFee,
             'description' => 'Bank transfer to '.$this->verifiedAccountName,
             'status' => 'pending',
             'balance_before' => $this->userBalance,
@@ -209,7 +209,7 @@ class CreateTransfer extends Component
         \Log::info('Flutterwave transfer response', ['response' => $transferResult]);
 
         if ($transferResult['success']) {
-            $transaction->status = 'completed';
+            $transaction->status = 'pending';
             $transaction->save();
         } else {
             $transaction->status = 'failed';

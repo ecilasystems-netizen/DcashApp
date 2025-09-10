@@ -62,6 +62,86 @@
 
     </div>
 
+    <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-center mt-4 text-white">Account Tiers & Limits</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Tier 1 -->
+            <div class="bg-gray-800 border border-yellow-500/30 rounded-xl p-3 flex flex-col">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-semibold bg-yellow-500/10 text-yellow-400 py-1 px-2 rounded-full">Current</span>
+                    <h4 class="text-sm font-bold text-white">Tier 1</h4>
+                </div>
+                <p class="text-gray-400 text-xs mt-2">Basic access</p>
+                <ul class="mt-2 text-xs space-y-1">
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="arrow-down-up"
+                                                                              class="w-4 h-4"></i><span>Daily</span>
+                        </div>
+                        <span class="font-semibold text-white">₦100,000</span>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="wallet"
+                                                                              class="w-4 h-4"></i><span>Max</span></div>
+                        <span class="font-semibold text-white">₦300,000</span>
+                    </li>
+                </ul>
+                <button
+                    class="mt-3 w-full bg-gray-700 text-gray-400 text-sm font-bold py-2 rounded-lg cursor-not-allowed">
+                    Active
+                </button>
+            </div>
+
+            <!-- Tier 2 -->
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-3 flex flex-col">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-white">Tier 2</h4>
+                </div>
+                <p class="text-gray-400 text-xs mt-2">Higher limits</p>
+                <ul class="mt-2 text-xs space-y-1">
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="arrow-down-up"
+                                                                              class="w-4 h-4"></i><span>Daily</span>
+                        </div>
+                        <span class="font-semibold text-white">₦200,000</span>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="wallet"
+                                                                              class="w-4 h-4"></i><span>Max</span></div>
+                        <span class="font-semibold text-white">₦500,000</span>
+                    </li>
+                </ul>
+                <button
+                    class="mt-3 w-full bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 rounded-lg transition-colors">
+                    Upgrade
+                </button>
+            </div>
+
+            <!-- Tier 3 -->
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-3 flex flex-col">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-white">Tier 3</h4>
+                </div>
+                <p class="text-gray-400 text-xs mt-2">Power users</p>
+                <ul class="mt-2 text-xs space-y-1">
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="arrow-down-up"
+                                                                              class="w-4 h-4"></i><span>Daily</span>
+                        </div>
+                        <span class="font-semibold text-white">₦5,000,000</span>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="wallet"
+                                                                              class="w-4 h-4"></i><span>Max</span></div>
+                        <span class="font-semibold text-white">Unlimited</span>
+                    </li>
+                </ul>
+                <button
+                    class="mt-3 w-full bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 rounded-lg transition-colors">
+                    Upgrade
+                </button>
+            </div>
+        </div>
+    </div>
     @push('scripts')
         <script>
 

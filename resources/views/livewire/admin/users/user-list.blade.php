@@ -177,10 +177,8 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($user->kyc_status === 'verified')
+                                @if($user->latestKyc && $user->latestKyc->status === 'approved')
                                     <span class="status-pill status-verified">Verified</span>
-                                @elseif($user->latestKyc && $user->latestKyc->status === 'pending')
-                                    <span class="status-pill status-pending">Pending</span>
                                 @elseif($user->latestKyc && $user->latestKyc->status === 'rejected')
                                     <span class="status-pill status-rejected">Rejected</span>
                                 @else

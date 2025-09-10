@@ -4,24 +4,25 @@
         <header class="bg-black backdrop-blur-sm top-0 z-10 border-b border-gray-700/80">
             <div class="px-4 lg:px-0 py-4 flex justify-between items-center">
                 <div class="lg:hidden flex items-center space-x-4">
-                    <button class="p-1 rounded-full bg-gray-800">
+                    <a href="{{route('profile')}}" class="p-1 rounded-full bg-gray-800">
                         <i data-lucide="user"></i>
-                    </button>
+                    </a>
                     <div>
                         <p class="text-xs text-gray-400">Welcome,</p>
                         <p class="font-bold text-sm text-white">{{ auth()->user()->username }} !</p>
                     </div>
                 </div>
                 <div class="lg:hidden flex items-center space-x-2">
-                    <button
-                        class="p-1 rounded-full bg-gray-800 hover:bg-gray-700 hover:text-[#E1B362] transition-all">
+                    <button id="openZohoChat" type="button"
+                            class="p-1 rounded-full bg-gray-800 hover:bg-gray-700 hover:text-[#E1B362] transition-all">
                         <i data-lucide="headphones"></i>
                     </button>
 
-                    <button
-                        class="p-1 rounded-full bg-gray-800 hover:bg-gray-700 hover:text-[#E1B362] transition-all">
-                        <i data-lucide="bell"></i>
-                    </button>
+
+                    {{--                    <button--}}
+                    {{--                        class="p-1 rounded-full bg-gray-800 hover:bg-gray-700 hover:text-[#E1B362] transition-all">--}}
+                    {{--                        <i data-lucide="bell"></i>--}}
+                    {{--                    </button>--}}
                 </div>
 
                 <div class="hidden lg:block">
@@ -74,11 +75,14 @@
                         </div>
 
                         <div class="flex items-center space-x-2 md:space-x-4">
-                            <input type="text" wire:model.live="baseAmount"
+                            <input id="baseAmountFormatted" type="text"
                                    class="w-full bg-transparent text-2xl md:text-3xl font-bold focus:outline-none placeholder-gray-500"
-                                   placeholder="0.0" min="0" step="0.01"
+                                   placeholder="0.0" inputmode="decimal"
+                                   oninput="(function(el){ let raw = el.value.replace(/,/g,''); if(raw===''){ document.getElementById('baseAmount').value=''; document.getElementById('baseAmount').dispatchEvent(new Event('input')); el.value=''; return;} raw = raw.replace(/[^\d.]/g,''); const parts = raw.split('.'); raw = parts.shift() + (parts.length ? '.' + parts.join('') : ''); document.getElementById('baseAmount').value = raw; document.getElementById('baseAmount').dispatchEvent(new Event('input')); const formatted = raw.includes('.') ? raw.split('.')[0].replace(/\B(?=(\d{3})+(?!\d))/g,',') + '.' + raw.split('.').slice(1).join('') : raw.replace(/\B(?=(\d{3})+(?!\d))/g,','); el.value = formatted; })(this)"
                                    onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 46"
-                                   @keydown="if(['e','+','-'].includes($event.key)) $event.preventDefault()">
+                                   onkeydown="if(['e','+','-'].includes(event.key)) event.preventDefault();">
+
+                            <input type="hidden" id="baseAmount" wire:model.live="baseAmount">
 
                             <div
                                 class="flex-shrink-0 flex items-center space-x-1 md:space-x-2 p-2 bg-gray-800 rounded-lg border border-gray-600">
@@ -111,7 +115,22 @@
                             <label class="text-xs md:text-sm font-medium text-gray-400">You Receive</label>
                         </div>
                         <div class="flex items-center space-x-2 md:space-x-4">
-                            <input type="text" wire:model="quoteAmount" readonly
+                            <input type="text"
+                                   x-data="{
+                                              quoteAmount: @entangle('quoteAmount'),
+                                              formatNumber(value) {
+                                                  if (value === null || value === '' || isNaN(parseFloat(value))) {
+                                                      return '0.0';
+                                                  }
+                                                  let number = parseFloat(value);
+                                                  return number.toLocaleString('en-US', {
+                                                      minimumFractionDigits: 2,
+                                                      maximumFractionDigits: 2
+                                                  });
+                                              }
+                                          }"
+                                   x-effect="$el.value = formatNumber(quoteAmount)"
+                                   readonly
                                    class="w-full bg-transparent text-2xl md:text-3xl font-bold focus:outline-none placeholder-gray-500"
                                    placeholder="0.0">
 
@@ -165,7 +184,8 @@
                         </div>
                         <div class="text-right hidden lg:block">
                             <p class="text-sm text-whte">Account Number</p>
-                            <p class="font-semibold text-lg">0123456789</p>
+                            <p class="font-semibold text-lg">{{auth()->user()->virtualBankAccount->account_number}}</p>
+                            <p class="text-sm text-whte">{{auth()->user()->virtualBankAccount->bank_name}}</p>
                         </div>
                     </div>
                     <div class="mt-8 grid grid-cols-2 gap-4">
@@ -197,14 +217,6 @@
                             <span class="text-xs font-medium">Airtime</span>
                         </a>
                         <a
-                            href="{{route('wallet.buy-power')}}"
-                            class="flex-shrink-0 flex flex-col items-center space-y-2 p-2 transition-all hover-scale min-w-[60px]">
-                            <div class="p-3 bg-gray-700 rounded-full text-[#E1B362]">
-                                <i data-lucide="lightbulb"></i>
-                            </div>
-                            <span class="text-xs font-medium">Power</span>
-                        </a>
-                        <a
                             href="{{route('wallet.mobile-data')}}"
                             class="flex-shrink-0 flex flex-col items-center space-y-2 p-2 transition-all hover-scale min-w-[60px]">
                             <div class="p-3 bg-gray-700 rounded-full text-[#E1B362]">
@@ -212,6 +224,15 @@
                             </div>
                             <span class="text-xs font-medium">Data</span>
                         </a>
+                        <a
+                            href="{{route('wallet.buy-power')}}"
+                            class="flex-shrink-0 flex flex-col items-center space-y-2 p-2 transition-all hover-scale min-w-[60px]">
+                            <div class="p-3 bg-gray-700 rounded-full text-[#E1B362]">
+                                <i data-lucide="lightbulb"></i>
+                            </div>
+                            <span class="text-xs font-medium">Power</span>
+                        </a>
+
                         <a
                             href="{{route('wallet.cable-tv')}}"
                             class="flex-shrink-0 flex flex-col items-center space-y-2 p-2 transition-all hover-scale min-w-[60px]">
@@ -250,61 +271,23 @@
                                             <div
                                                 class="flex items-center space-x-4 p-3 bg-gray-900 rounded-lg hover:bg-gray-900">
                                                 <div
-                                                    class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                                    <i data-lucide="repeat" class="w-5 h-5 text-blue-500"></i>
+                                                    class="{{ $transaction->status === 'rejected' ? 'w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center' : 'w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center' }}">
+                                                    <i data-lucide="{{ $transaction->status === 'rejected' ? 'x' : 'repeat' }}"
+                                                       class="w-5 h-5 {{ $transaction->status === 'rejected' ? 'text-red-500' : 'text-blue-500' }}"></i>
                                                 </div>
                                                 <div class="flex-1">
-                                                    <p class="font-medium text-sm text-white">Exchanged
-                                                        {{ $transaction->base_currency }} to
-                                                        {{ $transaction->quote_currency }}</p>
-                                                    <p class="text-xs text-gray-400">{{ $transaction->created_at->format('M d, Y') }}</p>
+                                                    <p class="font-medium text-sm {{ $transaction->status === 'rejected' ? 'text-red-400' : 'text-white' }}">
+                                                        Exchanged
+                                                        {{ $transaction->fromCurrency->code }} to
+                                                        {{ $transaction->toCurrency->code }}</p>
+                                                    <p class="{{ $transaction->status === 'rejected' ? 'text-red-300 text-xs' : 'text-xs text-gray-400' }}">{{ $transaction->created_at->format('M d, Y') }}</p>
                                                 </div>
-                                                <p class="font-semibold text-green-500">
-                                                    + {{ $transaction->quote_currency }} {{ number_format($transaction->quote_amount, 2) }}</p>
+                                                <p class="font-semibold {{ $transaction->status === 'rejected' ? 'text-red-500' : 'text-green-500' }}">
+                                                    {{ $transaction->fromCurrency->symbol }} {{ number_format($transaction->amount_from, 2) }}</p>
                                             </div>
                                         @endforeach
                                     @endif
-                                    <!-- Transaction Item 1 -->
-                                    {{--                                <div--}}
-                                    {{--                                    class="flex items-center space-x-4 p-3 bg-gray-900 rounded-lg hover:bg-gray-900">--}}
-                                    {{--                                    <div--}}
-                                    {{--                                        class="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">--}}
-                                    {{--                                        <i data-lucide="arrow-up" class="w-5 h-5 text-red-500"></i>--}}
-                                    {{--                                    </div>--}}
-                                    {{--                                    <div class="flex-1">--}}
-                                    {{--                                        <p class="font-medium text-sm text-white">MTN Airtime</p>--}}
-                                    {{--                                        <p class="text-xs text-gray-400">Aug 20, 2025</p>--}}
-                                    {{--                                    </div>--}}
-                                    {{--                                    <p class="font-semibold text-red-500">- ₦ 2,000.00</p>--}}
-                                    {{--                                </div>--}}
-                                    {{--                                <!-- Transaction Item 2 -->--}}
-                                    {{--                                <div--}}
-                                    {{--                                    class="flex items-center space-x-4 p-3 bg-gray-900 rounded-lg hover:bg-gray-900">--}}
-                                    {{--                                    <div--}}
-                                    {{--                                        class="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">--}}
-                                    {{--                                        <i data-lucide="arrow-down" class="w-5 h-5 text-green-500"></i>--}}
-                                    {{--                                    </div>--}}
-                                    {{--                                    <div class="flex-1">--}}
-                                    {{--                                        <p class="font-medium text-sm text-white">Incoming Transfer</p>--}}
-                                    {{--                                        <p class="text-xs text-gray-400">From: Alex Doe</p>--}}
-                                    {{--                                    </div>--}}
-                                    {{--                                    <p class="font-semibold text-green-500">+ ₦ 25,000.00</p>--}}
-                                    {{--                                </div>--}}
-                                    {{--                                <!-- Transaction Item 3 -->--}}
-                                    {{--                                <div--}}
-                                    {{--                                    class="flex items-center space-x-4 p-3 bg-gray-900 rounded-lg hover:bg-gray-900">--}}
-                                    {{--                                    <div--}}
-                                    {{--                                        class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">--}}
-                                    {{--                                        <i data-lucide="zap" class="w-5 h-5 text-blue-500"></i>--}}
-                                    {{--                                    </div>--}}
-                                    {{--                                    <div class="flex-1">--}}
-                                    {{--                                        <p class="font-medium text-sm text-white">--}}
-                                    {{--                                            Ikeja Electric Bill--}}
-                                    {{--                                        </p>--}}
-                                    {{--                                        <p class="text-xs text-gray-400">Aug 19, 2025</p>--}}
-                                    {{--                                    </div>--}}
-                                    {{--                                    <p class="font-semibold text-red-500">- ₦ 15,000.00</p>--}}
-                                    {{--                                </div>--}}
+
                                 </div>
                             </div>
                         @endif
@@ -333,12 +316,12 @@
                                                        class="w-5 h-5 {{ $transaction->direction === 'credit' ? 'text-green-500' : 'text-red-500' }}"></i>
                                                 </div>
                                                 <div class="flex-1">
-                                                    <p class="font-medium text-sm text-white">{{ $transaction->description }}</p>
+                                                    <p class="font-medium text-sm text-white"> {{  strtoupper($transaction->type) }}</p>
                                                     <p class="text-xs text-gray-400">{{ $transaction->created_at->format('M d, Y') }}</p>
                                                 </div>
                                                 <p class="font-semibold {{ $transaction->direction === 'credit' ? 'text-green-500' : 'text-red-500' }}">
                                                     {{ $transaction->direction === 'credit' ? '+' : '-' }}
-                                                    N {{ number_format($transaction->amount, 2) }}
+                                                    ₦ {{ number_format($transaction->amount, 2) }}
                                                 </p>
                                             </div>
                                         @endforeach
@@ -379,65 +362,6 @@
                     </div>
                 </div>
 
-                <!-- Mobile Announcements Slider -->
-                {{--                <div class="lg:hidden mb-6">--}}
-                {{--                    <div x-data="{--}}
-                {{--                    activeSlide: 0,--}}
-                {{--                    slides: [--}}
-                {{--                        {--}}
-                {{--                            image: 'https://dcashwallet.com/assets/images/app/app-image-6.png',--}}
-                {{--                            title: 'Exchange On The Go',--}}
-                {{--                            subtitle: 'Download our mobile app'--}}
-                {{--                        },--}}
-                {{--                        {--}}
-                {{--                            image: 'https://bitcoin.org/img/icons/logotop.svg',--}}
-                {{--                            title: 'Dcash Wallet Blog',--}}
-                {{--                            subtitle: 'Latest updates and news'--}}
-                {{--                        },--}}
-                {{--                        {--}}
-                {{--                            image: 'https://ethereum.org/_next/image/?url=/_next/static/media/finance_transparent.a4abc782.png',--}}
-                {{--                            title: 'DCash Wallet Academy',--}}
-                {{--                            subtitle: 'Learn about crypto'--}}
-                {{--                        }--}}
-                {{--                    ]--}}
-                {{--                }"--}}
-                {{--                         x-init="setInterval(() => {--}}
-                {{--                    activeSlide = activeSlide === slides.length - 1 ? 0 : activeSlide + 1--}}
-                {{--                }, 3000)"--}}
-                {{--                         class="relative h-40  rounded-xl">--}}
-                {{--                        <!-- Slides -->--}}
-                {{--                        <template x-for="(slide, index) in slides" :key="index">--}}
-                {{--                            <div x-show="activeSlide === index"--}}
-                {{--                                 x-transition:enter="transition-transform duration-300"--}}
-                {{--                                 x-transition:enter-start="transform translate-x-full"--}}
-                {{--                                 x-transition:enter-end="transform translate-x-0"--}}
-                {{--                                 x-transition:leave="transition-transform duration-300"--}}
-                {{--                                 x-transition:leave-start="transform translate-x-0"--}}
-                {{--                                 x-transition:leave-end="transform -translate-x-full"--}}
-                {{--                                 class="absolute inset-0">--}}
-                {{--                                <div class="relative h-full bg-gray-900 p-4 brand-border ">--}}
-                {{--                                    <img :src="slide.image"--}}
-                {{--                                         class="absolute right-0 top-1/2 transform -translate-y-1/2 h-24 object-contain opacity-50">--}}
-                {{--                                    <div class="relative z-10">--}}
-                {{--                                        <p class="text-sm font-semibold text-[#E1B362]"--}}
-                {{--                                           x-text="slide.subtitle"></p>--}}
-                {{--                                        <h4 class="text-lg font-bold mt-2 text-white" x-text="slide.title"></h4>--}}
-                {{--                                    </div>--}}
-                {{--                                </div>--}}
-                {{--                            </div>--}}
-                {{--                        </template>--}}
-
-                {{--                        <!-- Indicators -->--}}
-                {{--                        <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">--}}
-                {{--                            <template x-for="(slide, index) in slides" :key="index">--}}
-                {{--                                <button @click="activeSlide = index"--}}
-                {{--                                        :class="{'bg-[#E1B362]': activeSlide === index, 'bg-gray-600': activeSlide !== index}"--}}
-                {{--                                        class="w-2 h-2 rounded-full transition-colors duration-200">--}}
-                {{--                                </button>--}}
-                {{--                            </template>--}}
-                {{--                        </div>--}}
-                {{--                    </div>--}}
-                {{--                </div>--}}
             </div>
 
             <!-- Exchange Rates and Resources -->
@@ -473,14 +397,14 @@
                                             <p class="text-xs text-gray-400">{{ $pair->firstCurrency->name }}</p>
                                         </div>
                                     </div>
-                                    <div class="text-right space-y-1">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-xs text-gray-400">Buy:</span>
+                                    <div class="w-[120px] text-left justify-start">
+                                        <div class="">
+                                            <span class="text-xs text-gray-400 w-10 text-left">Buy:</span>
                                             <span
                                                 class="text-green-500 text-sm font-medium">{{ $pair->secondCurrency->symbol }}{{ number_format($pair->buyRate, 2) }}</span>
                                         </div>
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-xs text-gray-400">Sell:</span>
+                                        <div class=" mt-1">
+                                            <span class="text-xs text-gray-400 w-10 text-left">Sell:</span>
                                             <span
                                                 class="text-red-500 text-sm font-medium">{{ $pair->secondCurrency->symbol }}{{ number_format($pair->sellRate, 2) }}</span>
                                         </div>
@@ -514,23 +438,106 @@
             @endif
 
             @if($activeTab !== 'exchange')
-                <!-- Mobile-only Download Card -->
-                <div class="lg:hidden mt-1">
-                    <div class="bg-gray-800 p-6 rounded-lg text-center border border-gray-700">
-                        <h4 class="font-bold text-lg text-white">Download the Dcash app</h4>
-                        <div class="flex justify-center space-x-2 mt-4">
-                            <a href="#"><img
-                                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-                                    class="h-10" alt="App Store"></a>
-                            <a href="#"><img
-                                    src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                                    class="h-10" alt="Google Play"></a>
+
+                <!-- Weekly Flow Stats -->
+                <div class="bg-gray-900 p-6 rounded-lg border border-gray-700 mt-5">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-bold text-white">Weekly Flow</h4>
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open"
+                                    class="flex items-center space-x-2 text-sm font-medium text-gray-300 bg-gray-800 px-3 py-1 rounded-lg hover:bg-gray-700">
+                                <span>This Week</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false"
+                                 class="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10"
+                                 style="display: none;">
+                                <a href="#" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">This Week</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">Last
+                                    Week</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">This
+                                    Month</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <div class="flex items-center space-x-2 mb-1">
+                                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span class="text-sm text-gray-400">Money In</span>
+                            </div>
+                            <p class="text-xl font-bold text-white">{{ $walletCurrencySymbol }}{{ number_format($weeklyInflow, 2) }}</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2 mb-1">
+                                <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                <span class="text-sm text-gray-400">Money Out</span>
+                            </div>
+                            <p class="text-xl font-bold text-white">{{ $walletCurrencySymbol }}{{ number_format($weeklyOutflow, 2) }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="relative h-40">
+                        <!-- Y-Axis Labels and Grid Lines -->
+                        <div class="absolute inset-0 flex flex-col justify-between h-full">
+                            <div class="flex items-center">
+                                <span
+                                    class="text-xs text-gray-400 w-12 text-right pr-2">{{ $this->formatNumberShort($maxWeeklyFlow) }}</span>
+                                <div class="flex-1 border-t border-gray-700 border-dashed"></div>
+                            </div>
+                            <div class="flex items-center">
+                                <span
+                                    class="text-xs text-gray-400 w-12 text-right pr-2">{{ $this->formatNumberShort($maxWeeklyFlow / 2) }}</span>
+                                <div class="flex-1 border-t border-gray-700 border-dashed"></div>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-xs text-gray-400 w-12 text-right pr-2">0</span>
+                                <div class="flex-1 border-t border-gray-700"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bars -->
+                        <div class="absolute inset-0 ml-12 flex justify-around items-end">
+                            @foreach($weeklyChartData as $day => $data)
+                                <div class="flex flex-col items-center w-full h-full pt-5">
+                                    <div class="flex-grow flex items-end justify-center w-full space-x-1">
+                                        @if($data['inflow'] > 0 || $data['outflow'] > 0)
+                                            <div class="bg-green-500 rounded-t-md w-1/3"
+                                                 style="height: {{ $maxWeeklyFlow > 0 ? ($data['inflow'] / $maxWeeklyFlow) * 100 : 0 }}%;"></div>
+                                            <div class="bg-blue-500 rounded-t-md w-1/3"
+                                                 style="height: {{ $maxWeeklyFlow > 0 ? ($data['outflow'] / $maxWeeklyFlow) * 100 : 0 }}%;"></div>
+                                        @else
+                                            {{-- Render empty space to maintain layout --}}
+                                            <div class="w-1/3"></div>
+                                            <div class="w-1/3"></div>
+                                        @endif
+                                    </div>
+                                    <span class="text-xs text-gray-400 mt-2">{{ $day }}</span>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
+
+                {{--                <!-- Mobile-only Download Card -->--}}
+                {{--                <div class="lg:hidden mt-1">--}}
+                {{--                    <div class="bg-gray-800 p-6 rounded-lg text-center border border-gray-700">--}}
+                {{--                        <h4 class="font-bold text-lg text-white">Download the Dcash app</h4>--}}
+                {{--                        <div class="flex justify-center space-x-2 mt-4">--}}
+                {{--                            <a href="#"><img--}}
+                {{--                                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"--}}
+                {{--                                    class="h-10" alt="App Store"></a>--}}
+                {{--                            <a href="#"><img--}}
+                {{--                                    src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"--}}
+                {{--                                    class="h-10" alt="Google Play"></a>--}}
+                {{--                        </div>--}}
+                {{--                    </div>--}}
+                {{--                </div>--}}
             @endif
             <div class="mb-10 hidden lg:block">
-                <h3 class="font-bold text-lg mb-4 text-white">Resources</h3>
+                <h3 class="font-bold text-lg mb-4 text-white mt-5">Resources</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div
                         class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-[#E1B362] transition-all">
@@ -695,3 +702,34 @@
 
 
     </div>
+
+    @push('scripts')
+        <script>
+            // Zoho SalesIQ configuration
+            window.$zoho = window.$zoho || {};
+            $zoho.salesiq = $zoho.salesiq || {
+                widgetcode: "siq51f05af08ede1ce8f9d01bd2e895d43046f039e0d2129498c89fa3fb2251ab81",
+                values: {},
+                ready: function () {
+                    // Hide the default Zoho floating chat button
+                    $zoho.salesiq.floatbutton.visible('hide');
+
+                    // Find your custom button
+                    const chatButton = document.getElementById('openZohoChat');
+
+                    // Add a click event listener to your custom button
+                    if (chatButton) {
+                        chatButton.addEventListener('click', function () {
+                            // API call to open the chat window
+                            $zoho.salesiq.floatwindow.visible('show');
+                        });
+                    }
+                }
+            };
+        </script>
+        {{-- The main Zoho SalesIQ script --}}
+        <script id="zsiqscript"
+                src="https://salesiq.zoho.com/widget?wc=siq51f05af08ede1ce8f9d01bd2e895d43046f039e0d2129498c89fa3fb2251ab81"
+                defer></script>
+    @endpush
+</div>

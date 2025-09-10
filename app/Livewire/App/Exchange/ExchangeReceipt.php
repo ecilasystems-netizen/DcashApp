@@ -46,6 +46,8 @@ class ExchangeReceipt extends Component
             'recipientNetwork' => $transaction->recipient_network ?? null,
             'paymentTransactionHash' => $transaction->payment_transaction_hash ?? null,
             'paymentProof' => json_decode($transaction->payment_proof, true) ?? [],
+            'note' => $transaction->note,
+            'cashback' => $transaction->cashback ?? null,
             'companyBankAccount' => $transaction->companyBankAccount ? [
                 'name' => $transaction->companyBankAccount->name,
                 'accountNumber' => $transaction->companyBankAccount->account_number,

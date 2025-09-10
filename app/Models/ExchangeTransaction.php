@@ -27,6 +27,8 @@ class ExchangeTransaction extends Model
         'payment_transaction_hash',
         'payment_proof',
         'status',
+        'note',
+        'cashback',
     ];
 
     protected $casts = [
