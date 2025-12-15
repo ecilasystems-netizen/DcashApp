@@ -3,6 +3,9 @@
 namespace App\Livewire\App\Kyc;
 
 use App\Jobs\ProcessSelfieUpload;
+use App\Mail\AdminNotificationMail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -56,6 +59,19 @@ class Selfie extends Component
 
             // Set a success message
             session()->flash('success', 'Your selfie has been uploaded and is being processed');
+
+            // notify admin of new KYC submission
+            Mail::to('kyc@dcashwallet.com')->send(new AdminNotificationMail(
+                'kyc_submission',
+                Auth::user()->fname,
+                Auth::user()->email,
+                [
+                    'submission_date' => now()->format('Y-m-d H:i:s'),
+                    'document_type' => 'ID',
+                    'status' => 'Pending Review'
+                ],
+                route('admin.kyc')
+            ));
 
             // Redirect to the under review page
             return $this->redirect(route('kyc.under-review'), navigate: true);

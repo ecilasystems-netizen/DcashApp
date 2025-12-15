@@ -8,7 +8,7 @@
                 </a>
                 <div>
                     <p class="text-xs text-gray-400">Buy</p>
-                    <h2 class="font-bold text-xl text-white">Mobile Date</h2>
+                    <h2 class="font-bold text-xl text-white">Mobile Data</h2>
                 </div>
             </div>
         </header>

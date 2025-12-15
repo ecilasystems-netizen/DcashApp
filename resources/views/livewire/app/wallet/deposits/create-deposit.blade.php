@@ -18,130 +18,284 @@
     <!-- Deposit Details -->
     <div class=" lg:py-8 space-y-8">
 
-        <!-- Instructions -->
-        <div class="bg-gray-800/2  border-gray-700 rounded-2xl text-center">
-            <h3 class="font-semibold text-[#E1B362] mb-4">Instructions</h3>
-            <ul class="space-y-3 text-white text-sm list-disc list-inside bg-gray-800 p-5 rounded-lg">
-                Make a transfer into the account, your wallet will be credited automatically within 2-5 minutes.
-            </ul>
+        <div
+            x-data="{ showNotice: true }"
+            x-show="showNotice"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            style="backdrop-filter: blur(2px);"
+        >
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center relative">
+                <button
+                    @click="showNotice = false"
+                    class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 transition"
+                >
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+                <div class="flex justify-center mb-4">
+                    <div class="bg-red-500 rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-white"></i>
+                    </div>
+                </div>
+                <h2 class="text-xl font-bold mb-2 text-gray-900">Important Notice</h2>
+                <p class="text-gray-700 mb-2">
+                    Due to system upgrade, deposits through Virtual Bank Account are temporarily unavailable<span class="font-semibold">, service will be restored soon.</span>
+
+                </p>
+                <p class="text-gray-500 text-sm">Please check back later.</p>
+            </div>
         </div>
 
-        <div class="bg-gray-800/2 border-2 border-dashed border-gray-700 rounded-2xl p-6 text-center">
-            <h2 class="text-lg font-semibold text-white mb-4">Your Dedicated Account Details</h2>
-            <div class="space-y-5">
-                <!-- Account Number -->
-                <div>
-                    <p class="text-sm text-gray-400">Account Number</p>
-                    <div class="flex items-center justify-center gap-4 mt-1">
-                        <p id="account-number" class="text-2xl font-bold text-[#E1B362]">{{$accountNumber}}</p>
-                        <button data-copy-target="account-number"
-                                class="copy-btn p-2 rounded-lg bg-gray-700 hover:bg-gray-600">
-                            <i data-lucide="copy" class="w-5 h-5"></i>
+        <!-- Instructions -->
+{{--        <div class="bg-gray-800/2  border-gray-700 rounded-2xl text-center">--}}
+{{--            <h3 class="font-semibold text-[#E1B362] mb-4">Instructions</h3>--}}
+{{--            <ul class="space-y-3 text-white text-sm list-disc list-inside bg-gray-800 p-5 rounded-lg">--}}
+{{--                Make a transfer into the account, your wallet will be credited automatically within 2-5 minutes.--}}
+{{--            </ul>--}}
+{{--        </div>--}}
+
+{{--        <div class="bg-gray-800/2 border-2 border-dashed border-gray-700 rounded-2xl p-6 text-center">--}}
+{{--            <h2 class="text-lg font-semibold text-white mb-4">Your Dedicated Account Details</h2>--}}
+{{--            <div class="space-y-5">--}}
+{{--                <!-- Account Number -->--}}
+{{--                <div>--}}
+{{--                    <p class="text-sm text-gray-400">Account Number</p>--}}
+{{--                    <div class="flex items-center justify-center gap-4 mt-1">--}}
+{{--                        <p id="account-number" class="text-2xl font-bold text-[#E1B362]">{{$accountNumber}}</p>--}}
+{{--                        <button data-copy-target="account-number"--}}
+{{--                                class="copy-btn p-2 rounded-lg bg-gray-700 hover:bg-gray-600">--}}
+{{--                            <i data-lucide="copy" class="w-5 h-5"></i>--}}
+{{--                        </button>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--                <!-- Bank Name -->--}}
+{{--                <div>--}}
+{{--                    <p class="text-sm text-gray-400">Bank Name</p>--}}
+{{--                    <div class="flex items-center justify-center gap-4 mt-1">--}}
+{{--                        <p id="bank-name" class="text-xl font-semibold text-white">{{$bankName}}</p>--}}
+
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--                <!-- Account Name -->--}}
+{{--                <div>--}}
+{{--                    <p class="text-sm text-gray-400">Account Name</p>--}}
+{{--                    <div class="flex items-center justify-center gap-4 mt-1">--}}
+{{--                        <p id="account-name" class="text-xl font-semibold text-white">{{$accountName}}</p>--}}
+
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--            </div>--}}
+{{--        </div>--}}
+
+
+    </div>
+
+    {{--    limit upgrade request--}}
+    <div>
+        <!-- Main Content -->
+        <div class="mx-auto p-0 md:p-0 mt-5">
+            <!-- Current Tier Display -->
+            <div class="bg-gray-900 rounded-xl p-6 mb-6 border border-gray-800">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <i data-lucide="shield" class="w-6 h-6 text-[#E1B362]"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Your Current Tier: {{$currentTier->name}} </h3>
+                        <p class="text-sm text-gray-400">Transaction Limits</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                        <span class="text-gray-300">Daily Limit</span>
+                        <span
+                            class="font-semibold text-white">₦{{ number_format($currentTier->max_daily_transaction) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                        <span class="text-gray-300">Balance Limit</span>
+                        <span class="font-semibold text-white">₦{{ number_format($currentTier->max_balance) }}</span>
+                    </div>
+                </div>
+
+                @if($hasExistingRequest)
+                    <!-- Existing Request Notice -->
+                    <div class="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="clock" class="w-3 h-3 text-blue-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-blue-300">Request Under Review</p>
+                                <p class="text-xs text-gray-400">Your limit upgrade request is being processed. We'll
+                                    notify you once completed.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button disabled
+                            class="w-full mt-4 px-4 py-2 bg-gray-600 text-gray-400 rounded-lg font-medium cursor-not-allowed">
+                        Request Submitted
+                    </button>
+                @else
+                    @if($currentTier->id == 1)
+
+                        <button
+                            wire:click="$set('showLimitIncreaseModal', true)"
+                            class="w-full mt-6 px-4 py-2 bg-[#E1B362] hover:bg-orange-400 text-white rounded-lg font-medium transition-colors">
+                            Increase Limits
+                        </button>
+                    @endif
+
+                @endif
+            </div>
+
+            <!-- Rest of your deposit form content -->
+        </div>
+
+        <!-- Limit Increase Modal -->
+        @if($showLimitIncreaseModal && !$hasExistingRequest)
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+
+                <!-- Modal Panel -->
+                <div class="relative w-full max-w-lg bg-gray-900 rounded-2xl shadow-xl border border-gray-800 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-white">Increase Your Limits</h3>
+                        <button wire:click="$set('showLimitIncreaseModal', false)"
+                                class="text-gray-400 hover:text-white">
+                            <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
-                </div>
-                <!-- Bank Name -->
-                <div>
-                    <p class="text-sm text-gray-400">Bank Name</p>
-                    <div class="flex items-center justify-center gap-4 mt-1">
-                        <p id="bank-name" class="text-xl font-semibold text-white">{{$bankName}}</p>
 
-                    </div>
-                </div>
-                <!-- Account Name -->
-                <div>
-                    <p class="text-sm text-gray-400">Account Name</p>
-                    <div class="flex items-center justify-center gap-4 mt-1">
-                        <p id="account-name" class="text-xl font-semibold text-white">{{$accountName}}</p>
+                    @if (session()->has('error'))
+                        <div class="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                            <p class="text-red-400 text-sm">{{ session('error') }}</p>
+                        </div>
+                    @endif
 
-                    </div>
+                    <form wire:submit.prevent="submitLimitIncrease" class="space-y-4">
+
+                        <!-- Upgrade Info Card -->
+                        <div
+                            class="bg-gradient-to-r from-[#E1B362]/10 to-orange-500/10 border border-[#E1B362]/30 rounded-xl p-4 mb-6">
+                            <div class="flex items-start gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-[#E1B362]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-[#E1B362]"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-semibold text-[#E1B362] mb-2">New Limit Details</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-300">Daily Limit:</span>
+                                            <span class="font-medium text-white">₦5,000,000</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-300">Balance Limit:</span>
+                                            <span class="font-medium text-green-400">Unlimited</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">Complete the form below to upgrade your
+                                        account
+                                        limits.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form wire:submit.prevent="submitLimitIncrease" class="space-y-4">
+                            <!-- Occupation -->
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Occupation</label>
+                                <select wire:model.live="occupation"
+                                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:border-blue-500">
+                                    <option value="">Select your occupation</option>
+                                    <option value="accountant">Accountant</option>
+                                    <option value="doctor">Doctor</option>
+                                    <option value="lawyer">Lawyer</option>
+                                    <option value="engineer">Engineer</option>
+                                    <option value="teacher">Teacher</option>
+                                    <option value="nurse">Nurse</option>
+                                    <option value="businessman">Businessman/woman</option>
+                                    <option value="trader">Trader</option>
+                                    <option value="civil_servant">Civil Servant</option>
+                                    <option value="banker">Banker</option>
+                                    <option value="consultant">Consultant</option>
+                                    <option value="contractor">Contractor</option>
+                                    <option value="farmer">Farmer</option>
+                                    <option value="artisan">Artisan</option>
+                                    <option value="student">Student</option>
+                                    <option value="retired">Retired</option>
+                                    <option value="unemployed">Unemployed</option>
+                                    <option value="others">Others</option>
+                                </select>
+                                @error('occupation') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <!-- Source of Income -->
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Source of Income</label>
+                                <select wire:model.live="sourceOfIncome"
+                                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:border-blue-500">
+                                    <option value="">Select source</option>
+                                    <option value="salary">Salary</option>
+                                    <option value="business">Business Income</option>
+                                    <option value="investments">Investments</option>
+                                    <option value="others">Others</option>
+                                </select>
+                                @error('sourceOfIncome') <span
+                                    class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <button type="submit"
+                                    wire:loading.attr="disabled"
+                                    wire:target="submitLimitIncrease"
+                                    class="w-full px-6 py-3 bg-[#E1B362] hover:bg-orange-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors">
+                                <span wire:loading.remove wire:target="submitLimitIncrease">Submit for Review</span>
+                                <span wire:loading wire:target="submitLimitIncrease"
+                                      class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4" fill="none"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Submitting...
+                            </span>
+                            </button>
+                        </form>
                 </div>
             </div>
-        </div>
-
-
+        @endif
     </div>
 
-    <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-center mt-4 text-white">Account Tiers & Limits</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <!-- Tier 1 -->
-            <div class="bg-gray-800 border border-yellow-500/30 rounded-xl p-3 flex flex-col">
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-semibold bg-yellow-500/10 text-yellow-400 py-1 px-2 rounded-full">Current</span>
-                    <h4 class="text-sm font-bold text-white">Tier 1</h4>
-                </div>
-                <p class="text-gray-400 text-xs mt-2">Basic access</p>
-                <ul class="mt-2 text-xs space-y-1">
-                    <li class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="arrow-down-up"
-                                                                              class="w-4 h-4"></i><span>Daily</span>
-                        </div>
-                        <span class="font-semibold text-white">₦100,000</span>
-                    </li>
-                    <li class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="wallet"
-                                                                              class="w-4 h-4"></i><span>Max</span></div>
-                        <span class="font-semibold text-white">₦300,000</span>
-                    </li>
-                </ul>
-                <button
-                    class="mt-3 w-full bg-gray-700 text-gray-400 text-sm font-bold py-2 rounded-lg cursor-not-allowed">
-                    Active
-                </button>
-            </div>
+    <!-- Success Modal -->
+    @if($showSuccessModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
 
-            <!-- Tier 2 -->
-            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-3 flex flex-col">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-bold text-white">Tier 2</h4>
+            <!-- Modal Panel -->
+            <div
+                class="relative w-full max-w-md bg-gray-900 rounded-2xl shadow-xl border border-gray-800 p-6 text-center">
+                <!-- Success Icon -->
+                <div class="w-16 h-16 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="check-circle" class="w-8 h-8 text-green-400"></i>
                 </div>
-                <p class="text-gray-400 text-xs mt-2">Higher limits</p>
-                <ul class="mt-2 text-xs space-y-1">
-                    <li class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="arrow-down-up"
-                                                                              class="w-4 h-4"></i><span>Daily</span>
-                        </div>
-                        <span class="font-semibold text-white">₦200,000</span>
-                    </li>
-                    <li class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="wallet"
-                                                                              class="w-4 h-4"></i><span>Max</span></div>
-                        <span class="font-semibold text-white">₦500,000</span>
-                    </li>
-                </ul>
-                <button
-                    class="mt-3 w-full bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 rounded-lg transition-colors">
-                    Upgrade
-                </button>
-            </div>
 
-            <!-- Tier 3 -->
-            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-3 flex flex-col">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-sm font-bold text-white">Tier 3</h4>
-                </div>
-                <p class="text-gray-400 text-xs mt-2">Power users</p>
-                <ul class="mt-2 text-xs space-y-1">
-                    <li class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="arrow-down-up"
-                                                                              class="w-4 h-4"></i><span>Daily</span>
-                        </div>
-                        <span class="font-semibold text-white">₦5,000,000</span>
-                    </li>
-                    <li class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-gray-400"><i data-lucide="wallet"
-                                                                              class="w-4 h-4"></i><span>Max</span></div>
-                        <span class="font-semibold text-white">Unlimited</span>
-                    </li>
-                </ul>
-                <button
-                    class="mt-3 w-full bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 rounded-lg transition-colors">
-                    Upgrade
+                <h3 class="text-xl font-bold text-white mb-2">Request Submitted!</h3>
+                <p class="text-gray-300 mb-6">Your limit increase request has been submitted successfully. We'll review
+                    your application and get back to you within 24-48 hours.</p>
+
+                <button wire:click="$set('showSuccessModal', false)"
+                        class="w-full px-6 py-3 bg-[#E1B362] hover:bg-orange-400 text-white rounded-lg font-medium transition-colors">
+                    Got it
                 </button>
             </div>
         </div>
-    </div>
+    @endif
+
     @push('scripts')
         <script>
 

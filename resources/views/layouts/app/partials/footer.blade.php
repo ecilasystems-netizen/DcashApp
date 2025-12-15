@@ -10,22 +10,28 @@
         <i data-lucide="arrow-left-right"></i>
         <span>History</span>
     </a>
+
     <a href="{{ route('rewards') }}"
        class="flex flex-col items-center py-2 {{ request()->routeIs('rewards') ? 'text-[#E1B362]' : 'hover:text-[#E1B362] transition-colors' }}">
         <i data-lucide="gift"></i>
         <span>Rewards</span>
+    </a>
+    <a href="{{ route('rewards.cashbacks') }}"
+       class="flex flex-col items-center py-2 {{ request()->routeIs('rewards.cashbacks') ? 'text-[#E1B362]' : 'hover:text-[#E1B362] transition-colors' }}">
+        <i data-lucide="dollar-sign"></i>
+        <span>Cashbacks</span>
     </a>
     <a href="{{ route('profile') }}"
        class="flex flex-col items-center py-2 {{ request()->routeIs('profile') ? 'text-[#E1B362]' : 'hover:text-[#E1B362] transition-colors' }}">
         <i data-lucide="user"></i>
         <span>Profile</span>
     </a>
-    <form method="POST" action="{{ route('logout') }}" x-data class="contents">
-        @csrf
-        <button type="submit" class="flex flex-col items-center py-2 hover:text-[#E1B362] transition-colors">
-            <i data-lucide="log-out"></i>
-            <span>Logout</span>
-        </button>
-    </form>
+    {{--    <form method="POST" action="{{ route('logout') }}" x-data class="contents">--}}
+    {{--        @csrf--}}
+    {{--        <button type="submit" class="flex flex-col items-center py-2 hover:text-[#E1B362] transition-colors">--}}
+    {{--            <i data-lucide="log-out"></i>--}}
+    {{--            <span>Logout</span>--}}
+    {{--        </button>--}}
+    {{--    </form>--}}
 </footer>
 

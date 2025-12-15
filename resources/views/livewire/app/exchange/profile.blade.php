@@ -40,7 +40,12 @@
                          alt="{{ $user->fname }} {{ $user->lname }}"
                          class="rounded-full w-full h-full object-cover border-4 border-gray-700">
                 </div>
-                <h3 class="text-xl font-bold text-white">{{ $user->fname }} {{ $user->lname }}</h3>
+                <h3 class="text-xl font-bold text-white flex items-center justify-center">
+                    {{ $user->fname }} {{ $user->lname }}
+                    @if($hasVerifiedKyc)
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-400 ml-2"></i>
+                    @endif
+                </h3>
                 <p class="text-sm text-gray-400">{{ $user->email }}</p>
                 <p class="text-xs text-gray-500 mt-2">Joined {{ $user->created_at->format('F d, Y') }}</p>
             </div>
@@ -101,13 +106,13 @@
                               class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                             <div>
                                 <label for="fname" class="block text-gray-400 mb-2">First Name</label>
-                                <input wire:model="fname" type="text" id="fname"
+                                <input wire:model="fname" type="text" id="fname" disabled
                                        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                 @error('fname') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label for="lname" class="block text-gray-400 mb-2">Last Name</label>
-                                <input wire:model="lname" type="text" id="lname"
+                                <input wire:model="lname" type="text" id="lname" disabled
                                        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                 @error('lname') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
                             </div>
@@ -119,43 +124,20 @@
                             </div>
                             <div>
                                 <label for="phone" class="block text-gray-400 mb-2">Phone Number</label>
-                                <input wire:model="phone" type="tel" id="phone"
+                                <input wire:model="phone" type="tel" id="phone" disabled
                                        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                 @error('phone') <span class="text-red-400 text-xs mt-1">{{ $message }}</span> @enderror
                             </div>
-                            <div class="md:col-span-2 flex justify-end">
-                                <button type="submit"
-                                        class="brand-gradient text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition-all">
-                                    Save Changes
-                                </button>
-                            </div>
+                            {{--                            <div class="md:col-span-2 flex justify-end">--}}
+                            {{--                                <button type="submit"--}}
+                            {{--                                        class="brand-gradient text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition-all">--}}
+                            {{--                                    Save Changes--}}
+                            {{--                                </button>--}}
+                            {{--                            </div>--}}
                         </form>
                     </div>
                 </div>
 
-                <!-- Referrals -->
-                <div class="bg-gray-900 border border-gray-700 rounded-lg">
-                    <div wire:click="toggleTab('referrals')"
-                         class="p-6 cursor-pointer flex justify-between items-center">
-                        <h4 class="font-bold text-white text-lg">Referrals</h4>
-                        <i data-lucide="chevron-down"
-                           class="w-5 h-5 text-gray-400 transition-transform"
-                           :class="openTab === 'referrals' && 'rotate-180'"></i>
-                    </div>
-                    <div x-show="openTab === 'referrals'" x-collapse
-                         class="px-6 pb-6">
-                        <p class="text-sm text-gray-400 mb-4">Share your referral code to earn rewards.</p>
-                        <div class="flex items-center gap-2" x-data="{ code: '{{ $user->referral_code }}' }">
-                            <input type="text" readonly :value="code"
-                                   class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white">
-                            <button
-                                @click="navigator.clipboard.writeText(code); $dispatch('notify', {message: 'Copied to clipboard!', type: 'success'})"
-                                class="bg-gray-700 text-white p-2 rounded-lg hover:bg-gray-600">
-                                <i data-lucide="copy" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Security -->
                 <div class="bg-gray-900 border border-gray-700 rounded-lg">
@@ -202,19 +184,25 @@
             </div>
 
             <!-- Action Links -->
-            <div class="mt-8 pt-8 border-t border-gray-800 space-y-4 text-sm">
-                <div class="flex flex-col items-center justify-center space-y-4">
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
+            <div class="mt-8 pt-8 border-t border-gray-800">
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <!-- Logout Button -->
+                    <form method="POST" action="{{ route('logout') }}" class="w-full sm:w-auto">
                         @csrf
                         <button type="submit"
-                                class="font-semibold text-[#E1B362] hover:underline">
-                            Logout
+                                class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-[#E1B362] text-[#E1B362] font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#E1B362] focus:ring-opacity-50">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                            <span>Logout</span>
                         </button>
                     </form>
 
-                    <a href="#" class="font-semibold text-red-500 hover:underline">
-                        Delete Account
-                    </a>
+                    <!-- Delete Account Button -->
+                    <button type="button"
+                            onclick="confirm('Are you sure you want to delete your account? This action cannot be undone.') && alert('Account deletion feature coming soon.')"
+                            class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-red-900/20 hover:bg-red-900/40 border border-red-500/50 hover:border-red-500 text-red-400 hover:text-red-300 font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span>Delete Account</span>
+                    </button>
                 </div>
             </div>
         </div>

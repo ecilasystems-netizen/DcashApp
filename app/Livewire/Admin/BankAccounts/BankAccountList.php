@@ -6,10 +6,12 @@ use App\Models\CompanyBankAccount;
 use App\Models\Currency;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use SweetAlert2\Laravel\Traits\WithSweetAlert;
 
 class BankAccountList extends Component
 {
     use WithFileUploads;
+    use WithSweetAlert;
 
     public $currencies = [];
     public $bankAccounts = [];
@@ -26,6 +28,7 @@ class BankAccountList extends Component
     public $editingWalletId = null;
     public $editingWalletQr;
 
+
     public function mount()
     {
         $this->newBank = $this->defaultBank();
@@ -35,9 +38,19 @@ class BankAccountList extends Component
 
     public function loadData()
     {
-        $this->currencies = Currency::all();
-        $this->bankAccounts = CompanyBankAccount::where('is_crypto', 0)->withCount('transactions')->latest()->get();
-        $this->wallets = CompanyBankAccount::where('is_crypto', 1)->withCount('transactions')->latest()->get();
+        $this->currencies = Currency::where('status', 1)->get();
+        $this->bankAccounts = CompanyBankAccount::where('is_crypto', 0)
+            ->withCount('transactions')
+            ->orderByDesc('is_active')
+            ->orderBy('currency_id')
+            ->latest()
+            ->get();
+        $this->wallets = CompanyBankAccount::where('is_crypto', 1)
+            ->withCount('transactions')
+            ->orderByDesc('is_active')
+            ->orderBy('currency_id')
+            ->latest()
+            ->get();
     }
 
     protected function defaultBank(): array
@@ -47,9 +60,10 @@ class BankAccountList extends Component
             'bank_name' => '',
             'account_name' => '',
             'account_number' => '',
+            'account_type' => null,
             'position' => 1,
             'tab_name' => '',
-            'is_active' => true,
+            'is_active' => false,
             'qr' => null,
         ];
     }
@@ -73,6 +87,7 @@ class BankAccountList extends Component
             'bank_name' => 'required|string|max:255',
             'account_name' => 'required|string|max:255',
             'account_number' => 'required|string|max:255',
+            'account_type' => 'nullable|string|max:255',
             'position' => 'required|integer|min:0',
             'tab_name' => 'nullable|string|max:255',
             'is_active' => 'boolean',
@@ -96,8 +111,8 @@ class BankAccountList extends Component
             ->where('is_crypto', 0)
             ->count();
 
-        if ($accountCount >= 3) {
-            $this->addError('newBank.currency_id', 'This currency already has the maximum of 3 bank accounts.');
+        if ($accountCount >= 50) {
+            $this->addError('newBank.currency_id', 'This currency already has the maximum of 50 bank accounts.');
             return;
         }
 
@@ -109,7 +124,7 @@ class BankAccountList extends Component
         $data = $validatedData['newBank'];
 
         if ($this->newBankQr) {
-            $this->validate(['newBankQr' => 'image|max:1024']);
+            $this->validate(['newBankQr' => 'image|max:8024']);
             $data['bank_account_qr_code'] = $this->newBankQr->store('images/bank_qr_codes', 'public');
         }
 
@@ -146,7 +161,7 @@ class BankAccountList extends Component
         $data = $validatedData['editingBank'];
 
         if ($this->editingBankQr) {
-            $this->validate(['editingBankQr' => 'image|max:1024']);
+            $this->validate(['editingBankQr' => 'image|max:8024']);
             $data['bank_account_qr_code'] = $this->editingBankQr->store('images/bank_qr_codes', 'public');
         }
 
@@ -177,7 +192,7 @@ class BankAccountList extends Component
         $data = $validatedData['newWallet'];
 
         if (isset($this->newWallet['qr']) && $this->newWallet['qr']) {
-            $this->validate(['newWallet.qr' => 'image|max:1024']);
+            $this->validate(['newWallet.qr' => 'image|max:8024']);
             $data['crypto_qr_code'] = $this->newWallet['qr']->store('images/crypto_qr_codes', 'public');
         }
 
@@ -213,7 +228,7 @@ class BankAccountList extends Component
         $data = $validatedData['editingWallet'];
 
         if ($this->editingWalletQr) {
-            $this->validate(['editingWalletQr' => 'image|max:1024']);
+            $this->validate(['editingWalletQr' => 'image|max:8024']);
             $data['crypto_qr_code'] = $this->editingWalletQr->store('images/crypto_qr_codes', 'public');
         }
 
@@ -237,6 +252,28 @@ class BankAccountList extends Component
     public function toggleStatus($id)
     {
         $model = CompanyBankAccount::findOrFail($id);
+        if (!$model->is_active) {
+            $activeCount = CompanyBankAccount::where('currency_id', $model->currency_id)
+                ->where('is_active', true)
+                ->count();
+
+            if ($activeCount >= 3) {
+
+                $this->swalToastError([
+                    'title' => 'Maximum 3 active accounts allowed for this currency. Please deactivate one before activating another.',
+                    'timerProgressBar' => true,
+                    'showConfirmButton' => true,
+                    'confirmButtonText' => 'Close',
+                    'confirmButtonColor' => '#D19A66',
+                    'showCloseButton' => true,
+//                    'timer' => 3000,
+                ]);
+
+                return;
+            }
+        }
+
+
         $model->update(['is_active' => !$model->is_active]);
         $this->loadData();
     }

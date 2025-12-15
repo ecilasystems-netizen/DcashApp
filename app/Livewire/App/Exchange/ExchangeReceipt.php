@@ -10,12 +10,24 @@ class ExchangeReceipt extends Component
     public $reference;
     public $transactionData = [];
     public $backUrl;
-
+    public $randomAd;
+    
     public function mount($ref, $backUrl = null)
     {
+
+        //random ads
+        $this->randomAd = \App\Models\Advertisement::where('is_active', true)
+            ->inRandomOrder()
+            ->first();
+
+        if ($this->randomAd) {
+            $this->randomAd->incrementImpressions();
+        }
+
         $this->reference = $ref;
 
-        $this->backUrl = $backUrl ?? route('exchange.transactions');
+        // Get backUrl from query string or use a default
+        $this->backUrl = request()->query('backUrl', route('exchange.transactions'));
 
 
         // Check if the reference is valid

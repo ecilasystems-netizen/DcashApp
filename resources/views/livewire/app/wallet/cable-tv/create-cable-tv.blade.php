@@ -1,264 +1,86 @@
 <div>
-    <!-- Header -->
-    <header class="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700/80">
-        <div class="px-4 lg:px-0 py-4 flex items-center gap-4">
-            <a href="#" class="p-2 rounded-full hover:bg-gray-800">
-                <i data-lucide="arrow-left"></i>
-            </a>
-            <div>
-                <h1 class="text-xl font-bold text-white">Pay Cable TV Bills</h1>
-                <p class="text-gray-400 text-sm">Renew your subscription instantly.</p>
-            </div>
-        </div>
-    </header>
-
-    <!-- Pay TV Form -->
-    <div class="p-1 lg:p-0 lg:py-8 space-y-6">
-        <!-- Provider Selection Dropdown -->
-        <div>
-            <h3 class="font-semibold text-white mb-4">1. Select Provider</h3>
-            <div class="relative" id="provider-dropdown">
-                <button type="button" id="provider-dropdown-button"
-                        class="w-full bg-gray-800 border-2 border-gray-700 rounded-lg px-4 py-3 text-white flex items-center justify-between focus:outline-none focus:border-[#E1B362]">
-                                <span id="selected-provider-content" class="flex items-center gap-3">
-                                     <i data-lucide="tv" class="text-gray-400"></i>
-                                     <span>Select Provider</span>
-                                </span>
-                    <i data-lucide="chevron-down" class="transition-transform"></i>
-                </button>
-                <div id="provider-dropdown-list"
-                     class="absolute z-20 w-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg hidden overflow-hidden">
-                    <div data-provider="DStv" data-logo="https://i.imgur.com/7sZ5vce.png"
-                         class="provider-item cursor-pointer hover:bg-gray-700 p-3 flex items-center gap-3">
-                        <img src="https://i.imgur.com/7sZ5vce.png"
-                             class="h-8 w-8 object-contain rounded-full bg-white p-1">
-                        <span>DStv</span>
-                    </div>
-                    <div data-provider="GOtv" data-logo="https://i.imgur.com/Jq8i26B.png"
-                         class="provider-item cursor-pointer hover:bg-gray-700 p-3 flex items-center gap-3">
-                        <img src="https://i.imgur.com/Jq8i26B.png"
-                             class="h-8 w-8 object-contain rounded-full bg-white p-1">
-                        <span>GOtv</span>
-                    </div>
-                    <div data-provider="Startimes" data-logo="https://i.imgur.com/jVbYm2I.png"
-                         class="provider-item cursor-pointer hover:bg-gray-700 p-3 flex items-center gap-3">
-                        <img src="https://i.imgur.com/jVbYm2I.png" class="h-8 w-8 object-contain rounded-full">
-                        <span>Startimes</span>
+    <x-slot name="header">
+        <!-- Header -->
+        <header class="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700/80">
+            <div class="px-4 lg:px-0 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="{{route('dashboard')}}" class="p-2 rounded-full hover:bg-gray-800">
+                        <i data-lucide="arrow-left"></i>
+                    </a>
+                    <div>
+                        <p class="text-xs text-gray-400">Pay</p>
+                        <h2 class="font-bold text-xl text-white">Cable Tv</h2>
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
+    </x-slot>
 
-        <!-- Plan Selection Dropdown -->
-        <div id="plan-section" class="hidden">
-            <h3 class="font-semibold text-white mb-4">2. Select Plan</h3>
-            <select id="plan-selector"
-                    class="w-full bg-gray-800 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#E1B362] appearance-none">
-                <option>Select a plan</option>
-            </select>
-        </div>
 
-        <!-- Smart Card Number -->
-        <div id="smartcard-section" class="hidden">
-            <label for="smartcard-number" class="font-semibold text-white mb-2 block">3. Smart Card / IUC Number</label>
-            <input type="number" id="smartcard-number" placeholder="Enter your card number"
-                   class="w-full bg-gray-800 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#E1B362]">
-        </div>
-
-        <!-- Proceed Button -->
-        <button id="proceed-btn"
-                class="brand-gradient w-full text-white py-4 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-all mt-5 disabled:opacity-50"
-                disabled>
-            Proceed
-        </button>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirmation-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-6 border border-gray-700 shadow-xl">
-            <h2 class="text-2xl font-bold text-center text-white mb-2">Confirm Payment</h2>
-            <div class="space-y-3 text-sm my-6">
-                <div class="flex justify-between"><span class="text-gray-400">Provider:</span><span
-                        id="summary-provider" class="font-bold text-white"></span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Smart Card:</span><span
-                        id="summary-smartcard" class="font-bold text-white"></span></div>
-                <div class="flex justify-between"><span class="text-gray-400">Plan:</span><span id="summary-plan"
-                                                                                                class="font-bold text-white"></span>
+    <div class=" flex items-center justify-center p-4">
+        <div class="max-w-2xl w-full text-center space-y-8">
+            <!-- Animated Gear Icon -->
+            <div class="relative w-32 h-32 mx-auto">
+                <div class="absolute inset-0 animate-spin-slow">
+                    <svg class="w-full h-full text-[#E1B362]" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
                 </div>
-                <div class="flex justify-between"><span class="text-gray-400">Amount:</span><span id="summary-amount"
-                                                                                                  class="font-bold text-white"></span>
+                <div class="absolute inset-0 animate-ping-slow opacity-75">
+                    <svg class="w-full h-full text-[#E1B362]" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                              d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
                 </div>
             </div>
-            <div class="mb-6">
-                <label for="pin" class="font-semibold text-white mb-2 block text-center">Enter your 4-digit PIN</label>
-                <input type="password" id="pin" maxlength="4"
-                       class="w-full bg-gray-900 border-2 border-gray-700 rounded-lg px-4 py-3 text-white text-center text-2xl tracking-[1em] focus:outline-none focus:border-[#E1B362]">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button id="cancel-btn" class="bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-600">
-                    Cancel
-                </button>
-                <button id="confirm-btn"
-                        class="brand-gradient text-white py-3 rounded-lg font-semibold hover:opacity-90">Confirm
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Success Modal -->
-    <div id="success-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-8 text-center border border-gray-700 shadow-xl">
-            <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="check" class="text-green-400 w-12 h-12"></i>
+            <!-- Content -->
+            <div class="space-y-4">
+                <h1 class="text-4xl font-bold text-white">System Maintenance</h1>
+                <p class="text-gray-400 text-lg">We're currently performing scheduled maintenance, please check back
+                    later.</p>
             </div>
-            <h2 class="text-2xl font-bold text-white mb-2">Payment Successful!</h2>
-            <p class="text-gray-400 mb-6">Your subscription has been renewed.</p>
-            <button id="done-btn"
-                    class="brand-gradient w-full text-white py-3 px-6 rounded-xl font-semibold text-lg hover:opacity-90">
-                Done
-            </button>
+
+            <!-- Progress Bar -->
+            <div class="max-w-md mx-auto w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                <div class="brand-gradient h-full w-2/3 animate-progress"></div>
+            </div>
+
+
         </div>
     </div>
 
     @push('styles')
         <style>
+            .animate-spin-slow {
+                animation: spin 10s linear infinite;
+            }
+
+            .animate-ping-slow {
+                animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+            }
+
+            .animate-progress {
+                animation: progress 2s ease-in-out infinite;
+            }
+
+            @keyframes progress {
+                0% {
+                    transform: translateX(-100%);
+                }
+                100% {
+                    transform: translateX(100%);
+                }
+            }
+
             .brand-gradient {
                 background: linear-gradient(135deg, #e1b362 0%, #d4a55a 100%);
             }
-
-            .modal-backdrop {
-                background-color: rgba(0, 0, 0, 0.7);
-                backdrop-filter: blur(5px);
-            }
         </style>
-    @endpush
-
-    @push('scripts')
-        <script>
-
-            document.addEventListener('DOMContentLoaded', () => {
-                const TV_PLANS = {
-                    'DStv': [
-                        {name: 'Padi', price: 2150},
-                        {name: 'Yanga', price: 3500},
-                        {name: 'Confam', price: 5300},
-                        {name: 'Compact', price: 9000},
-                        {name: 'Premium', price: 21000},
-                    ],
-                    'GOtv': [
-                        {name: 'Smallie', price: 900},
-                        {name: 'Jinja', price: 1900},
-                        {name: 'Jolli', price: 2800},
-                        {name: 'Max', price: 4150},
-                    ],
-                    'Startimes': [
-                        {name: 'Nova', price: 900},
-                        {name: 'Basic', price: 1700},
-                        {name: 'Smart', price: 2200},
-                        {name: 'Classic', price: 2500},
-                    ]
-                };
-
-                const providerDropdown = document.getElementById('provider-dropdown');
-                const providerDropdownButton = document.getElementById('provider-dropdown-button');
-                const providerDropdownList = document.getElementById('provider-dropdown-list');
-                const selectedProviderContent = document.getElementById('selected-provider-content');
-
-                const planSection = document.getElementById('plan-section');
-                const planSelector = document.getElementById('plan-selector');
-                const smartcardSection = document.getElementById('smartcard-section');
-                const smartcardNumberInput = document.getElementById('smartcard-number');
-                const proceedBtn = document.getElementById('proceed-btn');
-
-                const confirmationModal = document.getElementById('confirmation-modal');
-                const successModal = document.getElementById('success-modal');
-                const cancelBtn = document.getElementById('cancel-btn');
-                const confirmBtn = document.getElementById('confirm-btn');
-                const doneBtn = document.getElementById('done-btn');
-
-                let selectedProvider = null;
-                let selectedPlan = null;
-
-                function validateForm() {
-                    const isCardValid = smartcardNumberInput.value.length >= 10;
-                    const isPlanSelected = selectedPlan && selectedPlan.price > 0;
-                    proceedBtn.disabled = !(selectedProvider && isPlanSelected && isCardValid);
-                }
-
-                function populatePlans() {
-                    planSelector.innerHTML = '<option value="">Select a plan</option>';
-                    if (!selectedProvider) return;
-
-                    const plans = TV_PLANS[selectedProvider];
-                    plans.forEach(plan => {
-                        const option = document.createElement('option');
-                        option.value = JSON.stringify(plan);
-                        option.textContent = `${plan.name} - ₦${plan.price.toLocaleString()}`;
-                        planSelector.appendChild(option);
-                    });
-                    planSection.classList.remove('hidden');
-                    smartcardSection.classList.remove('hidden');
-                }
-
-                providerDropdownButton.addEventListener('click', () => {
-                    providerDropdownList.classList.toggle('hidden');
-                    providerDropdownButton.querySelector('[data-lucide="chevron-down"]').classList.toggle('rotate-180');
-                });
-
-                providerDropdownList.addEventListener('click', (e) => {
-                    const providerItem = e.target.closest('.provider-item');
-                    if (!providerItem) return;
-
-                    selectedProvider = providerItem.dataset.provider;
-                    const logoSrc = providerItem.dataset.logo;
-
-                    selectedProviderContent.innerHTML = `
-                    <img src="${logoSrc}" class="h-6 w-6 object-contain rounded-full">
-                    <span>${selectedProvider}</span>
-                `;
-
-                    providerDropdownList.classList.add('hidden');
-                    providerDropdownButton.querySelector('[data-lucide="chevron-down"]').classList.remove('rotate-180');
-
-                    populatePlans();
-                    selectedPlan = null; // Reset plan selection
-                    validateForm();
-                });
-
-                planSelector.addEventListener('change', (e) => {
-                    if (e.target.value) {
-                        selectedPlan = JSON.parse(e.target.value);
-                    } else {
-                        selectedPlan = null;
-                    }
-                    validateForm();
-                });
-
-                smartcardNumberInput.addEventListener('input', validateForm);
-
-                proceedBtn.addEventListener('click', () => {
-                    document.getElementById('summary-provider').textContent = selectedProvider;
-                    document.getElementById('summary-smartcard').textContent = smartcardNumberInput.value;
-                    document.getElementById('summary-plan').textContent = selectedPlan.name;
-                    document.getElementById('summary-amount').textContent = `₦${selectedPlan.price.toLocaleString()}`;
-                    confirmationModal.classList.remove('hidden');
-                });
-
-                cancelBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
-                doneBtn.addEventListener('click', () => window.location.reload());
-
-                confirmBtn.addEventListener('click', () => {
-                    confirmationModal.classList.add('hidden');
-                    successModal.classList.remove('hidden');
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!providerDropdown.contains(e.target)) {
-                        providerDropdownList.classList.add('hidden');
-                        providerDropdownButton.querySelector('[data-lucide="chevron-down"]').classList.remove('rotate-180');
-                    }
-                });
-            });
-        </script>
     @endpush
 </div>

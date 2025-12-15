@@ -24,11 +24,15 @@ class Login extends Component
 
         // Check if credentials are valid
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
-            // Check if user is an admin
+            // Check if user is an admin or agent
             $user = Auth::user();
-            if ($user && $user->is_admin) {
+            if ($user && $user->is_admin || $user->is_agent) {
                 // Redirect to admin dashboard or intended page
-                return redirect()->intended('/admin/dashboard');
+                if ($user->is_agent) {
+                    return redirect()->intended('/agent/dashboard');
+                } else {
+                    return redirect()->intended('/admin/dashboard');
+                }
             } else {
                 Auth::logout();
                 $this->loginError = 'You do not have admin access.';

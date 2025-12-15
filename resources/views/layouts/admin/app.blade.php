@@ -70,6 +70,7 @@
     @livewireStyles
 </head>
 <body class="bg-gray-900 text-gray-300">
+@include('sweetalert2::index')
 
 <div class="flex min-h-screen">
     {{-- Sidebar --}}

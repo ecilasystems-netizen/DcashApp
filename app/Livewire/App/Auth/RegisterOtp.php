@@ -2,7 +2,8 @@
 
 namespace App\Livewire\App\Auth;
 
-use App\Mail\app\OtpVerificationMail;
+use App\Mail\RegistrationOtpMail;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
@@ -36,6 +37,9 @@ class RegisterOtp extends Component
             auth()->login($user);
             Cache::forget('otp_for_'.$this->email);
 
+            //send welcome email
+            Mail::to($user->email)->send(new WelcomeMail($user->fname));
+
             return $this->redirect(route('success', [
                 'title' => 'Account Verified',
                 'message' => 'Your account has been successfully verified.',
@@ -54,7 +58,7 @@ class RegisterOtp extends Component
         $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         Cache::put('otp_for_'.$this->email, $otp, now()->addMinutes(5));
 
-        Mail::to($user->email)->send(new OtpVerificationMail($otp, $user->fname));
+        Mail::to($user->email)->send(new RegistrationOtpMail($otp, $user->fname));
 
         $this->dispatch('otp-resent');
     }

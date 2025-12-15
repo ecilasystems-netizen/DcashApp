@@ -171,6 +171,9 @@ class CreateTransfer extends Component
             return;
         }
 
+        //$this->showError('We are currently upgrading the wallet system, please try again later. Thank you');
+        //return;
+
         // Debit wallet
         $user->wallet->balance -= ($this->amount + $this->transferFee);
         $user->wallet->save();

@@ -41,7 +41,7 @@ class VerifyOtp extends Component
             ]
         );
 
-        Mail::to($this->email)->send(new OtpMail($otp));
+        Mail::to($this->email)->send(new OtpMail($otp, $user->fname));
         $this->otp_sent = true;
         session()->flash('success', 'A new OTP has been sent to your email.');
     }

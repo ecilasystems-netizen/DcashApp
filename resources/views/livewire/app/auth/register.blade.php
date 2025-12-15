@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <x-logo class="w-[150px] h-[70px] mx-auto mb-4"/>
+                <x-logo class="w-[220px] h-[100px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Create Your Account</h1>
                 <p class="text-gray-400">Join us to start exchanging currency with ease.</p>
             </div>
@@ -20,7 +20,7 @@
                                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
                             <input wire:model.blur="referral" type="text" id="referral" placeholder="Referral Code"
                                    maxlength="66"
-                                   class="w-full bg-gray-800/2 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] @error('referral') border-red-500 @enderror">
+                                   class="w-full bg-gray-800/2 border rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] @error('referral') border-red-500 @enderror">
                         </div>
                         @if($referrerName)
                             <div class="text-green-400 text-xs mt-1">Referred by: {{ $referrerName }}</div>
@@ -50,18 +50,7 @@
                         @error('lname') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-400 mb-2">Phone</label>
-                        <div class="relative">
-                            <i data-lucide="phone"
-                               class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                            <input wire:model="phone" type="tel" id="phone" placeholder="034 801 234 223"
-                                   pattern="[0-9\s]*" inputmode="numeric"
-                                   class="w-full bg-gray-800/2 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
-                                   oninput="this.value = this.value.replace(/[^0-9\s]/g, '')">
-                        </div>
-                        @error('phone') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
-                    </div>
+                    @include('components.phone-input')
 
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-400 mb-2">Email Address</label>
@@ -74,37 +63,57 @@
                         @error('email') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <div>
+                    <div x-data="{ show: false }" x-effect="window.lucide && window.lucide.replace()">
                         <label for="password" class="block text-sm font-medium text-gray-400 mb-2">Password</label>
                         <div class="relative">
                             <i data-lucide="lock"
                                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                            <input wire:model="password" type="password" id="password" placeholder="••••••••"
-                                   class="w-full bg-gray-800/2 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                            <input wire:model="password" :type="show ? 'text' : 'password'" id="password"
+                                   placeholder="••••••••"
+                                   class="w-full bg-gray-800\/2 border border-gray-600 rounded-lg pl-10 pr-10 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                            <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+                                    :aria-label="show ? 'Hide password' : 'Show password'"
+                                    :title="show ? 'Hide password' : 'Show password'">
+                                <span wire:ignore><i :data-lucide="show ? 'eye-off' : 'eye'" class="w-4 h-4"></i></span>
+                            </button>
                         </div>
                         @error('password') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <div>
+                    <div x-data="{ show: false }" x-effect="window.lucide && window.lucide.replace()" class="mt-4">
                         <label for="password_confirmation" class="block text-sm font-medium text-gray-400 mb-2">Confirm
                             Password</label>
                         <div class="relative">
                             <i data-lucide="lock"
                                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                            <input wire:model="password_confirmation" type="password" id="password_confirmation"
+                            <input wire:model="password_confirmation" :type="show ? 'text' : 'password'"
+                                   id="password_confirmation"
                                    placeholder="••••••••"
-                                   class="w-full bg-gray-800/2 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                                   class="w-full bg-gray-800\/2 border border-gray-600 rounded-lg pl-10 pr-10 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                            <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+                                    :aria-label="show ? 'Hide password' : 'Show password'"
+                                    :title="show ? 'Hide password' : 'Show password'">
+                                <span wire:ignore><i :data-lucide="show ? 'eye-off' : 'eye'" class="w-4 h-4"></i></span>
+                            </button>
                         </div>
                     </div>
 
-
-                    <div>
+                    <div x-data="{ show: false }" x-effect="window.lucide && window.lucide.replace()" class="mt-4">
                         <label for="pin" class="block text-sm font-medium text-gray-400 mb-2">4-Digit PIN</label>
                         <div class="relative">
                             <i data-lucide="key"
                                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
-                            <input wire:model="pin" type="password" id="pin" placeholder="••••" maxlength="4"
-                                   class="w-full bg-gray-800/2 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                            <input wire:model="pin" :type="show ? 'text' : 'password'" id="pin" placeholder="••••"
+                                   maxlength="4"
+                                   class="w-full bg-gray-800\/2 border border-gray-600 rounded-lg pl-10 pr-10 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                            <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+                                    :aria-label="show ? 'Hide PIN' : 'Show PIN'"
+                                    :title="show ? 'Hide PIN' : 'Show PIN'">
+                                <span wire:ignore><i :data-lucide="show ? 'eye-off' : 'eye'" class="w-4 h-4"></i></span>
+                            </button>
                         </div>
                         @error('pin') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>

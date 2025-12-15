@@ -55,44 +55,92 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Supported Currencies -->
-            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-white">Supported Currencies</h3>
+            <!-- Supported Currencies Section -->
+            <div class="bg-gray-800 border border-gray-700 rounded-lg">
+                <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-white">Supported Currencies</h3>
                     <button
                         @click="isCurrencyModalOpen = true"
-                        class="brand-gradient text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 text-sm">
-                        <i data-lucide="plus" class="w-4 h-4"></i> Add Currency
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg flex items-center gap-2 text-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Add Currency
                     </button>
                 </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="text-xs text-gray-400 uppercase">
+                        <thead class="bg-gray-700/50 text-xs text-gray-400 uppercase">
                         <tr>
-                            <th class="py-2">Currency</th>
-                            <th class="py-2">Code</th>
-                            <th class="py-2">Symbol</th>
-                            <th class="py-2">Status</th>
+                            <th class="px-4 py-2">Currency</th>
+                            <th class="px-4 py-2">Code</th>
+                            <th class="px-4 py-2">Type</th>
+                            <th class="px-4 py-2 text-center">Status</th>
+                            <th class="px-4 py-2 text-center">Actions</th>
                         </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-700">
-
-                        @foreach($currencies as $currency)
-                            <tr>
-                                <td class="py-3 font-semibold text-white">
-                                    {{$currency->name}}
+                        @forelse($currencies as $currency)
+                            <tr class="hover:bg-gray-700/30">
+                                <td class="px-4 py-2">
+                                    <div class="flex items-center gap-2">
+                                        @if($currency->flag)
+                                            <img src="{{ asset($currency->flag) }}"
+                                                 alt="{{ $currency->name }}"
+                                                 class="w-5 h-5 rounded-full object-cover border border-gray-600"/>
+                                        @else
+                                            <div
+                                                class="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center">
+                                                <i data-lucide="{{ $currency->type === 'crypto' ? 'bitcoin' : 'banknote' }}"
+                                                   class="w-3 h-3 text-gray-400"></i>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="font-medium text-white text-xs">{{ $currency->name }}</div>
+                                            <div class="text-gray-400 text-xs">{{ $currency->symbol }}</div>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td class="py-3">{{$currency->code}}</td>
-                                <td class="py-3">{{$currency->symbol}}</td>
-
-                                <td class="py-3">
-                                    <label class="switch"
-                                    ><input type="checkbox" checked/><span
-                                            class="slider"></span
-                                        ></label>
+                                <td class="px-4 py-2">
+                                    <span class="font-mono text-gray-300 text-xs">{{ $currency->code }}</span>
+                                </td>
+                                <td class="px-4 py-2">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                        {{ $currency->type === 'crypto'
+                                            ? 'bg-purple-500/20 text-purple-400'
+                                            : 'bg-blue-500/20 text-blue-400' }}">
+                                        @if($currency->type === 'crypto')
+                                            <i data-lucide="bitcoin" class="w-3 h-3 mr-1"></i>
+                                            Crypto
+                                        @else
+                                            <i data-lucide="banknote" class="w-3 h-3 mr-1"></i>
+                                            Fiat
+                                        @endif
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2 text-center">
+                                    <label class="switch-small">
+                                        <input
+                                            type="checkbox"
+                                            wire:click="toggleCurrency({{ $currency->id }})"
+                                            @if($currency->status) checked @endif
+                                        />
+                                        <span class="slider-small"></span>
+                                    </label>
+                                </td>
+                                <td class="px-4 py-2 text-center">
+                                    <button
+                                        class="bg-gray-700 hover:bg-gray-600 text-white p-1 rounded text-xs">
+                                        <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                    </button>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-400 text-sm">
+                                    No currencies found
+                                </td>
+                            </tr>
+                        @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -108,6 +156,7 @@
                             <th class="py-2">Pair</th>
                             <th class="py-2">Buy Rate</th>
                             <th class="py-2">Sell Rate</th>
+                            <th class="py-2">Auto</th>
                             <th class="py-2 text-right">Action</th>
                         </tr>
                         </thead>
@@ -118,6 +167,16 @@
                                 <td class="py-3 font-semibold text-white">{{ $pair['pair'] }}</td>
                                 <td class="py-3 text-green-400">{{ $pair['buy_rate'] }}</td>
                                 <td class="py-3 text-red-400">{{ $pair['sell_rate'] }}</td>
+                                <td class="py-3 text-center">
+                                    <label class="switch-small">
+                                        <input
+                                            type="checkbox"
+                                            wire:click="toggleAutoUpdate({{ $pair['id'] }})"
+                                            @if($pair['auto_update']) checked @endif
+                                        />
+                                        <span class="slider-small"></span>
+                                    </label>
+                                </td>
                                 <td class="py-3 text-right">
                                     <button
                                         @click="isRateModalOpen = true; selectedRate = {
@@ -155,6 +214,18 @@
             @click.away="isCurrencyModalOpen = false"
             class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
             <h3 class="text-lg font-bold text-white mb-4">Add New Currency</h3>
+
+            <!-- Add this right after the form opening tag for debugging -->
+            @if ($errors->any())
+                <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                    <h4 class="text-red-400 font-semibold">Validation Errors:</h4>
+                    <ul class="text-red-300 text-sm mt-2">
+                        @foreach ($errors->all() as $error)
+                            <li>• {{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <form class="space-y-4" wire:submit.prevent="saveCurrency" enctype="multipart/form-data">
                 <div>
@@ -238,7 +309,7 @@
                                                 min="0"
                                                 placeholder="Enter rate"
                                                 class="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-white text-sm"
-                                                wire:model="newPairRates.{{ $pair['key'] }}"
+                                                wire:model.live="newPairRates.{{ $pair['key'] }}"
                                             />
                                         </td>
                                     </tr>
@@ -249,6 +320,7 @@
                     </div>
                 @endif
 
+
                 <div class="pt-4 flex justify-end gap-4">
                     <button
                         type="button"
@@ -258,10 +330,15 @@
                     </button>
                     <button
                         type="submit"
+                        wire:loading.attr="disabled"
+                        wire:loading.class="opacity-50 cursor-not-allowed"
                         class="brand-gradient text-white font-semibold py-2 px-4 rounded-lg">
-                        Save Currency
+                        <span wire:loading.remove>Save Currency</span>
+                        <span wire:loading>Saving...</span>
                     </button>
                 </div>
+
+
             </form>
 
         </div>
@@ -444,6 +521,103 @@
             }
 
             /* Perfect semi-transparent overlay */
+            .modal-overlay {
+                background-color: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(1px);
+            }
+
+            /* Smaller switch for compact table */
+            .switch-small {
+                position: relative;
+                display: inline-block;
+                width: 28px;
+                height: 16px;
+            }
+
+            .switch-small input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider-small {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #4b5563;
+                transition: 0.4s;
+                border-radius: 34px;
+            }
+
+            .slider-small:before {
+                position: absolute;
+                content: "";
+                height: 12px;
+                width: 12px;
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .slider-small {
+                background-color: #10b981;
+            }
+
+            input:checked + .slider-small:before {
+                transform: translateX(12px);
+            }
+
+            /* Your existing styles... */
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 40px;
+                height: 24px;
+            }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #4b5563;
+                transition: 0.4s;
+                border-radius: 34px;
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .slider {
+                background-color: #10b981;
+            }
+
+            input:checked + .slider:before {
+                transform: translateX(16px);
+            }
+
             .modal-overlay {
                 background-color: rgba(0, 0, 0, 0.4);
                 backdrop-filter: blur(1px);

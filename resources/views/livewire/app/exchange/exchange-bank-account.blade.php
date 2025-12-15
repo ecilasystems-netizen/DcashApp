@@ -34,15 +34,14 @@
                 <div class="flex justify-between items-center">
                     <span class="text-gray-400">You Send</span>
                     <span class="font-semibold text-white flex items-center space-x-2">
-                        <span>{{ number_format($baseAmount, 2) }} {{ $baseCurrencyCode }}</span>
-                        <img id="selected-flag-base" src="{{ asset('storage/'.$baseCurrencyFlag)}}"
-                             class="w-6 h-6 rounded-full" alt="">
-                    </span>
+                                            <span>{{ number_format($baseAmount, 2) }} {{ $baseCurrencyCode }}</span>
+                                            <img id="selected-flag-base" src="{{ asset('storage/'.$baseCurrencyFlag)}}"
+                                                 class="w-6 h-6 rounded-full" alt="">
+                                        </span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-400">Exchange Rate</span>
-                    <span
-                        class="font-semibold text-white">1 {{ $baseCurrencyCode }} = {{ number_format($exchangeRate, 2) }} {{ $quoteCurrencyCode }}</span>
+                    <span class="font-semibold text-white">{{ number_format($exchangeRate, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-400">Processing Fee</span>
@@ -54,16 +53,16 @@
                     <span class="text-gray-300">You Receive</span>
                     <span
                         class="font-bold text-lg text-[#E1B362] flex items-center space-x-2">
-                        <span>{{ number_format($quoteAmount, 2) }} {{ $quoteCurrencyCode }}</span>
-                        <img id="selected-flag-base" src="{{ asset('storage/' .$quoteCurrencyFlag)}}"
-                             class="w-6 h-6 rounded-full" alt="">
-                    </span>
+                                            <span>{{ number_format($quoteAmount, 2) }} {{ $quoteCurrencyCode }}</span>
+                                            <img id="selected-flag-base"
+                                                 src="{{ asset('storage/' .$quoteCurrencyFlag)}}"
+                                                 class="w-6 h-6 rounded-full" alt="">
+                                        </span>
                 </div>
             </div>
             <p class="text-xs text-gray-500 mt-4 text-center">Rates are updated every 30 seconds. Complete your
                 transaction promptly to lock in this rate.</p>
         </div>
-
 
         <!-- Account Details Form -->
         <div class="bg-gray-950 border border-gray-800 rounded-lg p-6">
@@ -74,32 +73,168 @@
                 <form wire:submit.prevent="submit" class="space-y-6 text-sm">
                     <div x-data="{ bankSelected: @entangle('bank').live }" class="space-y-6 text-sm">
                         @if($quoteCurrencyCode === 'NGN')
-                            <div x-data="{ open: false, search: '', selectedBank: '' }" class="relative">
-                                <label for="bank" class="block text-gray-400 mb-2">Select Bank</label>
-                                <div class="relative">
-                                    <input
-                                        type="text"
-                                        x-model="search"
-                                        @click="open = true"
-                                        @click.away="open = false"
-                                        placeholder="Select bank..."
-                                        class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
-                                    >
-                                    <div x-show="open"
-                                         class="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-800 rounded-lg max-h-60 overflow-y-auto">
-                                        @foreach($banks as $bank)
+                            @if(auth()->user()->wallet && auth()->user()->wallet->balance > 0)
+                                <div class="mb-8">
+                                    <div class="flex items-center space-x-2 mb-4">
+                                        <i data-lucide="credit-card" class="w-5 h-5 text-[#E1B362]"></i>
+                                        <label class="text-gray-200 font-medium">Choose Recipient Account</label>
+                                    </div>
+
+                                    <div class="grid gap-4">
+                                        <!-- Wallet Bank Details Option -->
+                                        <label class="group relative cursor-pointer">
+                                            <input type="radio"
+                                                   wire:model.live="useWalletBankDetails"
+                                                   value="true"
+                                                   class="peer sr-only">
+
                                             <div
-                                                @click="selectedBank = '{{ $bank->id }}'; $wire.bank = '{{ $bank->id }}'; search = '{{ $bank->name }}'; open = false"
-                                                class="px-4 py-2 cursor-pointer hover:bg-gray-600 text-white"
-                                                x-show="'{{ strtolower($bank->name) }}'.includes(search.toLowerCase())"
-                                            >
-                                                {{ $bank->name }}
+                                                class="relative flex items-start p-4 bg-gradient-to-r from-gray-900 to-gray-800 border-2 rounded-xl transition-all duration-300 hover:border-[#E1B362]/50 hover:shadow-lg hover:shadow-[#E1B362]/10"
+                                                :class="$wire.useWalletBankDetails === 'true' || $wire.useWalletBankDetails === true ? 'border-[#E1B362] bg-gradient-to-r from-[#E1B362]/10 to-[#E1B362]/5 shadow-lg shadow-[#E1B362]/20' : 'border-gray-700'">
+
+                                                <!-- Checkmark Icon -->
+                                                <div
+                                                    class="absolute top-3 right-3 w-6 h-6 bg-[#E1B362] rounded-full flex items-center justify-center transition-all duration-200"
+                                                    x-show="$wire.useWalletBankDetails === 'true' || $wire.useWalletBankDetails === true"
+                                                    x-transition:enter="transition ease-out duration-200"
+                                                    x-transition:enter-start="opacity-0 scale-75"
+                                                    x-transition:enter-end="opacity-100 scale-100">
+                                                    <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                                                </div>
+
+                                                <!-- Content -->
+                                                <div class="flex-1">
+                                                    <div class="flex items-center space-x-2 mb-2">
+                                                        <i data-lucide="wallet" class="w-4 h-4 text-[#E1B362]"></i>
+                                                        <h3 class="text-white font-semibold">My DCASH Wallet</h3>
+                                                        <span
+                                                            class="px-2 py-1 bg-[#E1B362]/20 text-[#E1B362] text-xs font-medium rounded-full">Recommended</span>
+                                                    </div>
+
+                                                    <p class="text-gray-400 text-sm leading-relaxed">
+                                                        @if(auth()->user()->virtualBankAccount->bank_name)
+                                                            <span class="inline-flex items-center space-x-2">
+                                                               <i data-lucide="building-2" class="w-3 h-3"></i>
+                                                               <span>{{ auth()->user()->virtualBankAccount->bank_name }}</span>
+                                                               <span class="text-gray-500">•</span>
+                                                               <span
+                                                                   class="font-mono">{{ auth()->user()->virtualBankAccount->account_number }}</span>
+                                                           </span>
+                                                        @else
+                                                            <span class="inline-flex items-center space-x-2">
+                                                               <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                                               <span>Your verified linked bank account</span>
+                                                           </span>
+                                                        @endif
+                                                    </p>
+                                                </div>
                                             </div>
-                                        @endforeach
+                                        </label>
+
+                                        <!-- Manual Entry Option -->
+                                        <label class="group relative cursor-pointer">
+                                            <input type="radio"
+                                                   wire:model.live="useWalletBankDetails"
+                                                   value="false"
+                                                   class="peer sr-only">
+
+                                            <div
+                                                class="relative flex items-start p-4 bg-gradient-to-r from-gray-900 to-gray-800 border-2 rounded-xl transition-all duration-300 hover:border-[#E1B362]/50 hover:shadow-lg hover:shadow-[#E1B362]/10"
+                                                :class="$wire.useWalletBankDetails === 'false' || $wire.useWalletBankDetails === false ? 'border-[#E1B362] bg-gradient-to-r from-[#E1B362]/10 to-[#E1B362]/5 shadow-lg shadow-[#E1B362]/20' : 'border-gray-700'">
+
+                                                <!-- Checkmark Icon -->
+                                                <div
+                                                    class="absolute top-3 right-3 w-6 h-6 bg-[#E1B362] rounded-full flex items-center justify-center transition-all duration-200"
+                                                    x-show="$wire.useWalletBankDetails === 'false' || $wire.useWalletBankDetails === false"
+                                                    x-transition:enter="transition ease-out duration-200"
+                                                    x-transition:enter-start="opacity-0 scale-75"
+                                                    x-transition:enter-end="opacity-100 scale-100">
+                                                    <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                                                </div>
+
+                                                <!-- Content -->
+                                                <div class="flex-1">
+                                                    <div class="flex items-center space-x-2 mb-2">
+                                                        <i data-lucide="edit-3" class="w-4 h-4 text-[#E1B362]"></i>
+                                                        <h3 class="text-white font-semibold">Enter Different Bank
+                                                            Account</h3>
+                                                    </div>
+
+                                                    <p class="text-gray-400 text-sm leading-relaxed">
+                                                        <span class="inline-flex items-center space-x-2">
+                                                            <i data-lucide="plus-circle" class="w-3 h-3"></i>
+                                                            <span>Manually enter recipient bank details</span>
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </label>
                                     </div>
                                 </div>
-                                <input type="hidden" wire:model.live="bank" :value="selectedBank">
-                                @error('bank') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            @endif
+
+                            <!-- Bank Selection Fields - Hidden when wallet bank details is selected -->
+                            <div
+                                x-show="$wire.useWalletBankDetails === 'false' || $wire.useWalletBankDetails === false || !$wire.useWalletBankDetails"
+                                x-transition>
+                                <div x-data="{ open: false, search: '', selectedBank: '' }" class="relative">
+                                    <label for="bank" class="block text-gray-400 mb-2">Select Bank</label>
+                                    <div class="relative">
+                                        <input
+                                            type="text"
+                                            x-model="search"
+                                            @click="open = true"
+                                            @click.away="open = false"
+                                            placeholder="Select bank..."
+                                            class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
+                                        >
+                                        <div x-show="open"
+                                             class="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-800 rounded-lg max-h-60 overflow-y-auto">
+                                            @foreach($banks as $bank)
+                                                <div
+                                                    @click="selectedBank = '{{ $bank->id }}'; $wire.bank = '{{ $bank->id }}'; search = '{{ $bank->name }}'; open = false"
+                                                    class="px-4 py-2 cursor-pointer hover:bg-gray-600 text-white"
+                                                    x-show="'{{ strtolower($bank->name) }}'.includes(search.toLowerCase())"
+                                                >
+                                                    {{ $bank->name }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <input type="hidden" wire:model.live="bank" :value="selectedBank">
+                                    @error('bank') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Account Number Field -->
+                                <div x-show="$wire.bank" x-transition class="mt-6">
+                                    <label for="accountNumber" class="block text-gray-400 mb-2">Account Number</label>
+                                    <input type="text" id="accountNumber" wire:model.live="accountNumber"
+                                           placeholder="Enter your 10-digit account number"
+                                           class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
+                                           maxlength="10"
+                                           oninput="if(this.value.length > 10) this.value = this.value.slice(0,10)"
+                                           onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 46"
+                                           @keydown="if(['e','+','-'].includes($event.key)) $event.preventDefault()">
+                                    @error('accountNumber') <p
+                                        class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+
+                                    @if ($isVerifying)
+                                        <p class="text-gray-400 text-xs mt-1 text-center">
+                                            <i data-lucide="loader-2"
+                                               class="animate-spin w-4 h-4 inline-block mr-1"></i>
+                                            Verifying account...
+                                        </p>
+                                    @endif
+
+                                    <div class="bg-gray-900 p-3 rounded-lg text-center mt-4">
+                                        <p class="font-semibold {{
+                                                                $accountName === 'Account name will appear here' ? 'text-gray-400' :
+                                                                ($accountName === 'Invalid Account Number' || $accountName === 'Error fetching account name' ? 'text-red-400' : 'text-green-400')
+                                                            }}">
+                                            {{ $accountName ?: 'Account name will appear here' }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         @elseif($quoteCurrencyCode === 'PHP')
                             <div x-data="{ open: false, search: '', selectedBank: '' }" class="relative">
@@ -129,47 +264,17 @@
                                 <input type="hidden" wire:model.live="bankName" :value="selectedBank">
                                 @error('bankName') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
-                        @else
-                            <div>
-                                <label for="bankName" class="block text-gray-400 mb-2">Bank Name</label>
-                                <input type="text" id="bankName" wire:model.live="bankName"
-                                       placeholder="Enter bank name"
-                                       class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
-                                @error('bankName') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                            </div>
-                        @endif
 
-                        <div x-show="@if($quoteCurrencyCode === 'NGN') bankSelected @else $wire.bankName @endif"
-                             x-transition>
-                            <label for="accountNumber" class="block text-gray-400 mb-2">Account Number</label>
-                            <input type="text" id="accountNumber" wire:model.live="accountNumber"
-                                   placeholder="Enter your {{ $quoteCurrencyCode === 'NGN' ? '10-digit' : '' }} account number"
-                                   class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
-                                   @if($quoteCurrencyCode === 'NGN')
-                                       maxlength="10"
-                                   oninput="if(this.value.length > 10) this.value = this.value.slice(0,10)"
+                            <div x-show="$wire.bankName" x-transition class="mt-6">
+                                <label for="accountNumber" class="block text-gray-400 mb-2">Account Number</label>
+                                <input type="text" id="accountNumber" wire:model.live="accountNumber"
+                                       placeholder="Enter your account number"
+                                       class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
+                                       onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 46"
+                                       @keydown="if(['e','+','-'].includes($event.key)) $event.preventDefault()">
+                                @error('accountNumber') <p
+                                    class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
 
-                                   @endif onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 46"
-                                   @keydown="if(['e','+','-'].includes($event.key)) $event.preventDefault()">
-                            @error('accountNumber') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-
-                            @if($quoteCurrencyCode === 'NGN')
-                                @if ($isVerifying)
-                                    <p class="text-gray-400 text-xs mt-1 text-center">
-                                        <i data-lucide="loader-2" class="animate-spin w-4 h-4 inline-block mr-1"></i>
-                                        Verifying account...
-                                    </p>
-                                @endif
-
-                                <div class="bg-gray-900 p-3 rounded-lg text-center mt-4">
-                                    <p class="font-semibold {{
-                                        $accountName === 'Account name will appear here' ? 'text-gray-400' :
-                                        ($accountName === 'Invalid Account Number' || $accountName === 'Error fetching account name' ? 'text-red-400' : 'text-green-400')
-                                    }}">
-                                        {{ $accountName }}
-                                    </p>
-                                </div>
-                            @else
                                 <div class="mt-4">
                                     <label for="accountName" class="block text-gray-400 mb-2">Account Name</label>
                                     <input type="text" id="accountName" wire:model.live="accountName"
@@ -178,25 +283,62 @@
                                     @error('accountName') <p
                                         class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
-                            @endif
+                            </div>
+                        @else
+                            <div>
+                                <label for="bankName" class="block text-gray-400 mb-2">Bank Name</label>
+                                <input type="text" id="bankName" wire:model.live="bankName"
+                                       placeholder="Enter bank name"
+                                       class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                                @error('bankName') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
 
-                            <div class="pt-4">
-                                <button type="submit"
-                                        class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                        @if($quoteCurrencyCode === 'NGN')
+                            <div class="mt-6">
+                                <label for="accountNumber" class="block text-gray-400 mb-2">Account Number</label>
+                                <input type="text" id="accountNumber" wire:model.live="accountNumber"
+                                       placeholder="Enter your account number"
+                                       class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
+                                       onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 46"
+                                       @keydown="if(['e','+','-'].includes($event.key)) $event.preventDefault()">
+                                @error('accountNumber') <p
+                                    class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+
+                                <div class="mt-4">
+                                    <label for="accountName" class="block text-gray-400 mb-2">Account Name</label>
+                                    <input type="text" id="accountName" wire:model.live="accountName"
+                                           placeholder=""
+                                           class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                                    @error('accountName') <p
+                                        class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Submit Button - Always show when any option is selected -->
+                        <div class="pt-6" x-transition>
+                            <button type="submit"
+                                    class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    @if($quoteCurrencyCode === 'NGN')
+                                        @if($useWalletBankDetails === 'true')
+                                            {{-- Wallet bank details selected - button enabled --}}
+                                        @elseif($useWalletBankDetails === 'false')
                                             @if($accountName === 'Account name will appear here' ||
                                                 $accountName === 'Invalid Account Number' ||
-                                                $accountName === 'Error fetching account name')
-                                                disabled
-                                        @endif
-                                        @else
-                                            @if(!$accountNumber || !$accountName || !$bankName)
+                                                $accountName === 'Error fetching account name' ||
+                                                empty($accountName) ||
+                                                !$bank || !$accountNumber)
                                                 disabled
                                     @endif
-                                    @endif>
-                                    Confirm and Proceed
-                                </button>
-                            </div>
+                                    @else
+                                        disabled
+                                    @endif
+                                    @else
+                                        @if(!$accountNumber || !$accountName || !$bankName)
+                                            disabled
+                                @endif
+                                @endif>
+                                Confirm and Proceed
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -244,7 +386,9 @@
                     <div class="pt-4">
                         <button type="submit"
                                 class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                @if(!$walletAddress || ($baseCurrencyCode !== 'BTC' && !$network))
+                                @if($quoteCurrencyCode !== 'BTC' && (!$walletAddress || !$network))
+                                    disabled
+                                @elseif($quoteCurrencyCode === 'BTC' && !$walletAddress)
                                     disabled
                             @endif>
                             Confirm and Proceed
@@ -296,5 +440,4 @@
             </div>
         </div>
     </div>
-
 </div>

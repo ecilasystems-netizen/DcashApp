@@ -20,6 +20,7 @@ class ExchangeTransaction extends Model
         'amount_to',
         'rate',
         'recipient_bank_name',
+        'recipient_bank_code',
         'recipient_account_number',
         'recipient_account_name',
         'recipient_wallet_address',
@@ -29,6 +30,8 @@ class ExchangeTransaction extends Model
         'status',
         'note',
         'cashback',
+        'agent_id'
+
     ];
 
     protected $casts = [
@@ -36,6 +39,7 @@ class ExchangeTransaction extends Model
         'amount_to' => 'decimal:8',
         'rate' => 'decimal:8',
         'status' => 'string',
+        'note' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -56,5 +60,10 @@ class ExchangeTransaction extends Model
     public function companyBankAccount(): BelongsTo
     {
         return $this->belongsTo(CompanyBankAccount::class, 'company_bank_account_id');
+    }
+
+    public function agent(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'agent_id');
     }
 }

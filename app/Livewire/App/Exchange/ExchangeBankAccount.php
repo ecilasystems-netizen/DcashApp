@@ -2,9 +2,10 @@
 
 namespace App\Livewire\App\Exchange;
 
-use App\Models\Bank;
-use Illuminate\Support\Facades\Http;
+use App\Models\SafehavenBank;
+use App\Services\SafeHavenApi\TransfersService;
 use Livewire\Component;
+
 
 class ExchangeBankAccount extends Component
 {
@@ -27,13 +28,28 @@ class ExchangeBankAccount extends Component
     public $networks = [];
     public $phpBanks = [];
 
+    public $useWalletBankDetails = false;
+
     // Add these crypto-related properties
     public $walletAddress = '';
     public $network = '';
 
+    public function boot(TransfersService $transfersService)
+    {
+        $this->transfersService = $transfersService;
+    }
+
     public function mount()
     {
         $exchangeData = session('exchangeData');
+
+        // Set default to manual entry if user doesn't have wallet balance
+        if (!auth()->user()->wallet || auth()->user()->wallet->balance <= 0) {
+            $this->useWalletBankDetails = 'false';
+        } else {
+            // If user has wallet balance, default to false but show both options
+            $this->useWalletBankDetails = 'false';
+        }
 
         if (!$exchangeData) {
             return redirect()->route('dashboard');
@@ -52,6 +68,9 @@ class ExchangeBankAccount extends Component
         $this->phpBanks = $this->phillipineBanks();
 
     }
+
+    protected TransfersService $transfersService;
+
 
     //supported crypyo currencies
     // This will determine if the quote currency is crypto or fiat
@@ -266,20 +285,34 @@ class ExchangeBankAccount extends Component
         $this->accountName = 'Account name will appear here';
 
         try {
-            $response = Http::post('https://dcashwallet.com/api/flutterwave/resolve-account', [
-                'flw_bank_id' => $this->bank,
-                'flw_account_number' => $this->accountNumber,
-            ]);
+            // Get the bank code from SafehavenBank model
+            $bank = SafehavenBank::find($this->bank);
 
-            $responseData = $response->json();
 
-            if (isset($responseData['status']) && $responseData['status'] == '200') {
-                $this->accountName = $responseData['message'] ?? 'N/A';
+            if (!$bank) {
+                //log the error if bank not found
+
+                $this->accountName = 'Invalid Bank';
+                $this->isVerifying = false;
+                $this->dispatch('account-verified');
+                return;
+            }
+
+            $response = $this->transfersService->accountNameEnquiry(
+                $this->accountNumber,
+                $bank->code,
+            );
+
+            if (in_array($response['status'], [200, 201]) && isset($response['json']['data'])) {
+                $this->accountName = $response['json']['data']['accountName'] ?? 'N/A';
             } else {
-                $this->accountName = 'Invalid Account Number';
+                $this->accountName = $response['json']['message'] ?? 'Invalid Account Number';
             }
         } catch (\Exception $e) {
             $this->accountName = 'Error fetching account name';
+            \Illuminate\Support\Facades\Log::error('Account verification failed', [
+                'error' => $e->getMessage()
+            ]);
         }
 
         $this->isVerifying = false;
@@ -289,6 +322,7 @@ class ExchangeBankAccount extends Component
     public function submit()
     {
         $validated = $this->validate();
+
 
         $exchangeData = [
             'baseCurrencyId' => $this->baseCurrencyId,
@@ -303,15 +337,27 @@ class ExchangeBankAccount extends Component
             'quoteCurrencyFlag' => $this->quoteCurrencyFlag,
         ];
 
+
         if ($this->quoteCurrencyType === 'fiat') {
 
             if ($this->quoteCurrencyCode === 'NGN') {
-                $exchangeData['bank'] = $this->getBankName($this->bank);
+                if ($this->useWalletBankDetails === 'true') {
+                    $wallet = auth()->user()->virtualBankAccount;
+                    $exchangeData['bank'] = $wallet->bank_name ?? 'Wallet Bank';
+                    $exchangeData['accountNumber'] = $wallet->account_number ?? '';
+                    $exchangeData['accountName'] = $wallet->account_name ?? auth()->user()->fname.' '.auth()->user()->lname;
+                    $exchangeData['note'] = ['receiving_bank' => 'DCASH Wallet'];
+                } else {
+                    $exchangeData['bank'] = $this->getBankName($this->bank);
+                    $exchangeData['accountNumber'] = $this->accountNumber;
+                    $exchangeData['accountName'] = $this->accountName;
+                }
             } else {
                 $exchangeData['bank'] = $this->bankName;
+                $exchangeData['accountNumber'] = $this->accountNumber;
+                $exchangeData['accountName'] = $this->accountName;
             }
-            $exchangeData['accountNumber'] = $this->accountNumber;
-            $exchangeData['accountName'] = $this->accountName;
+
         } else {
             $exchangeData['walletAddress'] = $this->walletAddress;
             $exchangeData['network'] = $this->network;
@@ -324,14 +370,14 @@ class ExchangeBankAccount extends Component
 
     private function getBankName($bankId)
     {
-        $bank = Bank::find($bankId);
+        $bank = SafehavenBank::find($bankId);
         return $bank->name ?? 'Unknown Bank';
     }
 
     public function render()
     {
         //get all banks
-        $banks = Bank::all(); // Fetch all currencies
+        $banks = SafehavenBank::orderBy('name', 'asc')->get(); // Fetch all currencies
         return view('livewire.app.exchange.exchange-bank-account', compact('banks'))->layout('layouts.app.app',
             [
                 'title' => 'Enter Bank Account - Dcash Wallet',
@@ -342,9 +388,17 @@ class ExchangeBankAccount extends Component
     {
         if ($this->quoteCurrencyType === 'fiat') {
             if ($this->quoteCurrencyCode === 'NGN') {
+                // Skip validation if using wallet bank details
+                if ($this->useWalletBankDetails === 'true') {
+                    return [
+                        'useWalletBankDetails' => 'required'
+                    ];
+                }
+
                 return [
                     'bank' => 'required|string',
                     'accountNumber' => 'required|digits:10',
+                    'useWalletBankDetails' => 'required'
                 ];
             } else {
                 return [

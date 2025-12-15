@@ -71,6 +71,7 @@
                     <tr>
                         <th class="px-4 py-2">Bank</th>
                         <th class="px-4 py-2">Account Details</th>
+                        <th class="px-4 py-2">Account Type</th>
                         <th class="px-4 py-2">QR Code</th>
                         <th class="px-4 py-2">Currency</th>
                         <th class="px-4 py-2">Status</th>
@@ -86,6 +87,22 @@
                             <td class="p-4 text-gray-300">
                                 <div class="font-mono">{{ $account->account_number }}</div>
                                 <div>{{ $account->account_name }}</div>
+                            </td>
+                            <td class="p-4">
+                                @if($account->account_type)
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                        @if(strtolower($account->account_type) === 'g-cash')
+                                            bg-blue-500/20 text-blue-400
+                                        @elseif(strtolower($account->account_type) === 'paymaya')
+                                            bg-green-500/20 text-green-400
+                                        @else
+                                            bg-gray-500/20 text-gray-400
+                                        @endif">
+                                        {{ ucwords(str_replace('-', ' ', $account->account_type)) }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-500 text-xs">N/A</span>
+                                @endif
                             </td>
                             <td class="px-4 py-2">
                                 @if($account->bank_account_qr_code_url)
@@ -117,7 +134,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-4 text-center text-gray-400">No bank accounts found.</td>
+                            <td colspan="9" class="p-4 text-center text-gray-400">No bank accounts found.</td>
                         </tr>
                     @endforelse
                     </tbody>
@@ -245,10 +262,25 @@
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
                         <option value="">Select Currency</option>
                         @foreach($currencies as $currency)
-                            <option value="{{ $currency->id }}">{{ $currency->code }} - {{ $currency->name }}</option>
+                            @if($currency->type == "fiat")
+                                <option value="{{ $currency->id }}">{{ $currency->code }} - {{ $currency->name }}
+                                </option>
+                            @endif
                         @endforeach
                     </select>
                     @error('newBank.currency_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
+                    <label for="new_account_type" class="block text-sm text-gray-400 mb-1">Account Type</label>
+                    <select id="new_account_type" wire:model.defer="newBank.account_type"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+                        <option value="">Select Account Type</option>
+                        <option value="bank">Bank Account</option>
+                        <option value="g-cash">G-Cash</option>
+                        <option value="paymaya">PayMaya</option>
+                    </select>
+                    @error('newBank.account_type') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label for="new_bank_name" class="block text-sm text-gray-400 mb-1">Bank Name</label>
@@ -275,18 +307,18 @@
                 <div>
                     <label class="block text-sm text-gray-400 mb-2">QR Code (Optional)</label>
                     <div class="flex items-center gap-4">
-                        @if(isset($newBank['qr']) && $newBank['qr'])
-                            <img src="{{ $newBank['qr']->temporaryUrl() }}"
+                        @if(isset($newBankQr) && $newBankQr)
+                            <img src="{{ $newBankQr->temporaryUrl() }}"
                                  class="w-16 h-16 object-cover rounded-md bg-white p-1">
                         @else
                             <div class="w-16 h-16 bg-gray-700 rounded-md flex items-center justify-center">
                                 <i data-lucide="qr-code" class="w-8 h-8 text-gray-500"></i>
                             </div>
                         @endif
-                        <input type="file" wire:model="newBank.qr" accept="image/*"
+                        <input type="file" wire:model="newBankQr" accept="image/*"
                                class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600">
                     </div>
-                    @error('newBank.qr') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                    @error('newBankQr') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -329,11 +361,37 @@
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
                         <option value="">Select Currency</option>
                         @foreach($currencies as $currency)
-                            <option value="{{ $currency->id }}">{{ $currency->code }} - {{ $currency->name }}</option>
+
+                            @if($currency->type == "fiat")
+                                <option value="{{ $currency->id }}">{{ $currency->code }} - {{ $currency->name }}
+                                </option>
+                            @endif
                         @endforeach
                     </select>
                     @error('editingBank.currency_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                 </div>
+
+                <div>
+                    <label for="edit_account_type" class="block text-sm text-gray-400 mb-1">Account Type</label>
+                    <select id="edit_account_type" wire:model.defer="editingBank.account_type"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+                        <option value="">Select Account Type</option>
+                        <option value="bank" {{ ($editingBank['account_type'] ?? '') === 'bank' ? 'selected' : '' }}>
+                            Bank Account
+                        </option>
+                        <option
+                            value="g-cash" {{ ($editingBank['account_type'] ?? '') === 'g-cash' ? 'selected' : '' }}>
+                            G-Cash
+                        </option>
+                        <option
+                            value="paymaya" {{ ($editingBank['account_type'] ?? '') === 'paymaya' ? 'selected' : '' }}>
+                            PayMaya
+                        </option>
+                    </select>
+                    @error('editingBank.account_type') <span
+                        class="text-xs text-red-500">{{ $message }}</span> @enderror
+                </div>
+
                 <div>
                     <label for="edit_bank_name" class="block text-sm text-gray-400 mb-1">Bank Name</label>
                     <input type="text" id="edit_bank_name" wire:model.defer="editingBank.bank_name"
@@ -422,9 +480,9 @@
             <form wire:submit.prevent="storeWallet" class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Currency</label>
-                    <select wire:model="newWallet.currency_id"
+                    <select wire:model.defer="newWallet.currency_id"
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
-                        <option value="" selected disabled>Select currency</option>
+                        <option value="">Select Currency</option>
                         @foreach($currencies as $currency)
                             @if($currency->type == "crypto")
                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->code }})

@@ -12,6 +12,19 @@
             .file-upload-label {
                 @apply border-2 border-dashed border-gray-600 hover:border-[#E1B362] transition-colors;
             }
+
+            .spinner {
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
         </style>
     @endpush
     <x-slot name="header">
@@ -64,31 +77,45 @@
                 @if($idType === 'passport')
                     <div>
                         <p class="font-medium text-white mb-2">Passport Data Page</p>
-                        @if($passportPage)
-                            <div class="relative">
-                                <img src="{{ $passportPage->temporaryUrl() }}"
-                                     class="w-full h-30 object-cover rounded-lg border border-gray-600"
-                                     alt="Passport Data Page Preview">
-                                <button type="button"
-                                        wire:click="removePassportPage"
-                                        class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
-                                </button>
+
+                        <!-- Loading state for passport -->
+                        <div wire:loading wire:target="passportPage" class="relative">
+                            <div
+                                class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg h-48 bg-gray-700/50">
+                                <div
+                                    class="spinner w-8 h-8 border-2 border-[#E1B362] border-t-transparent rounded-full mb-2"></div>
+                                <p class="text-sm text-gray-400">Processing image...</p>
                             </div>
-                        @else
-                            <label
-                                for="passportPage"
-                                class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer h-48">
-                                <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-500 mb-2"></i>
-                                <p class="text-sm font-semibold">Upload Data Page</p>
-                                <p class="text-xs text-gray-500">PNG or JPG (max. 5MB)</p>
-                            </label>
-                            <input type="file"
-                                   wire:model="passportPage"
-                                   id="passportPage"
-                                   class="hidden"
-                                   accept="image/*"/>
-                        @endif
+                        </div>
+
+                        <!-- Loaded state -->
+                        <div wire:loading.remove wire:target="passportPage">
+                            @if($passportPage)
+                                <div class="relative">
+                                    <img src="{{ $passportPage->temporaryUrl() }}"
+                                         class="w-full h-48 object-cover rounded-lg border border-gray-600"
+                                         alt="Passport Data Page Preview">
+                                    <button type="button"
+                                            wire:click="removePassportPage"
+                                            class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            @else
+                                <label
+                                    for="passportPage"
+                                    class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer h-48 hover:bg-gray-700/20 transition-colors">
+                                    <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-500 mb-2"></i>
+                                    <p class="text-sm font-semibold text-gray-300">Upload Data Page</p>
+                                    <p class="text-xs text-gray-500">PNG or JPG (max. 5MB)</p>
+                                </label>
+                                <input type="file"
+                                       wire:model="passportPage"
+                                       id="passportPage"
+                                       class="hidden"
+                                       accept="image/*"/>
+                            @endif
+                        </div>
                         @error('passportPage') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
                 @else
@@ -96,62 +123,90 @@
                         <!-- Front ID Upload -->
                         <div>
                             <p class="font-medium text-white mb-2">Front of ID</p>
-                            @if($frontId)
-                                <div class="relative">
-                                    <img src="{{ $frontId->temporaryUrl() }}"
-                                         class="w-full h-30 object-cover rounded-lg border border-gray-600"
-                                         alt="ID Front Preview">
-                                    <button type="button"
-                                            wire:click="removeFront"
-                                            class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </button>
+
+                            <!-- Loading state for front ID -->
+                            <div wire:loading wire:target="frontId" class="relative">
+                                <div
+                                    class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg h-40 bg-gray-700/50">
+                                    <div
+                                        class="spinner w-6 h-6 border-2 border-[#E1B362] border-t-transparent rounded-full mb-2"></div>
+                                    <p class="text-xs text-gray-400">Processing...</p>
                                 </div>
-                            @else
-                                <label
-                                    for="frontId"
-                                    class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer h-40">
-                                    <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-500 mb-2"></i>
-                                    <p class="text-sm font-semibold">Click to upload</p>
-                                    <p class="text-xs text-gray-500">PNG or JPG (max. 5MB)</p>
-                                </label>
-                                <input type="file"
-                                       wire:model="frontId"
-                                       id="frontId"
-                                       class="hidden"
-                                       accept="image/*"/>
-                            @endif
+                            </div>
+
+                            <!-- Loaded state -->
+                            <div wire:loading.remove wire:target="frontId">
+                                @if($frontId)
+                                    <div class="relative">
+                                        <img src="{{ $frontId->temporaryUrl() }}"
+                                             class="w-full h-40 object-cover rounded-lg border border-gray-600"
+                                             alt="ID Front Preview">
+                                        <button type="button"
+                                                wire:click="removeFront"
+                                                class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                @else
+                                    <label
+                                        for="frontId"
+                                        class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer h-40 hover:bg-gray-700/20 transition-colors">
+                                        <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-500 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-300">Click to upload</p>
+                                        <p class="text-xs text-gray-500">PNG or JPG (max. 5MB)</p>
+                                    </label>
+                                    <input type="file"
+                                           wire:model="frontId"
+                                           id="frontId"
+                                           class="hidden"
+                                           accept="image/*"/>
+                                @endif
+                            </div>
                             @error('frontId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Back ID Upload -->
                         <div>
                             <p class="font-medium text-white mb-2">Back of ID</p>
-                            @if($backId)
-                                <div class="relative">
-                                    <img src="{{ $backId->temporaryUrl() }}"
-                                         class="w-full h-40 object-cover rounded-lg border border-gray-600"
-                                         alt="ID Back Preview">
-                                    <button type="button"
-                                            wire:click="removeBack"
-                                            class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </button>
+
+                            <!-- Loading state for back ID -->
+                            <div wire:loading wire:target="backId" class="relative">
+                                <div
+                                    class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg h-40 bg-gray-700/50">
+                                    <div
+                                        class="spinner w-6 h-6 border-2 border-[#E1B362] border-t-transparent rounded-full mb-2"></div>
+                                    <p class="text-xs text-gray-400">Processing...</p>
                                 </div>
-                            @else
-                                <label
-                                    for="backId"
-                                    class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer h-40">
-                                    <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-500 mb-2"></i>
-                                    <p class="text-sm font-semibold">Click to upload</p>
-                                    <p class="text-xs text-gray-500">PNG or JPG (max. 5MB)</p>
-                                </label>
-                                <input type="file"
-                                       wire:model="backId"
-                                       id="backId"
-                                       class="hidden"
-                                       accept="image/*"/>
-                            @endif
+                            </div>
+
+                            <!-- Loaded state -->
+                            <div wire:loading.remove wire:target="backId">
+                                @if($backId)
+                                    <div class="relative">
+                                        <img src="{{ $backId->temporaryUrl() }}"
+                                             class="w-full h-40 object-cover rounded-lg border border-gray-600"
+                                             alt="ID Back Preview">
+                                        <button type="button"
+                                                wire:click="removeBack"
+                                                class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                @else
+                                    <label
+                                        for="backId"
+                                        class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer h-40 hover:bg-gray-700/20 transition-colors">
+                                        <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-500 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-300">Click to upload</p>
+                                        <p class="text-xs text-gray-500">PNG or JPG (max. 5MB)</p>
+                                    </label>
+                                    <input type="file"
+                                           wire:model="backId"
+                                           id="backId"
+                                           class="hidden"
+                                           accept="image/*"/>
+                                @endif
+                            </div>
                             @error('backId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -160,8 +215,15 @@
                 <div class="pt-4">
                     <button
                         type="submit"
-                        class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all">
-                        Continue
+                        class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50"
+                        wire:loading.attr="disabled"
+                        wire:target="submit">
+                        <span wire:loading.remove wire:target="submit">Continue</span>
+                        <span wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
+                                            <div
+                                                class="spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                            Processing...
+                                        </span>
                     </button>
                 </div>
             </div>

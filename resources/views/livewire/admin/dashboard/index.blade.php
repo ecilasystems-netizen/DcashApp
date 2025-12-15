@@ -2,7 +2,7 @@
     <x-slot name="header">
         <header class="bg-gray-800/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700">
             <div class="px-6 py-4 flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+                <h1 class="text-2xl font-bold text-white">Hello, {{Auth::user()->fname}}</h1>
                 <div class="flex items-center gap-4">
 
 
@@ -112,6 +112,8 @@
     </x-slot>
 
     <div class="p-6 space-y-8">
+
+
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-gray-800 border border-gray-700 p-6 rounded-lg">
@@ -124,6 +126,8 @@
                         <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
                 </div>
+
+
                 <p class="text-xs {{ $this->stats['user_growth'] >= 0 ? 'text-green-400' : 'text-red-400' }} mt-2">
                     {{ $this->stats['user_growth'] >= 0 ? '+' : '' }}{{ $this->stats['user_growth'] }}% from last month
                 </p>
@@ -244,7 +248,7 @@
                 @endif
             </div>
         </div>
-        
+
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 bg-gray-800 border border-gray-700 p-6 rounded-lg">

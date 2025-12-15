@@ -24,8 +24,24 @@ Route::get('/bills/import',
     [FlutterwaveBillsController::class, 'importFromJson'])->name('bills-flutterwave.import-from-json');
 
 
-Route::get('/test/nigerian-banks', [TestController::class, 'index']);
+Route::get('/test/create-safe-haven-sub-account', [TestController::class, 'createSafeHavenSubAccount']);
 
 //flutterwave webhook route
 Route::post('/webhooks/flutterwave',
     [FlutterwaveWebhookController::class, 'handleFlutterwaveWebhook'])->name('webhooks.flutterwave');
+
+
+// Safe Haven API Test Routes
+Route::get('/safe-haven/bank-list', [TestController::class, 'getBanks']);
+Route::get('/safe-haven/bank-list/sync', [TestController::class, 'syncSafeHavenBankList']);
+Route::post('/safe-haven/verify-account', [TestController::class, 'verifyAccountDetails']);
+
+Route::get('/safe-haven/test-route', [TestController::class, 'safeHaveApiTestRoute']);
+
+// Currency Rate API Routes (no authentication required)
+Route::prefix('currency')->group(function () {
+    Route::get('/currencies', [App\Http\Controllers\Api\CurrencyRateController::class, 'getAllCurrencies']);
+    Route::get('/rates', [App\Http\Controllers\Api\CurrencyRateController::class, 'getAllRates']);
+    Route::get('/rate', [App\Http\Controllers\Api\CurrencyRateController::class, 'getRate']);
+    Route::get('/convert', [App\Http\Controllers\Api\CurrencyRateController::class, 'convertAmount']);
+});

@@ -31,7 +31,8 @@ class User extends Authenticatable
         'is_admin',
         'referral_code',
         'referred_by',
-        'pin'
+        'pin',
+        'account_tier_id'
     ];
 
     /**
@@ -86,6 +87,11 @@ class User extends Authenticatable
         return $this->hasOne(KycVerification::class)->latestOfMany();
     }
 
+    public function bonuses()
+    {
+        return $this->hasMany(Bonus::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -109,5 +115,31 @@ class User extends Authenticatable
     public function walletTransactions(): HasMany
     {
         return $this->hasMany(WalletTransaction::class);
+    }
+
+    // Add this method to your User model
+
+    /**
+     * Get all referral bonuses earned by this user
+     */
+    public function referralBonuses(): HasMany
+    {
+        return $this->hasMany(ReferralBonus::class, 'referrer_id');
+    }
+
+    /**
+     * Get all referral bonuses where this user was the referred user
+     */
+    public function referredBonuses(): HasMany
+    {
+        return $this->hasMany(ReferralBonus::class, 'referred_user_id');
+    }
+
+    /**
+     * Get total credited referral bonus amount
+     */
+    public function getTotalReferralBonusAttribute(): float
+    {
+        return $this->referralBonuses()->credited()->sum('bonus_amount');
     }
 }

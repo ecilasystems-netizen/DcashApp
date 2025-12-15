@@ -63,23 +63,6 @@
                     </div>
                 </div>
 
-                @if($nationality === 'Nigeria')
-                    <div>
-                        <label for="bvn" class="block text-gray-400 mb-2">BVN</label>
-                        <input
-                            wire:model="bvn"
-                            type="text"
-                            id="bvn"
-                            placeholder="Enter your 11-digit BVN"
-                            maxlength="11"
-                            pattern="\d{11}"
-                            inputmode="numeric"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
-                        />
-                        @error('bvn') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-                @endif
-
 
                 <div>
                     <label for="address" class="block text-gray-400 mb-2">Residential Address</label>

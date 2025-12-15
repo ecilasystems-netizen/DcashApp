@@ -14,8 +14,8 @@ class WalletTransaction extends Model
         'reference',
         'wallet_id',
         'user_id',
-        'direction',
-        'type',
+        'direction', //credit , debit
+        'type', //deposit,airtime, data, electricity, tv, transfer, withdrawal
         'amount',
         'charge',
         'description',

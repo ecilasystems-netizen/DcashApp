@@ -2,9 +2,12 @@
 
 namespace App\Livewire\App\Auth;
 
+use App\Mail\PasswordResetNotificationMail;
 use App\Models\PasswordResetToken;
 use App\Models\User;
+use App\Services\DeviceInfoService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
 class NewPassword extends Component
@@ -32,6 +35,17 @@ class NewPassword extends Component
         if ($user) {
             $user->password = Hash::make($this->password);
             $user->save();
+
+            // Create instance of DeviceInfoService
+            $deviceInfoService = app(DeviceInfoService::class);
+            $deviceInfo = $deviceInfoService->getDeviceInfo();
+
+            // Here you can log the device info or send a notification email to the user
+            $browser = $deviceInfo['browser'];
+            $location = $deviceInfo['location'];
+
+            //send email notification
+            Mail::to($this->email)->send(new PasswordResetNotificationMail($user->fname, $browser, $location));
 
             PasswordResetToken::where('email', $this->email)->delete();
             session()->forget(['password-reset-email', 'otp-verified']);

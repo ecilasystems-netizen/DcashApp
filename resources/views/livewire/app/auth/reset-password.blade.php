@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <x-logo class="w-[150px] h-[70px] mx-auto mb-4"/>
+                <x-logo class="w-[220px] h-[100px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Reset Your Password</h1>
                 <p class="text-gray-400">Enter your email to make a password reset.</p>
             </div>

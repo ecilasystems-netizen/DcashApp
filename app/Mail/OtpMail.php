@@ -13,53 +13,29 @@ class OtpMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /**
-     * The one-time password.
-     *
-     * @var string
-     */
-    public $otp;
+    public string $otp;
+    public string $name;
 
-    /**
-     * Create a new message instance.
-     *
-     * @param  string  $otp
-     * @return void
-     */
-    public function __construct($otp)
+    public function __construct(string $otp, string $name)
     {
         $this->otp = $otp;
+        $this->name = $name;
     }
 
-    /**
-     * Get the message envelope.
-     *
-     * @return \Illuminate\Mail\Mailables\Envelope
-     */
-    public function envelope()
+    public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Password Reset OTP',
+            subject: 'Verification Otp',
         );
     }
 
-    /**
-     * Get the message content definition.
-     *
-     * @return \Illuminate\Mail\Mailables\Content
-     */
-    public function content()
+    public function content(): Content
     {
         return new Content(
-            view: 'emails.otp',
+            markdown: 'emails.otp',
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
     public function attachments(): array
     {
         return [];

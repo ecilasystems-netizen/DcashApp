@@ -20,24 +20,57 @@ class CurrencyList extends Component
     public $newBuyRate;
     public $newSellRate;
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'code' => 'required|string|max:10',
-        'symbol' => 'required|string|max:10',
-        'flag' => 'nullable|image|max:1024', // 1MB max
-        'newBuyRate' => 'required|numeric|min:0',
-        'newSellRate' => 'required|numeric|min:0',
-    ];
+    public function toggleAutoUpdate($pairId)
+    {
+        try {
+            $pair = CurrencyPair::findOrFail($pairId);
 
-    protected $rateRules = [
-        'selectedRateId' => 'required|exists:currency_pairs,id',
-        'newBuyRate' => 'required|numeric|min:0',
-        'newSellRate' => 'required|numeric|min:0',
-    ];
+            // Toggle the auto_update value
+            $newAutoUpdateValue = !$pair->auto_update;
+            $pair->auto_update = $newAutoUpdateValue;
+            $pair->save();
+
+            // Find and update the reverse pair if it exists
+            $reversePair = CurrencyPair::where('base_currency_id', $pair->quote_currency_id)
+                ->where('quote_currency_id', $pair->base_currency_id)
+                ->first();
+
+            if ($reversePair) {
+                $reversePair->auto_update = $newAutoUpdateValue;
+                $reversePair->save();
+            }
+
+            session()->flash('success', 'Auto-update setting updated successfully for both pair directions');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to update auto-update setting');
+            Log::error('Failed to toggle auto-update: '.$e->getMessage());
+        }
+    }
+
+    // Separate validation rules for adding currency
+    protected function getCurrencyRules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:10',
+            'symbol' => 'required|string|max:10',
+            'flag' => 'nullable|image|max:1024',
+        ];
+    }
+
+    // Separate validation rules for updating rates
+    protected function getRateRules()
+    {
+        return [
+            'selectedRateId' => 'required|exists:currency_pairs,id',
+            'newBuyRate' => 'required|numeric|min:0',
+            'newSellRate' => 'required|numeric|min:0',
+        ];
+    }
 
     public function updateRate()
     {
-        $this->validate($this->rateRules);
+        $this->validate($this->getRateRules());
 
         try {
             $rate = CurrencyPair::findOrFail($this->selectedRateId);
@@ -62,13 +95,8 @@ class CurrencyList extends Component
                 'message' => 'Rate updated successfully!'
             ]);
 
-
-            // Add this line to close the modal
             $this->dispatch('close-rate-modal');
-            
-            // Reset form fields
             $this->reset(['selectedRateId', 'newBuyRate', 'newSellRate']);
-
 
         } catch (\Exception $e) {
             report($e);
@@ -80,6 +108,7 @@ class CurrencyList extends Component
             ]);
         }
     }
+
 
     public function updatedName()
     {
@@ -122,6 +151,34 @@ class CurrencyList extends Component
         }
     }
 
+
+    public function toggleCurrency($currencyId)
+    {
+        try {
+            $currency = Currency::findOrFail($currencyId);
+            $currency->status = !$currency->status;
+            $currency->save();
+
+            // Also toggle related currency pairs
+            CurrencyPair::where('base_currency_id', $currencyId)
+                ->orWhere('quote_currency_id', $currencyId)
+                ->update(['is_active' => $currency->status]);
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => $currency->status ?
+                    "{$currency->code} has been activated" :
+                    "{$currency->code} has been deactivated"
+            ]);
+        } catch (\Exception $e) {
+            report($e);
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to update currency status'
+            ]);
+        }
+    }
+
     public function updatedCode()
     {
         // Also trigger when code changes
@@ -130,59 +187,79 @@ class CurrencyList extends Component
         }
     }
 
+
     public function saveCurrency()
     {
-        $this->validate();
 
-        $flagPath = $this->flag ? $this->flag->store('images/flags', 'public') : null;
+        // Use the specific currency validation rules
+        $this->validate($this->getCurrencyRules());
 
-        // Create the new currency
-        $newCurrency = Currency::create([
-            'name' => $this->name,
-            'code' => $this->code,
-            'symbol' => $this->symbol,
-            'type' => $this->is_crypto ? 'crypto' : 'fiat',
-            'flag' => $flagPath,
-            'status' => 1,
-        ]);
+        try {
+            $flagPath = $this->flag ? $this->flag->store('images/flags', 'public') : null;
 
-        // Save the currency pairs
-        foreach ($this->potentialPairs as $pair) {
-            $key = $pair['key'];
-            $rate = $this->newPairRates[$key] ?? null;
+            // Create the new currency
+            $newCurrency = Currency::create([
+                'name' => $this->name,
+                'code' => $this->code,
+                'symbol' => $this->symbol,
+                'type' => $this->is_crypto ? 'crypto' : 'fiat',
+                'flag' => 'storage/'.$flagPath,
+                'status' => 1,
+            ]);
 
-            if (!empty($rate)) {
-                if (str_starts_with($key, 'new_to_')) {
-                    // New currency is base, existing is quote
-                    $baseId = $newCurrency->id;
-                    $quoteId = $pair['existing_currency']->id;
-                } else {
-                    // Existing currency is base, new is quote
-                    $baseId = $pair['existing_currency']->id;
-                    $quoteId = $newCurrency->id;
+            // Save the currency pairs if rates are provided
+            foreach ($this->potentialPairs as $pair) {
+                $key = $pair['key'];
+                $rate = $this->newPairRates[$key] ?? null;
+
+                if (!empty($rate)) {
+                    if (str_starts_with($key, 'new_to_')) {
+                        // New currency is base, existing is quote
+                        $baseId = $newCurrency->id;
+                        $quoteId = $pair['existing_currency']->id;
+                    } else {
+                        // Existing currency is base, new is quote
+                        $baseId = $pair['existing_currency']->id;
+                        $quoteId = $newCurrency->id;
+                    }
+
+                    CurrencyPair::create([
+                        'base_currency_id' => $baseId,
+                        'quote_currency_id' => $quoteId,
+                        'rate' => $rate,
+                        'raw_rate' => $rate,
+                        'is_active' => 1
+                    ]);
                 }
-
-                CurrencyPair::create([
-                    'base_currency_id' => $baseId,
-                    'quote_currency_id' => $quoteId,
-                    'rate' => $rate,
-                    'raw_rate' => $rate,
-                    'is_active' => 1
-                ]);
             }
+
+            // Reset form fields
+            $this->reset(['name', 'code', 'symbol', 'is_crypto', 'flag', 'potentialPairs', 'newPairRates']);
+
+            // Close modal
+            $this->dispatch('close-currency-modal');
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Currency added successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            report($e);
+            Log::error('Failed to save currency: '.$e->getMessage());
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to save currency.'
+            ]);
         }
-
-        // Reset form fields
-        $this->reset(['name', 'code', 'symbol', 'is_crypto', 'flag', 'potentialPairs', 'newPairRates']);
-
-        // Close modal
-        $this->dispatch('close-currency-modal');
     }
+
 
     public function render()
     {
 
-        $currencies = Currency::where('status', 1)->get();
+        $currencies = Currency::get();
 
         // Get all active currency pairs
         $rawPairs = CurrencyPair::where('is_active', 1)->get();
@@ -234,6 +311,7 @@ class CurrencyList extends Component
                 'pair' => $pairName,
                 'buy_rate' => $buyRate,
                 'sell_rate' => $sellRate,
+                'auto_update' => $directPair->auto_update,
                 'base_currency' => $baseCurrency,
                 'quote_currency' => $quoteCurrency,
                 'direct_pair_id' => $directPair ? $directPair->id : null,

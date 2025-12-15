@@ -20,7 +20,9 @@
                 box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
             }
 
-            .status-pending_payment, .status-pending_confirmation {
+            .status-pending,
+            .status-pending_payment,
+            .status-pending_confirmation {
                 background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08));
                 color: #F59E0B;
                 border-color: rgba(245, 158, 11, 0.2);
@@ -34,18 +36,47 @@
                 box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
             }
 
-            .status-failed {
+            .status-failed,
+            .status-expired {
                 background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08));
                 color: #EF4444;
                 border-color: rgba(239, 68, 68, 0.2);
                 box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
             }
 
-            .status-rejected {
+            .status-rejected,
+            .status-cancelled {
                 background: linear-gradient(135deg, rgba(156, 163, 175, 0.15), rgba(156, 163, 175, 0.08));
                 color: #9CA3AF;
                 border-color: rgba(156, 163, 175, 0.2);
                 box-shadow: 0 2px 8px rgba(156, 163, 175, 0.1);
+            }
+
+            .transaction-type-badge {
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .type-wallet {
+                background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.08));
+                color: #8B5CF6;
+                border: 1px solid rgba(139, 92, 246, 0.2);
+            }
+
+            .type-bonus {
+                background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.08));
+                color: #EC4899;
+                border: 1px solid rgba(236, 72, 153, 0.2);
+            }
+
+            .type-exchange {
+                background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(14, 165, 233, 0.08));
+                color: #0EA5E9;
+                border: 1px solid rgba(14, 165, 233, 0.2);
             }
 
             .stat-card {
@@ -73,58 +104,26 @@
                 border-color: rgba(225, 179, 98, 0.3);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             }
-
-            .gradient-border {
-                position: relative;
-                overflow: hidden;
-            }
-
-            .gradient-border::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                padding: 1px;
-                background: linear-gradient(135deg, rgba(225, 179, 98, 0.4), rgba(225, 179, 98, 0.1));
-                border-radius: inherit;
-                mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                mask-composite: xor;
-            }
         </style>
     @endpush
 
     @php
         $statusConfig = [
-            'pending_payment' => [
-                'icon' => 'credit-card',
-                'label' => 'Pending Payment'
-            ],
-            'pending_confirmation' => [
-                'icon' => 'clock',
-                'label' => 'Pending Confirmation'
-            ],
-            'processing' => [
-                'icon' => 'loader',
-                'label' => 'Processing'
-            ],
-            'completed' => [
-                'icon' => 'check-circle',
-                'label' => 'Completed'
-            ],
-            'failed' => [
-                'icon' => 'x-circle',
-                'label' => 'Failed'
-            ],
-            'rejected' => [
-                'icon' => 'x-octagon',
-                'label' => 'Rejected'
-            ]
+            'pending_payment' => ['icon' => 'credit-card', 'label' => 'Pending Payment'],
+            'pending_confirmation' => ['icon' => 'clock', 'label' => 'Pending Confirmation'],
+            'pending' => ['icon' => 'clock', 'label' => 'Pending'],
+            'processing' => ['icon' => 'loader', 'label' => 'Processing'],
+            'completed' => ['icon' => 'check-circle', 'label' => 'Completed'],
+            'failed' => ['icon' => 'x-circle', 'label' => 'Failed'],
+            'rejected' => ['icon' => 'x-octagon', 'label' => 'Rejected'],
+            'cancelled' => ['icon' => 'x', 'label' => 'Cancelled'],
+            'expired' => ['icon' => 'clock', 'label' => 'Expired'],
         ];
     @endphp
 
     <x-slot name="header">
         <header class="bg-gray-950 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700/80">
             <div class="px-4 lg:px-0 py-4 flex justify-between items-center">
-                <!-- Mobile Header -->
                 <div class="lg:hidden flex items-center space-x-4">
                     <a type="button" class="p-1 rounded-full bg-gray-800" href="{{ route('dashboard') }}">
                         <i data-lucide="arrow-left"></i>
@@ -134,7 +133,6 @@
                         <h2 class="font-bold text-xl text-white">History</h2>
                     </div>
                 </div>
-                <!-- Desktop Header -->
                 <div class="hidden lg:block">
                     <h1 class="text-2xl font-bold text-white">Transaction History</h1>
                     <p class="text-gray-400 text-sm mt-1">Review your recent account activity.</p>
@@ -144,52 +142,72 @@
     </x-slot>
 
     <div class="p-0 lg:p-8 space-y-6">
-        @if(count($transactions) > 0)
+        @if (count($transactions) > 0)
 
-            @if(session('exchange_active_tab', 'exchange') === 'exchange' && isset($stats))
-                <!-- Transaction Statistics -->
+            @if (session('exchange_active_tab', 'exchange') === 'exchange' && isset($stats))
+                <!-- Exchange Statistics -->
                 <div class="grid grid-cols-1 gap-6">
-                    <!-- Mobile Stats Grid -->
                     <div class="grid grid-cols-3 gap-3 md:hidden">
-                        <div class="stat-card rounded-xl p-4">
-                            <div class="flex flex-col items-center text-center space-y-2">
+                        <div class="stat-card rounded-xl p-2 col-span-3">
+                            <div class="flex items-center gap-1 mb-2">
                                 <div
-                                    class="bg-gradient-to-br from-blue-500/20 to-blue-600/20 text-blue-400 p-3 rounded-full">
-                                    <i data-lucide="list" class="w-5 h-5"></i>
+                                    class="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 text-yellow-400 p-2 rounded-lg">
+                                    <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                </div>
+                                <p class="text-sm text-gray-400 font-medium">Volume (30d)</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                @forelse($stats['volumes'] as $volume)
+                                    <div class="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50">
+                                        <p class="text-xs text-gray-400">{{ $volume['currency']->code }}</p>
+                                        <p class="text-sm text-white">{{ $volume['currency']->symbol }}
+                                            {{ number_format($volume['amount'], 2) }}</p>
+                                    </div>
+                                @empty
+                                    <div class="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50">
+                                        <p class="text-base font-bold text-gray-500">-</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                        <div class="stat-card rounded-xl p-1">
+                            <div class="flex items-center gap-1">
+                                <div
+                                    class="bg-gradient-to-br from-blue-500/20 to-blue-600/20 text-blue-400 p-2 rounded-lg">
+                                    <i data-lucide="list" class="w-4 h-4"></i>
                                 </div>
                                 <div>
-                                    <p class="text-xl font-bold text-white">{{ $stats['total'] }}</p>
+                                    <p class="text-base font-bold text-white">{{ $stats['total'] }}</p>
                                     <p class="text-xs text-gray-400">Total</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <div class="flex flex-col items-center text-center space-y-2">
+                        <div class="stat-card rounded-xl p-1">
+                            <div class="flex items-center gap-0">
                                 <div
-                                    class="bg-gradient-to-br from-green-500/20 to-green-600/20 text-green-400 p-3 rounded-full">
-                                    <i data-lucide="check-check" class="w-5 h-5"></i>
+                                    class="bg-gradient-to-br from-green-500/20 to-green-600/20 text-green-400 p-2 rounded-lg">
+                                    <i data-lucide="check-check" class="w-4 h-4"></i>
                                 </div>
                                 <div>
-                                    <p class="text-xl font-bold text-white">{{ $stats['successful'] }}</p>
-                                    <p class="text-xs text-gray-400">Successful</p>
+                                    <p class="text-base font-bold text-white">{{ $stats['successful'] }}</p>
+                                    <p class="text-xs text-gray-400">Completed</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="stat-card rounded-xl p-4">
-                            <div class="flex flex-col items-center text-center space-y-2">
+                        <div class="stat-card rounded-xl p-1">
+                            <div class="flex items-center gap-1">
                                 <div
-                                    class="bg-gradient-to-br from-orange-500/20 to-orange-600/20 text-orange-400 p-3 rounded-full">
-                                    <i data-lucide="loader" class="w-5 h-5"></i>
+                                    class="bg-gradient-to-br from-orange-500/20 to-orange-600/20 text-orange-400 p-2 rounded-lg">
+                                    <i data-lucide="loader" class="w-4 h-4"></i>
                                 </div>
                                 <div>
-                                    <p class="text-xl font-bold text-white">{{ $stats['pending'] }}</p>
+                                    <p class="text-base font-bold text-white">{{ $stats['pending'] }}</p>
                                     <p class="text-xs text-gray-400">Pending</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Desktop Stats Grid -->
                     <div class="hidden md:grid md:grid-cols-4 gap-6">
                         <div class="stat-card rounded-xl p-6">
                             <div class="flex items-center space-x-4">
@@ -213,9 +231,8 @@
                                     <p class="text-sm text-gray-400 font-medium">Volume (30d)</p>
                                     <div class="space-y-1">
                                         @forelse($stats['volumes'] as $volume)
-                                            <p class="text-lg font-bold text-white">
-                                                {{ $volume['currency']->symbol }} {{ number_format($volume['amount'], 2) }}
-                                            </p>
+                                            <p class="text-lg font-bold text-white">{{ $volume['currency']->symbol }}
+                                                {{ number_format($volume['amount'], 2) }}</p>
                                         @empty
                                             <p class="text-lg font-bold text-gray-500">-</p>
                                         @endforelse
@@ -252,104 +269,131 @@
             @endif
 
             <!-- Transactions Container -->
-            <div class=" rounded-2xl overflow-hidden">
+            <div class="rounded-2xl overflow-hidden">
                 <div class="bg-gradient-to-br from-gray-900/90 to-gray-950/90 backdrop-blur-md">
-                    <!-- Filters and Search -->
-                    <div class="p-6 border-b border-gray-700/50">
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div class="relative w-full md:flex-1 max-w-md hidden md:block">
-                                <i data-lucide="search"
-                                   class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                                <input type="text" placeholder="Search by asset or ID..."
-                                       class="w-full bg-gray-800/80 border border-gray-700/50 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#E1B362]/50 focus:border-[#E1B362]/50 transition-all">
-                            </div>
-                            <div class="flex items-center gap-3 w-full md:w-auto">
-                                <select
-                                    class="bg-gray-800/80 border border-gray-700/50 rounded-xl px-4 py-3 text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#E1B362]/50 focus:border-[#E1B362]/50 transition-all text-sm font-medium min-w-0 flex-shrink-0">
-                                    <option>All Status</option>
-                                    <option>Completed</option>
-                                    <option>Pending</option>
-                                    <option>Failed</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Mobile Transaction List -->
                     <div class="lg:hidden p-4 space-y-4">
-                        @if(session('exchange_active_tab', 'exchange') === 'wallet')
-                            @foreach($transactions as $transaction)
-                                <a href="{{ route('wallet.transactions.receipt', ['ref' => $transaction->reference]) }}"
+                        @foreach ($transactions as $transaction)
+                            @if ($transaction['transaction_type'] === 'wallet')
+                                <a href="{{ route('wallet.transactions.receipt', ['ref' => $transaction['reference']]) }}"
                                    class="block transaction-card rounded-xl p-4 hover:scale-[1.02] transition-all duration-300">
                                     <div class="flex justify-between items-center mb-3">
-                                                        <span class="status-pill status-{{ $transaction->status }}">
-                                                            <i data-lucide="{{ $statusConfig[$transaction->status]['icon'] ?? 'circle' }}"
-                                                               class="w-3 h-3"></i>
-                                                            {{ ucfirst($transaction->status) }}
-                                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="transaction-type-badge type-wallet">
+                                                <i data-lucide="wallet" class="w-3 h-3 inline"></i> Wallet
+                                            </span>
+                                            <span class="status-pill status-{{ $transaction['status'] }}">
+                                                <i data-lucide="{{ $statusConfig[$transaction['status']]['icon'] ?? 'circle' }}"
+                                                   class="w-3 h-3"></i>
+                                                {{ $statusConfig[$transaction['status']]['label'] ?? ucfirst($transaction['status']) }}
+                                            </span>
+                                        </div>
                                         <span
-                                            class="text-xs text-gray-400 font-medium">{{ $transaction->created_at->format('M d, Y') }}</span>
+                                            class="text-xs text-gray-400 font-medium">{{ \Carbon\Carbon::parse($transaction['created_at'])->format('M d, Y') }}</span>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
-                                                            <span
-                                                                class="text-sm font-semibold text-white">{{ ucfirst($transaction->type) }}</span>
                                             <span
-                                                class="text-xs px-3 py-1 rounded-full font-medium {{ $transaction->direction === 'credit' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30' }}">
-                                                                {{ ucfirst($transaction->direction) }}
-                                                            </span>
+                                                class="text-sm font-semibold text-white">{{ ucfirst($transaction['type']) }}</span>
+                                            <span
+                                                class="text-xs px-3 py-1 rounded-full font-medium {{ $transaction['direction'] === 'credit' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30' }}">
+                                                {{ ucfirst($transaction['direction']) }}
+                                            </span>
                                         </div>
                                         <div class="text-right">
                                             <div class="text-base font-bold text-white">
-                                                {{ $transaction->wallet->currency->symbol }} {{ number_format($transaction->amount, 2) }}
+                                                {{ $transaction['currency_symbol'] }}
+                                                {{ number_format($transaction['amount'], 2) }}
                                             </div>
-                                            @if($transaction->charge > 0)
+                                            @if ($transaction['charge'] > 0)
                                                 <div class="text-xs text-gray-400">
-                                                    Fee: {{ $transaction->wallet->currency->symbol }} {{ number_format($transaction->charge, 2) }}
+                                                    Fee: {{ $transaction['currency_symbol'] }}
+                                                    {{ number_format($transaction['charge'], 2) }}
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
-                                    @if($transaction->description)
+                                    @if ($transaction['description'] ?? false)
                                         <div class="mt-3 pt-3 border-t border-gray-700/50 text-sm text-gray-400">
-                                            {{ $transaction->description }}
+                                            {{ $transaction['description'] }}
                                         </div>
                                     @endif
                                 </a>
-                            @endforeach
-                        @else
-                            @foreach($transactions as $transaction)
-                                <a href="{{ route('exchange.receipt', ['ref' => $transaction->reference]) }}"
-                                   class="block transaction-card rounded-xl p-4 hover:scale-[1.02] transition-all duration-300">
+                            @elseif($transaction['transaction_type'] === 'bonus')
+                                <a href="{{ route('rewards.transactions.receipt', ['ref' => $transaction['id']]) }}"
+                                   class="block transaction-card rounded-xl p-4">
                                     <div class="flex justify-between items-center mb-3">
-                                                        <span class="status-pill status-{{ $transaction->status }}">
-                                                            <i data-lucide="{{ $statusConfig[$transaction->status]['icon'] }}"
-                                                               class="w-3 h-3"></i>
-                                                            {{ $statusConfig[$transaction->status]['label'] }}
-                                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="transaction-type-badge type-bonus">
+                                                <i data-lucide="gift" class="w-3 h-3 inline"></i> Bonus
+                                            </span>
+                                            <span class="status-pill status-{{ $transaction['status'] }}">
+                                                <i data-lucide="{{ $statusConfig[$transaction['status']]['icon'] ?? 'circle' }}"
+                                                   class="w-3 h-3"></i>
+                                                {{ $statusConfig[$transaction['status']]['label'] ?? ucfirst($transaction['status']) }}
+                                            </span>
+                                        </div>
                                         <span
-                                            class="text-xs text-gray-400 font-medium">{{ $transaction->created_at->format('M d, Y') }}</span>
+                                            class="text-xs text-gray-400 font-medium">{{ \Carbon\Carbon::parse($transaction['created_at'])->format('M d, Y') }}</span>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
-                                                            <span
-                                                                class="text-sm font-semibold text-white">{{ $transaction->fromCurrency->code }}</span>
+                                            <span
+                                                class="text-sm font-semibold text-white">{{ ucfirst($transaction['type']) }}</span>
+
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-base font-bold text-green-400">
+                                                {{ number_format($transaction['bonus_amount'], 2) }} DCOINS
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if ($transaction['notes'] ?? false)
+                                        <div class="mt-3 pt-3 border-t border-gray-700/50 text-sm text-gray-400">
+                                            {{ $transaction['notes'] }}
+                                        </div>
+                                    @endif
+                                </a>
+                            @else
+                                <a href="{{ route('exchange.receipt', ['ref' => $transaction['reference']]) }}"
+                                   class="block transaction-card rounded-xl p-4 hover:scale-[1.02] transition-all duration-300">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="transaction-type-badge type-exchange">
+                                                <i data-lucide="arrow-left-right" class="w-3 h-3 inline"></i> Exchange
+                                            </span>
+                                            <span class="status-pill status-{{ $transaction['status'] }}">
+                                                <i data-lucide="{{ $statusConfig[$transaction['status']]['icon'] }}"
+                                                   class="w-3 h-3"></i>
+                                                {{ $statusConfig[$transaction['status']]['label'] }}
+                                            </span>
+                                        </div>
+                                        <span
+                                            class="text-xs text-gray-400 font-medium">{{ \Carbon\Carbon::parse($transaction['created_at'])->format('M d, Y') }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <span
+                                                class="text-sm font-semibold text-white">{{ $transaction['from_currency_code'] }}</span>
                                             <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400"></i>
                                             <span
-                                                class="text-sm font-medium text-gray-300">{{ $transaction->toCurrency->code }}</span>
+                                                class="text-sm font-medium text-gray-300">{{ $transaction['to_currency_code'] }}</span>
                                         </div>
                                         <div class="text-right">
                                             <div class="text-base font-bold text-white">
-                                                {{ $transaction->fromCurrency->symbol }} {{ number_format($transaction->amount_from, 2) }}
+                                                {{ $transaction['from_currency_symbol'] }}
+                                                {{ number_format($transaction['amount_from'], 2) }}
                                             </div>
                                             <div class="text-sm text-gray-400">
-                                                {{ $transaction->toCurrency->symbol }} {{ number_format($transaction->amount_to, 2) }}
+                                                {{ $transaction['to_currency_symbol'] }}
+                                                {{ number_format($transaction['amount_to'], 2) }}
                                             </div>
                                         </div>
                                     </div>
                                 </a>
-                            @endforeach
-                        @endif
+                            @endif
+                        @endforeach
                     </div>
 
                     <!-- Desktop Table -->
@@ -357,91 +401,133 @@
                         <table class="w-full">
                             <thead class="bg-gray-800/50 border-b border-gray-700/50">
                             <tr class="text-xs text-gray-400 uppercase tracking-wider">
-                                @if(session('exchange_active_tab', 'exchange') === 'wallet')
-                                    <th class="py-4 px-6 text-left font-semibold">Reference</th>
-                                    <th class="py-4 px-6 text-left font-semibold">Type</th>
-                                    <th class="py-4 px-6 text-left font-semibold">Direction</th>
-                                    <th class="py-4 px-6 text-right font-semibold">Amount</th>
-                                    <th class="py-4 px-6 text-center font-semibold">Status</th>
-                                    <th class="py-4 px-6 text-right font-semibold">Date</th>
-                                @else
-                                    <th class="py-4 px-6 text-left font-semibold">Transaction ID</th>
-                                    <th class="py-4 px-6 text-left font-semibold">Exchange</th>
-                                    <th class="py-4 px-6 text-right font-semibold">Amount</th>
-                                    <th class="py-4 px-6 text-center font-semibold">Status</th>
-                                    <th class="py-4 px-6 text-right font-semibold">Date</th>
-                                @endif
+                                <th class="py-4 px-6 text-left font-semibold">Type</th>
+                                <th class="py-4 px-6 text-left font-semibold">Reference/Details</th>
+                                <th class="py-4 px-6 text-right font-semibold">Amount</th>
+                                <th class="py-4 px-6 text-center font-semibold">Status</th>
+                                <th class="py-4 px-6 text-right font-semibold">Date</th>
                             </tr>
                             </thead>
                             <tbody class="text-sm">
-                            @foreach($transactions as $transaction)
-                                @if(session('exchange_active_tab', 'exchange') === 'wallet')
+                            @foreach ($transactions as $transaction)
+                                @if ($transaction['transaction_type'] === 'wallet')
                                     <tr class="border-b border-gray-700/30 hover:bg-gray-800/30 cursor-pointer transition-all duration-200"
-                                        onclick="window.location.href='{{ route('wallet.transactions.receipt', ['ref' => $transaction->reference]) }}'">
+                                        onclick="window.location.href='{{ route('wallet.transactions.receipt', ['ref' => $transaction['reference']]) }}'">
                                         <td class="py-4 px-6">
-                                                            <span
-                                                                class="font-mono text-gray-300 text-sm">{{ $transaction->reference }}</span>
+                                                <span class="transaction-type-badge type-wallet">
+                                                    <i data-lucide="wallet" class="w-3 h-3 inline"></i> Wallet
+                                                </span>
                                         </td>
                                         <td class="py-4 px-6">
-                                                            <span
-                                                                class="text-white font-medium">{{ ucfirst($transaction->type) }}</span>
-                                        </td>
-                                        <td class="py-4 px-6">
-                                                            <span
-                                                                class="text-xs px-3 py-1 rounded-full font-semibold {{ $transaction->direction === 'credit' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30' }}">
-                                                                {{ ucfirst($transaction->direction) }}
-                                                            </span>
+                                            <div class="font-mono text-gray-300 text-sm">
+                                                {{ $transaction['reference'] }}</div>
+                                            <div class="text-xs text-gray-400 mt-1">
+                                                {{ ucfirst($transaction['type']) }}
+                                                <span
+                                                    class="ml-2 px-2 py-0.5 rounded-full {{ $transaction['direction'] === 'credit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400' }}">
+                                                        {{ ucfirst($transaction['direction']) }}
+                                                    </span>
+                                            </div>
                                         </td>
                                         <td class="py-4 px-6 text-right">
-                                            <div
-                                                class="font-bold text-white">{{ $transaction->wallet->currency->symbol }} {{ number_format($transaction->amount, 2) }}</div>
+                                            <div class="font-bold text-white">
+                                                {{ $transaction['currency_symbol'] }}
+                                                {{ number_format($transaction['amount'], 2) }}</div>
+                                            @if ($transaction['charge'] > 0)
+                                                <div class="text-xs text-gray-400">
+                                                    Fee: {{ $transaction['currency_symbol'] }}
+                                                    {{ number_format($transaction['charge'], 2) }}</div>
+                                            @endif
                                         </td>
                                         <td class="py-4 px-6 text-center">
-                                                            <span
-                                                                class="status-pill status-{{ $transaction->status }}">
-                                                                {{ ucfirst($transaction->status) }}
-                                                            </span>
+                                                <span class="status-pill status-{{ $transaction['status'] }}">
+                                                    {{ $statusConfig[$transaction['status']]['label'] ?? ucfirst($transaction['status']) }}
+                                                </span>
                                         </td>
                                         <td class="py-4 px-6 text-right">
-                                            <div
-                                                class="text-gray-300">{{ $transaction->created_at->format('M d, Y') }}</div>
+                                            <div class="text-gray-300">
+                                                {{ \Carbon\Carbon::parse($transaction['created_at'])->format('M d, Y') }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ \Carbon\Carbon::parse($transaction['created_at'])->format('g:i A') }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @elseif($transaction['transaction_type'] === 'bonus')
+                                    <tr class="border-b border-gray-700/30 hover:bg-gray-800/30 cursor-pointer transition-all duration-200"
+                                        onclick="window.location.href='{{ route('rewards.transactions.receipt', ['ref' => $transaction['id']]) }}'">
+                                        <td class="py-4 px-6">
+                                                <span class="transaction-type-badge type-bonus">
+                                                    <i data-lucide="gift" class="w-3 h-3 inline"></i> Bonus
+                                                </span>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <div class="text-white font-medium">
+                                                {{ ucfirst($transaction['type']) }}
+                                                Bonus
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-6 text-right">
+                                            <div class="font-bold text-green-400">
+                                                {{ number_format($transaction['bonus_amount'], 2) }} DCOINS
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-6 text-center">
+                                                <span class="status-pill status-{{ $transaction['status'] }}">
+                                                    {{ $statusConfig[$transaction['status']]['label'] ?? ucfirst($transaction['status']) }}
+                                                </span>
+                                        </td>
+                                        <td class="py-4 px-6 text-right">
+                                            <div class="text-gray-300">
+                                                {{ \Carbon\Carbon::parse($transaction['created_at'])->format('M d, Y') }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ \Carbon\Carbon::parse($transaction['created_at'])->format('g:i A') }}
+                                            </div>
                                         </td>
                                     </tr>
                                 @else
                                     <tr class="border-b border-gray-700/30 hover:bg-gray-800/30 cursor-pointer transition-all duration-200"
-                                        onclick="window.location.href='{{ route('exchange.receipt', ['ref' => $transaction->reference]) }}'">
+                                        onclick="window.location.href='{{ route('exchange.receipt', ['ref' => $transaction['reference']]) }}'">
                                         <td class="py-4 px-6">
-                                                            <span
-                                                                class="font-mono text-gray-300 text-sm">{{ $transaction->reference }}</span>
+                                                <span class="transaction-type-badge type-exchange">
+                                                    <i data-lucide="arrow-left-right" class="w-3 h-3 inline"></i>
+                                                    Exchange
+                                                </span>
                                         </td>
                                         <td class="py-4 px-6">
-                                            <div class="flex items-center gap-3">
-                                                                <span
-                                                                    class="font-bold text-white">{{ $transaction->fromCurrency->code }}</span>
-                                                <i data-lucide="arrow-right" class="w-4 h-4 text-gray-500"></i>
+                                            <div class="font-mono text-gray-300 text-sm">
+                                                {{ $transaction['reference'] }}</div>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                    <span
+                                                        class="font-bold text-white text-xs">{{ $transaction['from_currency_code'] }}</span>
+                                                <i data-lucide="arrow-right" class="w-3 h-3 text-gray-500"></i>
                                                 <span
-                                                    class="font-medium text-gray-300">{{ $transaction->toCurrency->code }}</span>
+                                                    class="font-medium text-gray-300 text-xs">{{ $transaction['to_currency_code'] }}</span>
                                             </div>
                                         </td>
                                         <td class="py-4 px-6 text-right">
-                                            <div
-                                                class="font-bold text-white">{{ $transaction->fromCurrency->symbol }} {{ number_format($transaction->amount_from, 2) }}</div>
-                                            <div
-                                                class="text-sm text-gray-400">{{ $transaction->toCurrency->symbol }} {{ number_format($transaction->amount_to, 2) }}</div>
+                                            <div class="font-bold text-white">
+                                                {{ $transaction['from_currency_symbol'] }}
+                                                {{ number_format($transaction['amount_from'], 2) }}</div>
+                                            <div class="text-sm text-gray-400">
+                                                {{ $transaction['to_currency_symbol'] }}
+                                                {{ number_format($transaction['amount_to'], 2) }}</div>
                                         </td>
                                         <td class="py-4 px-6 text-center">
-                                                            <span
-                                                                class="status-pill status-{{ $transaction->status }}">
-                                                                <i data-lucide="{{ $statusConfig[$transaction->status]['icon'] }}"
-                                                                   class="w-3 h-3"></i>
-                                                                {{ $statusConfig[$transaction->status]['label'] }}
-                                                            </span>
+                                                <span class="status-pill status-{{ $transaction['status'] }}">
+                                                    <i data-lucide="{{ $statusConfig[$transaction['status']]['icon'] }}"
+                                                       class="w-3 h-3"></i>
+                                                    {{ $statusConfig[$transaction['status']]['label'] }}
+                                                </span>
                                         </td>
                                         <td class="py-4 px-6 text-right">
-                                            <div
-                                                class="text-gray-300">{{ $transaction->created_at->format('M d, Y') }}</div>
-                                            <div
-                                                class="text-sm text-gray-500">{{ $transaction->created_at->format('g:i A') }}</div>
+                                            <div class="text-gray-300">
+                                                {{ \Carbon\Carbon::parse($transaction['created_at'])->format('M d, Y') }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ \Carbon\Carbon::parse($transaction['created_at'])->format('g:i A') }}
+                                            </div>
                                         </td>
                                     </tr>
                                 @endif
@@ -452,6 +538,10 @@
                 </div>
             </div>
 
+            <!-- Add this after the transactions loop, before closing the main container -->
+            <div class="p-4">
+                {{ $transactions->links() }}
+            </div>
         @else
             <!-- Empty State -->
             <div class="flex flex-col items-center justify-center py-20 text-center">

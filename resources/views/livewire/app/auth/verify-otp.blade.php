@@ -2,7 +2,7 @@
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div class="w-full max-w-md">
             <div class="text-center mb-8">
-                <x-logo class="w-[150px] h-[70px] mx-auto mb-4"/>
+                <x-logo class="w-[220px] h-[100px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Enter OTP</h1>
                 <p class="text-gray-400">An OTP has been sent to {{ session('password-reset-email') }}.</p>
             </div>

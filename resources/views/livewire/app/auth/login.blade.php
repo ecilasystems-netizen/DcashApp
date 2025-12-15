@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <x-logo class="w-[150px] h-[70px] mx-auto mb-4"/>
+                <x-logo class="w-[220px] h-[100px] mx-auto mb-4"/>
                 <h1 class="text-3xl font-bold text-white">Welcome Back</h1>
                 <p class="text-gray-400">Sign in to continue to your dashboard.</p>
             </div>
@@ -41,13 +41,26 @@
                             <a href="{{route('reset-password')}}" class="text-sm text-[#E1B362] hover:underline">Forgot
                                 Password?</a>
                         </div>
-                        <div class="relative">
+                        <div class="relative" x-data="{ show: false }"
+                             x-effect="window.lucide && window.lucide.replace()">
                             <span wire:ignore>
                                 <i data-lucide="lock"
                                    class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
                             </span>
-                            <input wire:model="password" type="password" id="password" placeholder="••••••••"
-                                   class="w-full bg-gray-800/2 border border-gray-700 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+
+                            <input wire:model="password"
+                                   :type="show ? 'text' : 'password'"
+                                   id="password"
+                                   placeholder="••••••••"
+                                   class="w-full bg-gray-800\/2 border border-gray-700 rounded-lg pl-10 pr-10 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+
+                            <button type="button"
+                                    @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
+                                    :aria-label="show ? 'Hide password' : 'Show password'"
+                                    :title="show ? 'Hide password' : 'Show password'">
+                                <i :data-lucide="show ? 'eye-off' : 'eye'"></i>
+                            </button>
                         </div>
                         @error('password') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>

@@ -32,7 +32,10 @@
                      class="max-w-sm mx-auto bg-gray-900/80 border border-gray-700 rounded-lg shadow-lg receipt-container">
                     <!-- Receipt Header -->
                     <div class="p-6 text-center border-b border-gray-700">
-                        <img src="/imgs/logo-only.png" alt="Dcash Logo" class="w-12 h-12 mx-auto mb-4"/>
+                        <img
+                            src="{{asset('storage/logo-with-text-white.png')}}"
+                            alt="Dcash Logo"
+                            class="w-26 h-12 mx-auto mb-4"/>
                         <p class="text-xl font-bold text-white mt-1">
                             {{ $transaction->direction === 'credit' ? '+' : '-' }}
                             {{ number_format($transaction->amount, 2) }} {{ $transaction->wallet->currency->code }}

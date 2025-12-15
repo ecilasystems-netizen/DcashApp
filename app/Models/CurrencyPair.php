@@ -17,8 +17,6 @@ class CurrencyPair extends Model
         'raw_rate',
         'auto_update',
         'is_active',
-        'buy_rate',
-        'sell_rate',
     ];
 
     protected $casts = [

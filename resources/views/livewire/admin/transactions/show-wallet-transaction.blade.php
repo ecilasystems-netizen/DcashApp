@@ -68,10 +68,11 @@
                     </div>
                     <div>
                         <p class="text-gray-400">Direction</p>
-                        <p class="{{ $transaction->direction === 'in' ? 'text-green-400' : 'text-red-400' }}">
-                            {{ $transaction->direction === 'in' ? 'Credit (In)' : 'Debit (Out)' }}
+                        <p class="{{ $transaction->direction === 'credit' ? 'text-green-400' : 'text-red-400' }}">
+                            {{ $transaction->direction === 'credit' ? 'Credit (In)' : 'Debit (Out)' }}
                         </p>
                     </div>
+
                     <div class="md:col-span-2">
                         <p class="text-gray-400">Description</p>
                         <p class="text-white">{{ $transaction->description }}</p>
@@ -85,6 +86,31 @@
                         <p class="text-white">{{ $transaction->wallet->currency->code ?? '' }} {{ number_format($transaction->balance_after, 2) }}</p>
                     </div>
                 </div>
+
+
+                @if( $transaction->metadata)
+                    <div class="mt-8 pt-6 border-t border-gray-700">
+                        <h3 class="text-lg font-bold text-white mb-4">Transaction Metadata</h3>
+                        <div class="bg-gray-700/30 border border-gray-600   rounded-lg p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                @foreach($transaction->metadata as $key => $value)
+                                    <div>
+                                        <p class="text-gray-400 capitalize">{{ str_replace('_', ' ', $key) }}</p>
+                                        @if(is_array($value))
+                                            <pre
+                                                class="bg-gray-800 rounded p-2 overflow-auto text-xs">{{ json_encode($value, JSON_PRETTY_PRINT) }}</pre>
+                                        @else
+                                            <p class="text-white font-medium break-words">
+                                                {{ $value }}
+                                            </p>
+
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 @if($transaction->status === 'pending')
                     <div class="mt-8 pt-6 border-t border-gray-700 flex gap-4">

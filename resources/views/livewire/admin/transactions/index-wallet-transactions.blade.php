@@ -2,6 +2,7 @@
         confirmDelete: null,
         confirmApprove: null,
         confirmReject: null,
+        confirmRefund: null,
         rejectionReason: '',
         otherRejectionReason: ''
     }">
@@ -26,6 +27,36 @@
         @if (session()->has('message'))
             <div class="mb-4 p-4 bg-green-600/20 border border-green-600 rounded-lg">
                 <p class="text-green-400">{{ session('message') }}</p>
+            </div>
+        @endif
+
+        <!-- Simple Display -->
+        @if($safeHavenAccount)
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-6">
+                <h3 class="text-white font-bold mb-3">SafeHaven Account Details</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-400">Account Number:</span>
+                        <span class="text-white font-medium ml-2">{{ $safeHavenAccount['accountNumber'] }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Account Name:</span>
+                        <span class="text-white font-medium ml-2">{{ $safeHavenAccount['accountName'] }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Available Balance:</span>
+                        <span class="text-[#E1B362] font-bold ml-2">
+                           {{ $safeHavenAccount['currencyCode'] }} {{ number_format($safeHavenAccount['accountBalance'], 2) }}
+                       </span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Status:</span>
+                        <span
+                            class="ml-2 px-2 py-1 rounded text-xs {{ $safeHavenAccount['status'] === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400' }}">
+                           {{ $safeHavenAccount['status'] }}
+                       </span>
+                    </div>
+                </div>
             </div>
         @endif
 
@@ -83,9 +114,12 @@
                     class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                 <option value="">All Types</option>
                 <option value="deposit">Deposit</option>
-                <option value="withdrawal">Withdrawal</option>
+                <option value="airtime">Airtime</option>
+                <option value="data">Data</option>
+                <option value="electricity">Electricity</option>
+                <option value="tv">TV</option>
                 <option value="transfer">Transfer</option>
-                <option value="fee">Fee</option>
+                <option value="withdrawal">Withdrawal</option>
             </select>
             <input wire:model.live="dateFilter" type="date"
                    class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#E1B362]"/>
@@ -109,9 +143,11 @@
                 <tr>
                     <th class="px-6 py-3">User</th>
                     <th class="px-6 py-3">Reference</th>
-                    <th class="px-6 py-3">Type / Direction</th>
+                    <th class="px-6 py-3">Type</th>
                     <th class="px-6 py-3">Amount</th>
-                    <th class="px-6 py-3">Description</th>
+                    <th class="px-6 py-3">Balance Before</th>
+                    <th class="px-6 py-3">Balance After</th>
+                    {{--                    <th class="px-6 py-3">Description</th>--}}
                     <th class="px-6 py-3">Status</th>
                     <th class="px-6 py-3 text-right">Actions</th>
                 </tr>
@@ -133,8 +169,8 @@
                         <td class="px-6 py-4">
                             <div class="capitalize">{{ $transaction->type }}</div>
                             <div
-                                class="text-xs {{ $transaction->direction === 'in' ? 'text-green-400' : 'text-red-400' }}">
-                                {{ $transaction->direction === 'in' ? 'Credit' : 'Debit' }}
+                                class="text-xs {{ $transaction->direction === 'credit' ? 'text-green-400' : 'text-red-400' }}">
+                                {{ $transaction->direction === 'credit' ? 'Credit' : 'Debit' }}
                             </div>
                         </td>
                         <td class="px-6 py-4">
@@ -142,14 +178,23 @@
                                 class="font-medium text-white">{{ $transaction->wallet->currency->code ?? '' }} {{ number_format($transaction->amount, 2) }}</div>
                             <div class="text-xs text-gray-400">Fee: {{ number_format($transaction->charge, 2) }}</div>
                         </td>
-                        <td class="px-6 py-4 text-gray-300 max-w-xs truncate">{{ $transaction->description }}</td>
+                        <td class="px-6 py-4">
+                            <div
+                                class="font-medium text-gray-300">{{ $transaction->wallet->currency->symbol ?? '' }} {{ number_format($transaction->balance_before, 2) }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div
+                                class="font-medium text-gray-300">{{ $transaction->wallet->currency->symbol ?? '' }} {{ number_format($transaction->balance_after, 2) }}</div>
+                        </td>
+                        {{--                        <td class="px-6 py-4 text-gray-300 max-w-xs truncate">{{ $transaction->description }}</td>--}}
                         <td class="px-6 py-4">
                             @php
                                 $statusConfig = [
                                     'pending' => ['bg' => 'yellow', 'icon' => 'loader-2', 'text' => 'Pending'],
                                     'completed' => ['bg' => 'green', 'icon' => 'check-circle', 'text' => 'Completed'],
                                     'failed' => ['bg' => 'red', 'icon' => 'x-circle', 'text' => 'Failed'],
-                                    'rejected' => ['bg' => 'red', 'icon' => 'x-octagon', 'text' => 'Rejected']
+                                    'rejected' => ['bg' => 'red', 'icon' => 'x-octagon', 'text' => 'Rejected'],
+                                    'refunded' => ['bg' => 'blue', 'icon' => 'rotate-ccw', 'text' => 'Refunded'],
                                 ][$transaction->status] ?? ['bg' => 'gray', 'icon' => 'help-circle', 'text' => 'Unknown'];
                             @endphp
                             <div
@@ -178,6 +223,12 @@
                                                 <i data-lucide="x-circle" class="w-4 h-4"></i> Reject
                                             </button>
                                             <hr class="border-gray-600 my-1">
+                                        @elseif($transaction->status === 'failed')
+                                            <button @click.stop="confirmRefund = {{ $transaction->id }}; open = false"
+                                                    class="flex items-center gap-3 px-4 py-2 text-sm text-blue-400 hover:bg-gray-600 w-full text-left">
+                                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Refund
+                                            </button>
+                                            <hr class="border-gray-600 my-1">
                                         @endif
                                         <button @click.stop="confirmDelete = {{ $transaction->id }}; open = false"
                                                 class="flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-600 w-full text-left">
@@ -190,7 +241,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-400">No wallet transactions found.</td>
+                        <td colspan="9" class="px-6 py-8 text-center text-gray-400">No wallet transactions found.</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -213,6 +264,24 @@
                 </button>
                 <button @click="$wire.approveTransaction(confirmApprove); confirmApprove = null"
                         class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">Approve
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- refund modal -->
+    <div x-show="confirmRefund" x-cloak class="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div @click.away="confirmRefund = null"
+             class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
+            <h3 class="text-lg font-bold text-white mb-4">Confirm Refund</h3>
+            <p class="text-gray-300 mb-6">Are you sure you want to refund this failed transaction? The amount will be
+                credited back to the user's wallet.</p>
+            <div class="flex justify-end gap-4">
+                <button @click="confirmRefund = null"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg">Cancel
+                </button>
+                <button @click="$wire.refundTransaction(confirmRefund); confirmRefund = null"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg">Refund
                 </button>
             </div>
         </div>

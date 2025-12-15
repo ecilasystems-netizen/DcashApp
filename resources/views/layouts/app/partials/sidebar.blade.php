@@ -19,11 +19,18 @@
                     class="font-semibold opacity-0 group-hover:opacity-100 group-hover:ml-4 transition-all duration-200 whitespace-nowrap">Transactions</span>
             </a>
 
+
             <a href="{{ route('rewards') }}"
                class="flex items-center p-3 rounded-lg transition-colors duration-200 overflow-hidden {{ request()->routeIs('rewards') ? 'text-white bg-[#E1B362]' : 'text-gray-400 hover:text-[#E1B362] hover:bg-gray-700' }}">
                 <i data-lucide="gift" class="flex-shrink-0"></i>
                 <span
                     class="font-semibold opacity-0 group-hover:opacity-100 group-hover:ml-4 transition-all duration-200 whitespace-nowrap">Rewards</span>
+            </a>
+            <a href="{{ route('rewards.cashbacks') }}"
+               class="flex items-center p-3 rounded-lg transition-colors duration-200 overflow-hidden {{ request()->routeIs('rewards.cashbacks') ? 'text-white bg-[#E1B362]' : 'text-gray-400 hover:text-[#E1B362] hover:bg-gray-700' }}">
+                <i data-lucide="dollar-sign" class="flex-shrink-0"></i>
+                <span
+                    class="font-semibold opacity-0 group-hover:opacity-100 group-hover:ml-4 transition-all duration-200 whitespace-nowrap">Cashbacks</span>
             </a>
 
             <a href="{{ route('profile') }}"
@@ -32,6 +39,13 @@
                 <span
                     class="font-semibold opacity-0 group-hover:opacity-100 group-hover:ml-4 transition-all duration-200 whitespace-nowrap">Profile</span>
             </a>
+
+            <button id="openZohoChatDesktop" type="button"
+                    class="flex items-center p-3 w-full rounded-lg text-gray-400 hover:text-[#E1B362] hover:bg-gray-700 transition-colors duration-200 overflow-hidden">
+                <i data-lucide="headset" class="flex-shrink-0"></i>
+                <span
+                    class="font-semibold opacity-0 group-hover:opacity-100 group-hover:ml-4 transition-all duration-200 whitespace-nowrap">Help</span>
+            </button>
 
             <form method="POST" action="{{ route('logout') }}" x-data>
                 @csrf
@@ -44,12 +58,7 @@
             </form>
         </nav>
         <div class="w-full p-4">
-            <button
-                class="flex items-center p-3 w-full rounded-lg text-gray-400 hover:text-[#E1B362] hover:bg-gray-700 transition-colors duration-200 overflow-hidden">
-                <i data-lucide="pencil" class="flex-shrink-0"></i>
-                <span
-                    class="font-semibold opacity-0 group-hover:opacity-100 group-hover:ml-4 transition-all duration-200 whitespace-nowrap">Help</span>
-            </button>
+
         </div>
     </div>
 </aside>

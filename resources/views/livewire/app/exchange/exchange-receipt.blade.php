@@ -209,36 +209,37 @@
                 id="receiptContent"
                 class="max-w-sm mx-auto bg-gray-900/80 border border-gray-700 rounded-lg shadow-lg receipt-container">
                 <!-- Receipt Header -->
-                <div class="p-6 text-center border-b border-gray-700">
+                <div class="p-4 text-center border-b border-gray-700">
                     <img
-                        src="/imgs/logo-only.png"
+                        src="{{asset('storage/logo-with-text-white.png')}}"
                         alt="Dcash Logo"
-                        class="w-12 h-12 mx-auto mb-4"/>
+                        class="w-20 h-10 mx-auto mb-2"/>
 
-                    <p class="text-xl font-bold text-white mt-1">{{ number_format($transactionData['quoteAmount'], 2) .' '.$transactionData['quoteCurrencyCode']}}</p>
-                    <p class="text-sm text-gray-400">sent from {{strtoupper($transactionData['senderName'])}}</p>
+                    <p class="text-lg font-bold text-white">{{ number_format($transactionData['quoteAmount'], 2) .' '.$transactionData['quoteCurrencyCode']}}</p>
+                    <p class="text-xs text-gray-400">sent from {{strtoupper($transactionData['senderName'])}}</p>
                 </div>
 
                 <!-- Receipt Details -->
-                <div class="p-6 text-sm">
-                    <ul class="space-y-4">
+                <div class="p-4 text-xs">
+                    <ul class="space-y-2.5">
 
-                        @if(!empty($transactionData['note']))
+                        @if(!empty($transactionData['note']) && isset($transactionData['note']['rejected']) && $transactionData['note']['rejected'])
                             <div
-                                class="mb-2 p-3 bg-gradient-to-r from-red-700 to-red-600 border border-red-500 rounded-lg text-xs text-white text-center shadow-lg">
-                                <div class="flex items-center justify-center gap-2">
-                                    <i data-lucide="x-circle" class="w-5 h-5"></i>
-                                    <span class="font-bold text-sm">Transaction Rejected</span>
+                                class="mb-2 p-2 bg-gradient-to-r from-red-700 to-red-600 border border-red-500 rounded-lg text-[10px] text-white text-center shadow-lg">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                    <span class="font-bold text-xs">Transaction Rejected</span>
                                 </div>
-                                <div class="mt-1 text-[12px] text-red-100">Oh no — your transaction was
-                                    rejected because: <b>{{$transactionData['note']}}</b>. Please
-                                    review the details or contact support.
+                                <div class="mt-0.5 text-[10px] text-red-100">
+                                    Oh no — your transaction was rejected because:
+                                    <b>{{ $transactionData['note']['rejection_reason'] ?? 'No reason provided' }}</b>.
                                 </div>
                             </div>
                         @endif
-                        <li class="flex justify-between">
+
+                        <li class="flex justify-between items-center">
                             <span class="text-gray-400">Status</span>
-                            <span class="font-medium flex items-center gap-1.5 {{
+                            <span class="font-medium flex items-center gap-1 {{
                                 match($transactionData['status']) {
                                     'completed' => 'text-green-400',
                                     'pending_payment' => 'text-yellow-400',
@@ -258,70 +259,77 @@
                                         'rejected' => 'x-octagon',
                                         default => 'help-circle'
                                     }
-                                }}" class="w-4 h-4"></i>
+                                }}" class="w-3 h-3"></i>
                                 {{ucwords(str_replace('_', ' ', $transactionData['status']))}}
                             </span>
                         </li>
-                        <li class="flex justify-between">
+
+                        <li class="flex justify-between items-center">
                             <span class="text-gray-400">Transaction Type</span>
-                            <span class="flex items-center gap-2">
+                            <span class="flex items-center gap-1.5">{{$transactionData['baseCurrencyCode']}}
                                 <img src="{{asset('storage/'.$transactionData['baseCurrencyFlag']) ?? ''}}"
-                                     class="w-6 h-6 rounded-full"
+                                     class="w-5 h-5 rounded-full"
                                      alt="">
-                                <i data-lucide="repeat" class="w-4 h-4 text-gray-400"></i>
+                                <i data-lucide="repeat" class="w-3 h-3 text-gray-400"></i>
+                                {{$transactionData['quoteCurrencyCode']}}
                                 <img src="{{asset('storage/'.$transactionData['quoteCurrencyFlag']) ?? ''}}"
-                                     class="w-6 h-6 rounded-full"
+                                     class="w-5 h-5 rounded-full"
                                      alt="">
                             </span>
                         </li>
+
                         @if(!empty($transactionData['cashback']) && $transactionData['cashback'] > 0)
-                            <li class="flex justify-between">
+                            <li class="flex justify-between items-center">
                                 <span class="text-gray-400">Amount Sent</span>
                                 <span class="font-medium text-gray-400 line-through">
                                     {{ number_format($transactionData['baseAmount'], 2) }} {{ $transactionData['baseCurrencyCode'] }}
                                 </span>
                             </li>
-                            <li class="flex justify-between">
-                                <span class="text-gray-400">Cashback Reward</span>
+                            <li class="flex justify-between items-center">
+                                <span class="text-gray-400">Cashback/Discount</span>
                                 <span class="font-medium text-green-400">
                                     - {{ number_format($transactionData['cashback'], 2) }} {{ $transactionData['baseCurrencyCode'] }}
                                 </span>
                             </li>
-                            <li class="flex justify-between">
+                            <li class="flex justify-between items-center">
                                 <span class="font-bold text-white">Total Paid</span>
                                 <span class="font-bold text-white">
                                     {{ number_format($transactionData['baseAmount'] - $transactionData['cashback'], 2) }} {{ $transactionData['baseCurrencyCode'] }}
                                 </span>
                             </li>
                         @else
-                            <li class="flex justify-between">
+                            <li class="flex justify-between items-center">
                                 <span class="text-gray-400">You Sent</span>
                                 <span
                                     class="font-medium text-white">{{ number_format($transactionData['baseAmount'], 2) .' '.$transactionData['baseCurrencyCode']}}</span>
                             </li>
                         @endif
-                        <li class="flex justify-between">
+
+                        <li class="flex justify-between items-center">
                             <span class="text-gray-400">Exchange Rate</span>
-                            <span class="font-medium text-white"
-                            >{{number_format($transactionData['exchangeRate'], 2)}}</span
-                            >
+                            <span
+                                class="font-medium text-white">{{number_format($transactionData['exchangeRate'], 2)}}</span>
                         </li>
+
                         <li class="flex justify-between items-start">
                             <span class="text-gray-400">Recipient</span>
-                            <div class="text-right">
+                            <div class="text-right leading-tight">
                                 <p class="font-medium text-white">{{$transactionData['recipientAccountName']}}</p>
                                 <p class="font-medium text-white">{{$transactionData['recipientAccountNumber']}}</p>
                                 <p class="font-medium text-white">({{$transactionData['recipientBankName']}})</p>
                             </div>
                         </li>
-                        <li class="flex justify-between">
-                            <span class="text-gray-400">Fee</span>
-                            <span class="font-medium text-white">0.00 </span>
+
+                        <li class="flex justify-between items-center">
+                            <span class="text-gray-400">Service Fee</span>
+                            <span class="font-medium text-white">0.00</span>
                         </li>
+
                         <li class="flex justify-between items-center" x-data="{ copied: false }">
                             <span class="text-gray-400">Transaction ID</span>
-                            <div class="flex items-center gap-2">
-                                <span class="font-mono text-xs text-gray-300">{{$transactionData['reference']}}</span>
+                            <div class="flex items-center gap-1.5">
+                                <span
+                                    class="font-mono text-[10px] text-gray-300">{{$transactionData['reference']}}</span>
                                 <button
                                     @click="navigator.clipboard.writeText('{{$transactionData['reference']}}').then(() => {
                                         copied = true;
@@ -329,28 +337,48 @@
                                     })"
                                     class="text-gray-400 hover:text-white transition-colors focus:outline-none"
                                     title="Copy transaction ID">
-                                    <i x-show="!copied" data-lucide="copy" class="w-4 h-4"></i>
-                                    <i x-show="copied" data-lucide="check" class="w-4 h-4 text-green-400"></i>
+                                    <i x-show="!copied" data-lucide="copy" class="w-3 h-3"></i>
+                                    <i x-show="copied" data-lucide="check" class="w-3 h-3 text-green-400"></i>
                                 </button>
                             </div>
                         </li>
-                        <li class="flex justify-between">
+
+                        <li class="flex justify-between items-center">
                             <span class="text-gray-400">Date & Time</span>
-                            <span class="font-medium text-white"
-                            >{{$transactionData['transactionDate']}}</span
-                            >
+                            <span class="font-medium text-white">{{$transactionData['transactionDate']}}</span>
                         </li>
 
                     </ul>
                 </div>
+
                 <!-- Receipt Footer -->
-                <div class="p-6 text-center border-t border-gray-700">
-                    <p class="text-xs text-gray-500 mb-3">
+                <div class="p-4 text-center border-t border-gray-700">
+                    @if($randomAd)
+                        <div class="mb-3 rounded-lg overflow-hidden">
+                            @if($randomAd->link_url)
+                                <a href="{{ route('ad.click', $randomAd->id) }}" target="_blank">
+                                    <img src="{{ asset('storage/' . $randomAd->image_path) }}"
+                                         alt="{{ $randomAd->title }}"
+                                         class="w-full h-auto object-cover">
+                                </a>
+                            @else
+                                <img src="{{ asset('storage/' . $randomAd->image_path) }}" alt="{{ $randomAd->title }}"
+                                     class="w-full h-auto object-cover">
+                            @endif
+                        </div>
+                    @else
+                        <div
+                            class="mb-3 bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center">
+                            <i data-lucide="image" class="w-10 h-10 text-gray-500 mb-1"></i>
+                            <p class="text-[10px] text-gray-500">Advertisement Space</p>
+                        </div>
+                    @endif
+
+                    <p class="text-[10px] text-gray-500 mb-2">
                         Thank you for using Dcash Exchange.
                     </p>
-                    <a href="https://www.trustpilot.com/review/dcashwallet.com"
-                       target="_blank"
-                       class="inline-flex items-center text-sm text-green-500 hover:text-green-400 transition-colors">
+                    <a href="https://www.trustpilot.com/review/dcashwallet.com" target="_blank"
+                       class="inline-flex items-center text-xs text-green-500 hover:text-green-400 transition-colors">
                         <i data-lucide="star" class="w-3 h-3 mr-1"></i>
                         Rate us on Trustpilot
                     </a>

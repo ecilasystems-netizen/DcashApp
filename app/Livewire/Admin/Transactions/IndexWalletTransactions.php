@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Admin\Transactions;
 
+use App\Mail\RefundMail;
 use App\Models\WalletTransaction;
+use App\Services\SafeHavenService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -23,6 +26,37 @@ class IndexWalletTransactions extends Component
         'dateFilter' => ['except' => ''],
         'typeFilter' => ['except' => ''],
     ];
+
+    public $safeHavenAccount = null;
+    public $safeHavenAccountBalance = null;
+
+    public function fetchSafeHavenAccounts()
+    {
+        try {
+            $safeHaven = new SafeHavenService();
+
+            // Get specific account details
+            $this->safeHavenAccount = $safeHaven->getAccountByNumber('0119358126');
+
+            // Set balance if account exists
+            if ($this->safeHavenAccount) {
+                $this->safeHavenAccountBalance = $this->safeHavenAccount['accountBalance'];
+            }
+
+        } catch (\Exception $e) {
+            logger()->error('SafeHaven account fetch failed', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function mount()
+    {
+        $this->fetchSafeHavenAccounts();
+
+    }
+
+
     protected $paginationTheme = 'tailwind';
 
     public function resetFilters()
@@ -106,6 +140,49 @@ class IndexWalletTransactions extends Component
             'completed' => WalletTransaction::where('status', 'completed')->count(),
             'failed' => WalletTransaction::whereIn('status', ['failed', 'rejected'])->count(),
         ];
+    }
+
+    public function refundTransaction($transactionId)
+    {
+        $transaction = WalletTransaction::findOrFail($transactionId);
+
+        if ($transaction->status !== 'failed') {
+            session()->flash('error', 'Only failed transactions can be refunded.');
+            return;
+        }
+
+        // Create refund transaction
+        $refundTransaction = WalletTransaction::create([
+            'reference' => 'REF-'.uniqid(),
+            'wallet_id' => $transaction->wallet_id,
+            'user_id' => $transaction->user_id,
+            'direction' => $transaction->direction === 'debit' ? 'credit' : 'debit',
+            'type' => 'refund',
+            'amount' => $transaction->amount,
+            'charge' => 0,
+            'description' => "Refund for transaction #{$transaction->reference}",
+            'status' => 'completed',
+            'balance_before' => $transaction->wallet->balance,
+            'balance_after' => $transaction->wallet->balance + $transaction->amount,
+            'metadata' => ['original_transaction_id' => $transaction->id],
+        ]);
+
+        // Update wallet balance
+        $transaction->wallet->increment('balance', $transaction->amount);
+
+        // Update original transaction status
+        $transaction->update(['status' => 'refunded']);
+
+        // Send refund email notification
+        Mail::to($transaction->user->email)->send(
+            new RefundMail(
+                $transaction,
+                $refundTransaction,
+                $transaction->user->fname.' '.$transaction->user->lname
+            )
+        );
+
+        session()->flash('message', 'Transaction refunded successfully.');
     }
 
     public function render()

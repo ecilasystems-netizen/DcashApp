@@ -29,6 +29,16 @@
                     </div>
                 @endif
 
+                {{-- if error, display here--}}
+
+                @if(session('error'))
+                    <div
+                        class="bg-red-500 bg-opacity-20 border border-red-400 text-red-300 px-4 py-3 rounded mb-6 flex items-center">
+                        <i data-lucide="alert-circle" class="w-5 h-5 mr-3 text-red-400"></i>
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <form class="space-y-6" wire:submit="login">
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-400 mb-2">Email Address</label>

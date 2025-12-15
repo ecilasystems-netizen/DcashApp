@@ -166,7 +166,10 @@
                         <div class="flex justify-between items-center">
                             <span class="text-gray-400">Exchange Rate</span>
                             <span class="font-semibold text-gray-600">
-                    1 {{ $exchangeData['baseCurrencyCode'] ?? '' }} = {{ number_format($exchangeData['exchangeRate'], 2) }} {{ $exchangeData['quoteCurrencyCode'] ?? '' }}</span>
+{{--                    1 {{ $exchangeData['baseCurrencyCode'] ?? '' }} = {{ number_format($exchangeData['exchangeRate'], 2) }} {{ $exchangeData['quoteCurrencyCode'] ?? '' }}--}}
+                                {{ number_format($exchangeData['exchangeRate'], 2) }}
+
+                            </span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-400">Processing Fee</span>
@@ -180,77 +183,252 @@
 
             <hr class="border-gray-800 mt-6 pt-2">
 
-            @if($baseCurrencyType === 'fiat')
+            <!-- Payment Method-->
+            @if($exchangeData['baseCurrencyCode'] === 'NGN' && $userWallet)
+                <div class="bg-gray-950 border border-gray-800 rounded-lg p-6 mb-6 mt-6">
+                    <h4 class="font-bold text-white mb-4 ">Choose Payment Method</h4>
 
-                <div x-data="{ activeTab: 0 }">
-                    <h4 class="font-bold text-white mb-4 text-center md:text-left">Transfer to this Account</h4>
+                    <!-- Payment Method Selection -->
+                    <div class="space-y-3">
 
-                    @if(count($companyBankAccounts) > 1)
-                        <!-- Tab Headers -->
-                        <div class="flex border-b border-gray-700 mb-4 justify-center md:justify-start">
-                            @foreach($companyBankAccounts as $index => $account)
-                                <button
-                                    @click="activeTab = {{ $index }}"
-                                    :aria-pressed="activeTab === {{ $index }}"
-                                    :class="{
-                                            'border-b-2 border-[#E1B362] text-[#E1B362] bg-gray-900 shadow-md': activeTab === {{ $index }},
-                                            'text-gray-400 hover:text-white hover:bg-gray-800': activeTab !== {{ $index }}
-                                        }"
-                                    class="px-4 py-2 font-semibold text-sm focus:outline-none transition-all rounded-t-lg flex items-center gap-2"
-                                    role="tab"
-                                    type="button">
-                                    <span class="truncate">{{ $account->tab_name }}</span>
-                                    <i x-show="activeTab === {{ $index }}" x-cloak data-lucide="check"
-                                       class="w-4 h-4 text-[#E1B362]"></i>
-                                </button>
-                            @endforeach
-                        </div>
-                    @endif
+                        <!-- Wallet Payment Option -->
+                        <label class="relative flex flex-col sm:flex-row items-start p-4 rounded-xl border-2 transition-all duration-200
+                                      {{ $hasInsufficientFunds ? 'border-gray-800 bg-gray-900/30 opacity-60 cursor-not-allowed' : 'border-gray-800 bg-gray-900/50 cursor-pointer hover:border-[#E1B362] hover:bg-gray-900' }}
+                                      group">
+                            <input type="radio" wire:model.live="paymentMethod" value="wallet"
+                                   {{ $hasInsufficientFunds ? 'disabled' : '' }}
+                                   class="mt-1 sm:mt-0 text-[#E1B362] focus:ring-[#E1B362] focus:ring-2 focus:ring-offset-0 flex-shrink-0 {{ $hasInsufficientFunds ? 'cursor-not-allowed' : '' }}">
 
-                    <!-- Tab Content -->
-                    @foreach($companyBankAccounts as $index => $account)
-                        <div x-show="activeTab === {{ $index }}" x-cloak>
-                            <div class="flex flex-col md:flex-row gap-6 items-center">
-                                <!-- Text Details -->
-                                <div class="w-full md:flex-1 space-y-4 text-sm">
-                                    <hr class="border-gray-800">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-gray-400">Bank Name</span>
-                                        <span class="font-semibold text-white">{{ $account->bank_name }}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-gray-400">Account Name</span>
-                                        <span class="font-semibold text-white">{{ $account->account_name }}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center" x-data="{ copied: false }">
-                                        <span class="text-gray-400">Account Number</span>
-                                        <div class="flex items-center gap-2">
+                            <div class="ml-0 sm:ml-4 mt-3 sm:mt-0 flex-1 w-full">
+                                <div class="flex flex-col gap-3">
+                                    <!-- Header Row -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                            <div
+                                                class="p-2 rounded-lg {{ $hasInsufficientFunds ? 'bg-gray-800' : 'bg-gray-800 group-hover:bg-[#E1B362]/10' }} transition-colors flex-shrink-0">
+                                                <i data-lucide="wallet"
+                                                   class="w-5 h-5 {{ $hasInsufficientFunds ? 'text-gray-600' : 'text-gray-400 group-hover:text-[#E1B362]' }} transition-colors"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
                                                 <span
-                                                    class="font-semibold text-white">{{ $account->account_number }}</span>
-                                            <button
-                                                @click="navigator.clipboard.writeText('{{ $account->account_number }}').then(() => { copied = true; setTimeout(() => copied = false, 2000); })"
-                                                class="text-gray-400 hover:text-[#E1B362] transition-colors"
-                                                title="Copy account number">
-                                                <i x-show="!copied" data-lucide="copy" class="w-4 h-4"></i>
-                                                <i x-show="copied" x-cloak data-lucide="check"
-                                                   class="w-4 h-4 text-green-400"></i>
-                                            </button>
+                                                    class="font-semibold {{ $hasInsufficientFunds ? 'text-gray-500' : 'text-white group-hover:text-[#E1B362]' }} transition-colors text-base sm:text-xs block">
+                                                    DCASH Wallet
+                                                </span>
+                                                <p class="text-xs text-gray-400 mt-0.5">Instant payment</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Balance Badge -->
+                                        <div class="text-right flex-shrink-0 ml-2">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wider">Balance</p>
+                                            <p class="text-base sm:text-xs font-bold {{ $hasInsufficientFunds ? 'text-red-400' : 'text-green-400' }} mt-0.5 whitespace-nowrap">
+                                                ₦{{ number_format($walletBalance, 2) }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Message -->
+                                    <div class="flex items-start space-x-2">
+                                        @if($hasInsufficientFunds)
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <i data-lucide="alert-circle" class="w-4 h-4 text-red-400"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm text-red-400 font-medium break-words">Insufficient
+                                                    balance for this transaction</p>
+                                                <p class="text-xs text-gray-500 mt-1 break-words">
+                                                    Required: <span
+                                                        class="font-semibold text-red-400">₦{{ number_format($exchangeData['baseAmount'] - ($exchangeData['baseAmount'] * 0.001), 2) }}</span>
+                                                </p>
+                                            </div>
+                                        @else
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
+                                            </div>
+                                            <p class="text-sm text-yellow-400 leading-relaxed break-words">
+                                                Pay with my DCASH Wallet
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Indicator / Lock -->
+                            @if(!$hasInsufficientFunds)
+                                <div
+                                    class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-gray-700 group-hover:border-[#E1B362] transition-colors flex items-center justify-center">
+                                    <div
+                                        class="w-2.5 h-2.5 rounded-full bg-[#E1B362] opacity-0 scale-0 transition-all duration-200"
+                                        :class="$wire.paymentMethod === 'wallet' ? 'opacity-100 scale-100' : ''"></div>
+                                </div>
+                            @else
+                                <div class="absolute top-4 right-4">
+                                    <i data-lucide="lock" class="w-5 h-5 text-gray-600"></i>
+                                </div>
+                            @endif
+                        </label>
+
+                        <!-- Bank Transfer Option -->
+                        <label
+                            class="relative flex flex-col sm:flex-row items-start p-4 rounded-xl border-2 border-gray-800 bg-gray-900/50 cursor-pointer transition-all duration-200 hover:border-[#E1B362] hover:bg-gray-900 group">
+                            <input type="radio" wire:model.live="paymentMethod" value="bank_transfer"
+                                   class="mt-1 sm:mt-0 text-[#E1B362] focus:ring-[#E1B362] focus:ring-2 focus:ring-offset-0 flex-shrink-0">
+
+                            <div class="ml-0 sm:ml-4 mt-3 sm:mt-0 flex-1 w-full">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="p-2 rounded-lg bg-gray-800 group-hover:bg-[#E1B362]/10 transition-colors flex-shrink-0">
+                                            <i data-lucide="building"
+                                               class="w-5 h-5 text-gray-400 group-hover:text-[#E1B362] transition-colors"></i>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="font-semibold text-white group-hover:text-[#E1B362] transition-colors text-base sm:text-sm">Bank Transfer</span>
+                                            <p class="text-xs text-gray-400 mt-0.5">Traditional payment method</p>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- QR Code -->
-                                @if($account->bank_account_qr_code)
-                                    <div class="md:w-auto flex flex-col items-center">
-                                        <img src="{{ Storage::url($account->bank_account_qr_code) }}" alt="QR Code"
-                                             style="width:150px;max-width:100%;"
-                                             class="p-2 bg-gray-700 rounded-lg mt-0 md:mt-10"/>
-                                        <p class="text-xs text-gray-400 mt-2">Scan to pay</p>
-                                    </div>
-                                @endif
+                                <p class="text-sm text-gray-500 mt-3 leading-relaxed">
+                                    Transfer to our bank account and upload proof of payment
+                                </p>
                             </div>
-                        </div>
-                    @endforeach
+
+                            <!-- Selected Indicator -->
+                            <div
+                                class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-gray-700 group-hover:border-[#E1B362] transition-colors flex items-center justify-center">
+                                <div
+                                    class="w-2.5 h-2.5 rounded-full bg-[#E1B362] opacity-0 scale-0 transition-all duration-200"
+                                    :class="$wire.paymentMethod === 'bank_transfer' ? 'opacity-100 scale-100' : ''"></div>
+                            </div>
+                        </label>
+
+
+                    </div>
                 </div>
+            @endif
+
+            @if($baseCurrencyType === 'fiat')
+
+                @if($paymentMethod === 'bank_transfer')
+
+                    <div x-data="{ activeTab: 0 }">
+                        <h4 class="font-bold text-white mb-4 text-center md:text-left">Transfer to this Account</h4>
+
+                        @if(count($companyBankAccounts) > 1)
+                            <!-- Tab Headers -->
+                            <div class="flex border-b border-gray-700 mb-4 justify-center md:justify-start">
+                                @foreach($companyBankAccounts as $index => $account)
+                                    <button
+                                        @click="activeTab = {{ $index }}"
+                                        :aria-pressed="activeTab === {{ $index }}"
+                                        :class="{
+                                            'border-b-2 border-[#E1B362] text-[#E1B362] bg-gray-900 shadow-md': activeTab === {{ $index }},
+                                            'text-gray-400 hover:text-white hover:bg-gray-800': activeTab !== {{ $index }}
+                                        }"
+                                        class="px-4 py-2 font-semibold text-sm focus:outline-none transition-all rounded-t-lg flex items-center gap-2"
+                                        role="tab"
+                                        type="button">
+                                        <span class="truncate">{{ $account->tab_name }}</span>
+                                        <i x-show="activeTab === {{ $index }}" x-cloak data-lucide="check"
+                                           class="w-4 h-4 text-[#E1B362]"></i>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <!-- Tab Content -->
+                        @foreach($companyBankAccounts as $index => $account)
+                            <div x-show="activeTab === {{ $index }}" x-cloak>
+                                <div class="flex flex-col md:flex-row gap-6 items-center">
+                                    <!-- Text Details -->
+                                    <div class="w-full md:flex-1 space-y-4 text-sm">
+                                        <hr class="border-gray-800">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-400">Bank Name</span>
+                                            <span class="font-semibold text-white">{{ $account->bank_name }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-400">Account Name</span>
+                                            <span class="font-semibold text-white">{{ $account->account_name }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center" x-data="{ copied: false }">
+                                            <span class="text-gray-400">Account Number</span>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="font-semibold text-white">{{ $account->account_number }}</span>
+                                                <button
+                                                    @click="navigator.clipboard.writeText('{{ $account->account_number }}').then(() => { copied = true; setTimeout(() => copied = false, 2000); })"
+                                                    class="text-gray-400 hover:text-[#E1B362] transition-colors"
+                                                    title="Copy account number">
+                                                    <i x-show="!copied" data-lucide="copy" class="w-4 h-4"></i>
+                                                    <i x-show="copied" x-cloak data-lucide="check"
+                                                       class="w-4 h-4 text-green-400"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- QR Code -->
+                                    @if($account->bank_account_qr_code)
+                                        <div class="md:w-auto flex flex-col items-center"
+                                             x-data="{ showQrModal: false }">
+                                            <img
+                                                src="{{ Storage::url($account->bank_account_qr_code) }}"
+                                                alt="QR Code"
+                                                style="width:150px;max-width:100%;"
+                                                class="p-2 bg-gray-700 rounded-lg mt-0 md:mt-10 cursor-pointer hover:opacity-80 transition-opacity"
+                                                @click="showQrModal = true"
+                                            />
+                                            <p class="text-xs text-gray-400 mt-2">Click on QR Code image to enlarge</p>
+
+                                            <!-- QR Code Modal -->
+                                            <template x-teleport="body">
+                                                <div
+                                                    x-show="showQrModal"
+                                                    x-transition:enter="ease-out duration-300"
+                                                    x-transition:enter-start="opacity-0"
+                                                    x-transition:enter-end="opacity-100"
+                                                    x-transition:leave="ease-in duration-200"
+                                                    x-transition:leave-start="opacity-100"
+                                                    x-transition:leave-end="opacity-0"
+                                                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                                                    @click.self="showQrModal = false"
+                                                    style="display: none;"
+                                                >
+                                                    <!-- Backdrop -->
+                                                    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+                                                    <!-- Modal Content -->
+                                                    <div
+                                                        class="relative max-w-lg w-full bg-gray-800 rounded-lg p-4 shadow-xl"
+                                                        @click.away="showQrModal = false"
+                                                    >
+                                                        <button
+                                                            @click="showQrModal = false"
+                                                            class="absolute top-2 right-2 text-gray-400 hover:text-white"
+                                                        >
+                                                            <i data-lucide="x" class="w-6 h-6"></i>
+                                                        </button>
+
+                                                        <div class="flex flex-col items-center">
+                                                            <img
+                                                                src="{{ Storage::url($account->bank_account_qr_code) }}"
+                                                                alt="QR Code"
+                                                                class="w-full max-w-md p-4 bg-gray-700 rounded-lg"
+                                                            />
+                                                            <p class="text-sm text-gray-400 mt-4">{{ $account->bank_name }}
+                                                                - {{ $account->account_number }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             @else
 
                 <h4 class="font-bold text-white mb-4 text-center md:text-left">Transfer Crypto Wallet below</h4>
@@ -281,40 +459,85 @@
                     </div>
                     <!-- QR Code -->
                     @if($companyBankAccount->crypto_qr_code)
-                        <div class="md:w-auto flex flex-col items-center ">
-                            <img src="{{ asset('storage/'.$companyBankAccount->crypto_qr_code) }}" alt="QR Code"
+                        <div class="md:w-auto flex flex-col items-center" x-data="{ showQrModal: false }">
+                            <img src="{{ asset('storage/'.$companyBankAccount->crypto_qr_code) }}"
+                                 alt="QR Code"
                                  style="width:150px;max-width:100%;"
-                                 class="p-2 bg-gray-700 rounded-lg mt-0 md:mt-10"/>
-                            <p class="text-xs text-gray-400 mt-2">Scan to pay</p>
+                                 class="p-2 bg-gray-700 rounded-lg mt-0 md:mt-10 cursor-pointer hover:opacity-80 transition-opacity"
+                                 @click="showQrModal = true"/>
+                            <p class="text-xs text-gray-400 mt-2">Click on QR Code image to enlarge</p>
+
+                            <!-- QR Code Modal -->
+                            <template x-teleport="body">
+                                <div
+                                    x-show="showQrModal"
+                                    x-transition:enter="ease-out duration-300"
+                                    x-transition:enter-start="opacity-0"
+                                    x-transition:enter-end="opacity-100"
+                                    x-transition:leave="ease-in duration-200"
+                                    x-transition:leave-start="opacity-100"
+                                    x-transition:leave-end="opacity-0"
+                                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                                    @click.self="showQrModal = false"
+                                    style="display: none;"
+                                >
+
+
+                                    <!-- Modal Content -->
+                                    <div
+                                        class="relative max-w-lg w-full bg-gray-800 rounded-lg p-4 shadow-xl"
+                                        @click.away="showQrModal = false"
+                                    >
+                                        <button
+                                            @click="showQrModal = false"
+                                            class="absolute top-2 right-2 text-gray-400 hover:text-white"
+                                        >
+                                            <i data-lucide="x" class="w-6 h-6"></i>
+                                        </button>
+
+                                        <div class="flex flex-col items-center">
+                                            <img
+                                                src="{{ asset('storage/'.$companyBankAccount->crypto_qr_code) }}"
+                                                alt="QR Code"
+                                                class="w-full max-w-md p-4 bg-gray-700 rounded-lg"
+                                            />
+                                            <p class="text-sm text-gray-400 mt-4">{{ $companyBankAccount->crypto_name }}
+                                                Wallet Address</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     @endif
                 </div>
             @endif
 
 
-        </div>
+            <div class="mt-8">
+
+                <form wire:submit.prevent="saveTransaction">
 
 
-        <form wire:submit.prevent="saveTransaction">
-            <!-- Upload Payment Slip -->
-            <div class="bg-gray-950 border border-gray-800 rounded-lg p-6">
-                <h4 class="font-bold text-white mb-2">Upload Proof of Payment</h4>
-                <p class="text-sm text-gray-400 mb-6">You can upload multiple proof of payments at once.</p>
+                    @if($paymentMethod === 'bank_transfer')
+                        <!-- Upload Payment Slip -->
+                        <div class="bg-gray-950 border border-gray-800 rounded-lg p-6">
+                            <h4 class="font-bold text-white mb-2">Upload Proof of Payment</h4>
+                            <p class="text-sm text-gray-400 mb-6">You can upload multiple proof of payments at once.</p>
 
-                <label for="paymentSlip"
-                       class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer">
-                    <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-500 mb-2"></i>
-                    <p class="font-semibold">Click to upload files</p>
-                    <p class="text-xs text-gray-700">PNG, JPG or PDF, max 5MB</p>
-                </label>
-                <div>
-                    <input type="file"
-                           wire:model="newPaymentSlip"
-                           id="paymentSlip"
-                           class="hidden"
-                           accept="image/*"
-                           x-data
-                           x-on:change="
+                            <label for="paymentSlip"
+                                   class="file-upload-label flex flex-col items-center justify-center p-6 rounded-lg cursor-pointer">
+                                <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-500 mb-2"></i>
+                                <p class="font-semibold">Click to upload files</p>
+                                <p class="text-xs text-gray-700">PNG, JPG or PDF, max 5MB</p>
+                            </label>
+                            <div>
+                                <input type="file"
+                                       wire:model="newPaymentSlip"
+                                       id="paymentSlip"
+                                       class="hidden"
+                                       accept="image/*"
+                                       x-data
+                                       x-on:change="
                                   if ($event.target.files[0] && $event.target.files[0].size > 5242880) {
                                       $event.target.value = '';
                                       Swal.fire({
@@ -328,196 +551,239 @@
                                   }
                               ">
 
-                    <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <!-- Loading Skeleton -->
-                        <div wire:loading wire:target="newPaymentSlip">
-                            <div
-                                class="w-full h-24 bg-gray-800 rounded-lg border border-gray-600 flex flex-col items-center justify-center">
-                                <div
-                                    class="w-8 h-8 border-4 border-t-[#E1B362] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mb-2"></div>
-                                <span class="text-xs text-gray-400">Uploading...</span>
-                            </div>
-                        </div>
+                                <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <!-- Loading Skeleton -->
+                                    <div wire:loading wire:target="newPaymentSlip">
+                                        <div
+                                            class="w-full h-24 bg-gray-800 rounded-lg border border-gray-600 flex flex-col items-center justify-center">
+                                            <div
+                                                class="w-8 h-8 border-4 border-t-[#E1B362] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mb-2"></div>
+                                            <span class="text-xs text-gray-400">Uploading...</span>
+                                        </div>
+                                    </div>
 
-                        <!-- Existing Previews -->
-                        @if($paymentSlips)
-                            @foreach($paymentSlips as $index => $slip)
-                                <div class="relative">
-                                    <img src="{{ $slip->temporaryUrl() }}"
-                                         class="w-full h-24 object-cover rounded-lg border border-gray-600">
-                                    <button type="button"
-                                            wire:click="removeFile({{ $index }})"
-                                            class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </button>
+                                    <!-- Existing Previews -->
+                                    @if($paymentSlips)
+                                        @foreach($paymentSlips as $index => $slip)
+                                            <div class="relative">
+                                                <img src="{{ $slip->temporaryUrl() }}"
+                                                     class="w-full h-24 object-cover rounded-lg border border-gray-600">
+                                                <button type="button"
+                                                        wire:click="removeFile({{ $index }})"
+                                                        class="absolute -top-2 -right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-700">
+                                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                    @endif
                                 </div>
-                            @endforeach
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-1 mt-1 flex gap-4">
-
-                <button type="button"
-                        x-data
-                        @click="async () => {
-                                const result = await Swal.fire({
-                                    title: 'Cancel Transaction?',
-                                    text: 'Are you sure you want to cancel this transaction? This action cannot be undone.',
-                                    icon: 'warning',
-                                    background: '#1f2937',
-                                    color: '#fff',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#dc2626',
-                                    cancelButtonColor: '#374151',
-                                    confirmButtonText: 'Yes, cancel it',
-                                    cancelButtonText: 'No, keep it'
-                                });
-
-                                if (result.isConfirmed) {
-                                    // Set flag before cancelling to bypass beforeunload warning
-                                    window.intentionallyCancelling = true;
-                                    $wire.cancelTransaction();
-                                }
-                            }"
-                        class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg font-semibold text-base hover:bg-red-700 transition-all text-center">
-                    Cancel
-                </button>
-                <button type="submit"
-                        @click="window.intentionallyCancelling = true"
-                        class="brand-gradient flex-1 text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-center"
-                        @if(!$paymentSlips) disabled @endif>
-                    Submit
-                </button>
-            </div>
-        </form>
-
-        <div>
-            <div class="mt-6 bg-yellow-900/20 rounded-lg p-4">
-                @if($exchangeData['baseCurrencyCode'] === 'PHP')
-                    <div class="text-xs">
-                        <div class="flex items-start space-x-3 mb-3">
-                            <i data-lucide="alert-triangle"
-                               class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                            <h3 class="text-sm font-semibold text-yellow-300">Important notice</h3>
-                        </div>
-
-                        <ul class="text-xs space-y-2 text-yellow-100">
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="alert-triangle" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Transfers are non-refundable.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="hash" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Please make sure you send the exact amount.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="clock" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Check your daily transfer limit before proceeding.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="credit-card" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Review transfer fees in advance.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="refresh-ccw" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Know the expected transfer processing time.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="check-circle" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Wait for confirmation before exiting the app.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="file-text" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Save the order number for future reference.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="alert-circle" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Be wary of unexpected money requests.</span>
-                            </li>
-                            <li class="flex items-center space-x-2">
-                                <i data-lucide="link-2" class="w-4 h-4 text-yellow-400"></i>
-                                <span>Avoid phishing scams and suspicious links.</span>
-                            </li>
-                        </ul>
-
-                        <div class="mt-3 space-y-2">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-yellow-100">•</span>
-                                <img src="{{ asset('storage/images/instapay.png') }}" alt="Instapay"
-                                     class="h-5 w-20">
-                                <span class="text-yellow-100">transfers only</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <span class="text-yellow-100">•</span>
-                                <img src="{{ asset('storage/images/pesonet.png') }}" alt="PESONet" class="h-5 w-20">
-                                <span class="text-yellow-100">transfers only</span>
                             </div>
                         </div>
-                    </div>
+                    @elseif($paymentMethod === 'wallet' && $exchangeData['baseCurrencyCode'] === 'NGN')
+                        <div class="bg-gray-950 border border-gray-800 rounded-lg p-6 mb-6">
+                            <h4 class="font-bold text-white mb-4">Wallet Payment Summary</h4>
 
-                @elseif($exchangeData['baseCurrencyCode'] === 'USDT')
-                    <div class="flex items-start space-x-3">
-                        <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Payment Method</span>
+                                    <span class="font-medium text-white">NGN Wallet</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Current Balance</span>
+                                    <span
+                                        class="font-medium text-green-400">₦{{ number_format($walletBalance, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Amount to Deduct</span>
+                                    <span
+                                        class="font-medium text-white">₦{{ number_format($exchangeData['baseAmount'] - ($exchangeData['baseAmount'] * 0.001), 2) }}</span>
+                                </div>
+                                <hr class="border-gray-700">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300 font-medium">Remaining Balance</span>
+                                    <span class="font-bold text-yellow-400">
+                    ₦{{ number_format($walletBalance - ($exchangeData['baseAmount'] - ($exchangeData['baseAmount'] * 0.001)), 2) }}
+                </span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
+                                <div class="flex items-start space-x-2">
+                                    <i data-lucide="info" class="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0"></i>
+                                    <p class="text-xs text-blue-300">
+                                        Payment will be processed instantly. Your exchange transaction will be
+                                        automatically approved.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- submit button section -->
+                    <div class="pt-1 mt-1 flex gap-4">
+                        <button type="button"
+                                x-data
+                                @click="async () => {
+                const result = await Swal.fire({
+                    title: 'Cancel Transaction?',
+                    text: 'Are you sure you want to cancel this transaction? This action cannot be undone.',
+                    icon: 'warning',
+                    background: '#1f2937',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#374151',
+                    confirmButtonText: 'Yes, cancel it',
+                    cancelButtonText: 'No, keep it'
+                });
+
+                if (result.isConfirmed) {
+                    window.intentionallyCancelling = true;
+                    $wire.cancelTransaction();
+                }
+            }"
+                                class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg font-semibold text-base hover:bg-red-700 transition-all text-center">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                @click="window.intentionallyCancelling = true"
+                                class="brand-gradient flex-1 text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-center"
+                                @if($paymentMethod === 'bank_transfer' && !$paymentSlips) disabled
+                                @elseif($paymentMethod === 'wallet' && $hasInsufficientFunds) disabled @endif>
+                            {{ $paymentMethod === 'wallet' ? 'Pay with Wallet' : 'Submit' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div>
+                <div class="mt-6 bg-yellow-900/20 rounded-lg p-4">
+                    @if($exchangeData['baseCurrencyCode'] === 'PHP')
                         <div class="text-xs">
-                            <h3 class="text-sm font-semibold text-yellow-300 mb-1">Important notice</h3>
-                            <p class="text-yellow-100">Please confirm that you are depositing USDT to this address
-                                on the TRC20
-                                network. Mismatched address information may result in the permanent loss of your
-                                assets.</p>
-                        </div>
-                    </div>
+                            <div class="flex items-start space-x-3 mb-3">
+                                <i data-lucide="alert-triangle"
+                                   class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                <h3 class="text-sm font-semibold text-yellow-300">Important notice</h3>
+                            </div>
 
-                @else
-                    <div>
-                        <div class="flex items-start space-x-3 mb-3">
-                            <i data-lucide="alert-triangle"
-                               class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                            <h3 class="text-sm font-semibold text-yellow-300">Important notice</h3>
+                            <ul class="text-xs space-y-2 text-yellow-100">
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Transfers are non-refundable.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="hash" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Please make sure you send the exact amount.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="clock" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Check your daily transfer limit before proceeding.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="credit-card" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Review transfer fees in advance.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="refresh-ccw" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Know the expected transfer processing time.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Wait for confirmation before exiting the app.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Save the order number for future reference.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="alert-circle" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Be wary of unexpected money requests.</span>
+                                </li>
+                                <li class="flex items-center space-x-2">
+                                    <i data-lucide="link-2" class="w-4 h-4 text-yellow-400"></i>
+                                    <span>Avoid phishing scams and suspicious links.</span>
+                                </li>
+                            </ul>
+
+                            <div class="mt-3 space-y-2">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-yellow-100">•</span>
+                                    <img src="{{ asset('storage/images/instapay.png') }}" alt="Instapay"
+                                         class="h-5 w-20">
+                                    <span class="text-yellow-100">transfers only</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-yellow-100">•</span>No
+                                    <img src="{{ asset('storage/images/pesonet.png') }}" alt="PESONet" class="h-5 w-20">
+                                    <span class="text-yellow-100">transfers</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <ul class="text-xs space-y-2 text-yellow-100">
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="user-check"
-                                   class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Verify recipient details; transfers are non-refundable.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="clock" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Check your daily transfer limit before proceeding.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="credit-card"
-                                   class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Review transfer fees in advance.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="refresh-ccw"
-                                   class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Know the expected transfer processing time.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="check-circle"
-                                   class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Wait for confirmation before exiting the app.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="file-text" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Save the order number for future reference.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="alert-circle"
-                                   class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Be wary of unexpected money requests.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <i data-lucide="link-2" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
-                                <span>Avoid phishing scams and suspicious links.</span>
-                            </li>
-                        </ul>
-                    </div>
-                @endif
+                    @elseif($exchangeData['baseCurrencyCode'] === 'USDT')
+                        <div class="flex items-start space-x-3">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                            <div class="text-xs">
+                                <h3 class="text-sm font-semibold text-yellow-300 mb-1">Important notice</h3>
+                                <p class="text-yellow-100">Please confirm that you are depositing USDT to this address
+                                    on the TRC20
+                                    network. Mismatched address information may result in the permanent loss of your
+                                    assets.</p>
+                            </div>
+                        </div>
+
+                    @else
+                        <div>
+                            <div class="flex items-start space-x-3 mb-3">
+                                <i data-lucide="alert-triangle"
+                                   class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                <h3 class="text-sm font-semibold text-yellow-300">Important notice</h3>
+                            </div>
+
+                            <ul class="text-xs space-y-2 text-yellow-100">
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="user-check"
+                                       class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Verify recipient details; transfers are non-refundable.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="clock" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Check your daily transfer limit before proceeding.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="credit-card"
+                                       class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Review transfer fees in advance.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="refresh-ccw"
+                                       class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Know the expected transfer processing time.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="check-circle"
+                                       class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Wait for confirmation before exiting the app.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Save the order number for future reference.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="alert-circle"
+                                       class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Be wary of unexpected money requests.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <i data-lucide="link-2" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                                    <span>Avoid phishing scams and suspicious links.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    @endif
+                </div>
+
             </div>
 
         </div>
