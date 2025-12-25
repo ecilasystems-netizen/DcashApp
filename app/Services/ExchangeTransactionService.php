@@ -32,6 +32,7 @@ class ExchangeTransactionService
             'recipient_bank_name' => $exchangeData['bank'] ?? null,
             'recipient_account_number' => $exchangeData['accountNumber'] ?? null,
             'recipient_account_name' => $exchangeData['accountName'] ?? null,
+            'recipient_bank_code' => $exchangeData['bankCode'] ?? null,
             'recipient_wallet_address' => $exchangeData['walletAddress'] ?? null,
             'recipient_network' => $exchangeData['network'] ?? null,
             'payment_transaction_hash' => null,

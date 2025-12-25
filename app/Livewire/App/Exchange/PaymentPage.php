@@ -189,6 +189,7 @@ class PaymentPage extends Component
                     'status' => 'pending_confirmation', // Auto-approve wallet payments
                     'cashback' => $this->exchangeData['baseAmount'] * 0.001
                 ]);
+                
 
                 // Deduct from wallet
                 $this->userWallet->update([

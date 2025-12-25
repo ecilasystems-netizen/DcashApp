@@ -26,7 +26,7 @@ class TransactionList extends Component
     public $search = '';
     public $statusFilter = '';
     public $dateFilter = '';
-    public $perPage = 50;
+    public $perPage = 20;
 
     public $selectedBank = '';
     public $banks = [
@@ -76,7 +76,7 @@ class TransactionList extends Component
 
             if ($transaction->status === 'completed') {
                 session()->flash('error', 'Transaction is already completed.');
-                return;
+                return null;
             }
 
             // Store selected bank if NGN transaction
@@ -96,7 +96,7 @@ class TransactionList extends Component
             if (!in_array($accountEnquiry['status'], [200, 201])) {
                 session()->flash('error',
                     'Account verification failed: '.($accountEnquiry['json']['message'] ?? 'Unknown error'));
-                return;
+                return null;
             }
 
             $accountName = $accountEnquiry['json']['data']['accountName'] ?? null;
@@ -104,7 +104,7 @@ class TransactionList extends Component
 
             if (!$nameEnquiryReference) {
                 session()->flash('error', 'Name enquiry reference not found');
-                return;
+                return null;
             }
 
             // Verify account name matches
@@ -132,7 +132,7 @@ class TransactionList extends Component
             if (!in_array($transferResponse['status'], [200, 201])) {
                 session()->flash('error',
                     'Transfer failed: '.($transferResponse['json']['message'] ?? 'Unknown error'));
-                return;
+                return null;
             }
 
             // Update transaction status

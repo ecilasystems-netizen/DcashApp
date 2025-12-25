@@ -351,6 +351,7 @@ class ExchangeBankAccount extends Component
                     $exchangeData['bank'] = $this->getBankName($this->bank);
                     $exchangeData['accountNumber'] = $this->accountNumber;
                     $exchangeData['accountName'] = $this->accountName;
+                    $exchangeData['bankCode'] = $this->getBankCode($this->bank);
                 }
             } else {
                 $exchangeData['bank'] = $this->bankName;
@@ -372,6 +373,12 @@ class ExchangeBankAccount extends Component
     {
         $bank = SafehavenBank::find($bankId);
         return $bank->name ?? 'Unknown Bank';
+    }
+
+    private function getBankCode($bankId)
+    {
+        $bank = SafehavenBank::find($bankId);
+        return $bank->code ?? 'Unknown Bank';
     }
 
     public function render()

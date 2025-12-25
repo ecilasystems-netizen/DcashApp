@@ -254,7 +254,7 @@
                         <td class="px-6 py-4">{{ $index + 1 }}</td>
                         <td class="px-6 py-4">
                             @if($transaction->payment_proof)
-                                <div class="flex gap-2">
+                                <div class="grid grid-cols-2 gap-2">
                                     @foreach(json_decode($transaction->payment_proof, true) ?? [] as $image)
                                         <img src="{{ Storage::url($image) }}"
                                              class="w-16 h-12 object-cover rounded-md cursor-pointer"
