@@ -7,7 +7,6 @@ use App\Models\Bonus;
 use App\Models\RedemptionRequest;
 use App\Models\SupportedCurrency;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
@@ -137,7 +136,7 @@ class RedeemBonus extends Component
         if ($this->redeemAmount > $this->totalRewards) {
             $this->addError('redeemAmount', 'Insufficient DCoins balance');
             $this->isProcessing = false;
-            return;
+            return null;
         }
 
         try {
@@ -150,9 +149,6 @@ class RedeemBonus extends Component
                 'status' => 'pending',
                 'reference' => 'RDM-'.strtoupper(uniqid()),
             ];
-
-            //log the redemption data
-            log::info('Redemption Data: ', $redemptionData);
 
             if ($this->currencyData->isFiat()) {
                 $redemptionData['bank_details'] = [
@@ -167,7 +163,12 @@ class RedeemBonus extends Component
                 ];
             }
 
-            RedemptionRequest::create($redemptionData);
+            $record = RedemptionRequest::create($redemptionData);
+
+            //i want to capture the device info and store as json in the field 'device_info'
+            $deviceInfoService = app(\App\Services\DeviceInfoService::class);
+            $deviceInfo = $deviceInfoService->getDeviceInfo();
+            $record->update(['device_info' => json_encode($deviceInfo)]);
 
             // Update available balance
             $this->totalRewards -= $this->redeemAmount;

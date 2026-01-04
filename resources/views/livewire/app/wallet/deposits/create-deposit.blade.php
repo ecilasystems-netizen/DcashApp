@@ -14,80 +14,68 @@
         </header>
     </x-slot>
 
+    @if($walletProvider === 'safehaven')
 
-    <!-- Deposit Details -->
-    <div class=" lg:py-8 space-y-8">
+        <!-- Deposit Details -->
+        <div class=" lg:py-8 space-y-8">
 
-        <div
-            x-data="{ showNotice: true }"
-            x-show="showNotice"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-            style="backdrop-filter: blur(2px);"
-        >
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center relative">
-                <button
-                    @click="showNotice = false"
-                    class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 transition"
-                >
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-                <div class="flex justify-center mb-4">
-                    <div class="bg-red-500 rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
-                        <i data-lucide="alert-triangle" class="w-8 h-8 text-white"></i>
+
+            <!-- Instructions -->
+            <div class="bg-gray-800/2  border-gray-700 rounded-2xl text-center">
+                <h3 class="font-semibold text-[#E1B362] mb-4">Instructions</h3>
+                <ul class="space-y-3 text-white text-sm list-disc list-inside bg-gray-800 p-5 rounded-lg">
+                    Make a transfer into the account, your wallet will be credited automatically within 2-5 minutes.
+                </ul>
+            </div>
+
+            <div class="bg-gray-800/2 border-2 border-dashed border-gray-700 rounded-2xl p-6 text-center">
+                <h2 class="text-lg font-semibold text-white mb-4">Your Dedicated Account Details</h2>
+                <div class="space-y-5">
+                    <!-- Account Number -->
+                    <div>
+                        <p class="text-sm text-gray-400">Account Number</p>
+                        <div class="flex items-center justify-center gap-4 mt-1">
+                            <p id="account-number" class="text-2xl font-bold text-[#E1B362]">{{$accountNumber}}</p>
+                            <button data-copy-target="account-number"
+                                    class="copy-btn p-2 rounded-lg bg-gray-700 hover:bg-gray-600">
+                                <i data-lucide="copy" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Bank Name -->
+                    <div>
+                        <p class="text-sm text-gray-400">Bank Name</p>
+                        <div class="flex items-center justify-center gap-4 mt-1">
+                            <p id="bank-name" class="text-xl font-semibold text-white">{{$bankName}}</p>
+
+                        </div>
+                    </div>
+                    <!-- Account Name -->
+                    <div>
+                        <p class="text-sm text-gray-400">Account Name</p>
+                        <div class="flex items-center justify-center gap-4 mt-1">
+                            <p id="account-name" class="text-xl font-semibold text-white">{{$accountName}}</p>
+
+                        </div>
                     </div>
                 </div>
-                <h2 class="text-xl font-bold mb-2 text-gray-900">Important Notice</h2>
-                <p class="text-gray-700 mb-2">
-                    Due to system upgrade, deposits through Virtual Bank Account are temporarily unavailable<span class="font-semibold">, service will be restored soon.</span>
-
-                </p>
-                <p class="text-gray-500 text-sm">Please check back later.</p>
             </div>
+
+
         </div>
-
-        <!-- Instructions -->
-{{--        <div class="bg-gray-800/2  border-gray-700 rounded-2xl text-center">--}}
-{{--            <h3 class="font-semibold text-[#E1B362] mb-4">Instructions</h3>--}}
-{{--            <ul class="space-y-3 text-white text-sm list-disc list-inside bg-gray-800 p-5 rounded-lg">--}}
-{{--                Make a transfer into the account, your wallet will be credited automatically within 2-5 minutes.--}}
-{{--            </ul>--}}
-{{--        </div>--}}
-
-{{--        <div class="bg-gray-800/2 border-2 border-dashed border-gray-700 rounded-2xl p-6 text-center">--}}
-{{--            <h2 class="text-lg font-semibold text-white mb-4">Your Dedicated Account Details</h2>--}}
-{{--            <div class="space-y-5">--}}
-{{--                <!-- Account Number -->--}}
-{{--                <div>--}}
-{{--                    <p class="text-sm text-gray-400">Account Number</p>--}}
-{{--                    <div class="flex items-center justify-center gap-4 mt-1">--}}
-{{--                        <p id="account-number" class="text-2xl font-bold text-[#E1B362]">{{$accountNumber}}</p>--}}
-{{--                        <button data-copy-target="account-number"--}}
-{{--                                class="copy-btn p-2 rounded-lg bg-gray-700 hover:bg-gray-600">--}}
-{{--                            <i data-lucide="copy" class="w-5 h-5"></i>--}}
-{{--                        </button>--}}
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--                <!-- Bank Name -->--}}
-{{--                <div>--}}
-{{--                    <p class="text-sm text-gray-400">Bank Name</p>--}}
-{{--                    <div class="flex items-center justify-center gap-4 mt-1">--}}
-{{--                        <p id="bank-name" class="text-xl font-semibold text-white">{{$bankName}}</p>--}}
-
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--                <!-- Account Name -->--}}
-{{--                <div>--}}
-{{--                    <p class="text-sm text-gray-400">Account Name</p>--}}
-{{--                    <div class="flex items-center justify-center gap-4 mt-1">--}}
-{{--                        <p id="account-name" class="text-xl font-semibold text-white">{{$accountName}}</p>--}}
-
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--            </div>--}}
-{{--        </div>--}}
+    @else
+        {{-- BVN Verification Modal --}}
+        @livewire('app.kyc.bvn-verification-modal')
 
 
-    </div>
+        <button
+            wire:click="$dispatch('openModal')"
+            class="w-full px-6 py-3 bg-[#E1B362] hover:bg-orange-400 text-white rounded-lg font-medium transition-colors"
+        >
+            Generate Deposit Account
+        </button>
+
+    @endif
 
     {{--    limit upgrade request--}}
     <div>

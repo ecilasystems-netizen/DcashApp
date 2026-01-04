@@ -2,8 +2,8 @@
 
 namespace App\Livewire\App\Wallet\Transfers;
 
-use App\Models\NigerianBank;
-use App\Services\FlutterwaveService;
+use App\Models\SafehavenBank;
+use App\Services\SafeHavenApi\TransfersService;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
@@ -15,6 +15,7 @@ class CreateTransfer extends Component
     public $amount = '';
     public $narration = '';
     public $verifiedAccountName = '';
+    public $nameEnquiryReference = '';
     public $accountNameStatus = '';
     public $accountVerified = false;
     public $pin = '';
@@ -28,12 +29,19 @@ class CreateTransfer extends Component
     public $showSuccessModal = false;
 
     protected $listeners = ['processTransfer'];
+    protected TransfersService $transferService;
+
 
     public function mount()
     {
-        $this->banks = NigerianBank::all()->toArray();
+        $this->banks = SafehavenBank::orderBy('name')->get()->toArray();
         $this->userBalance = auth()->user()->wallet->balance ?? 0;
         $this->transferFee = 0.00;
+    }
+
+    public function boot(TransfersService $transferService)
+    {
+        $this->transferService = $transferService;
     }
 
     public function finishTransaction()
@@ -61,24 +69,28 @@ class CreateTransfer extends Component
         $this->dispatch('verification-started');
         $this->accountNameStatus = 'Verifying...';
 
-        $flutterwaveService = app(FlutterwaveService::class);
+        $transferService = app(TransfersService::class);
 
         try {
-            $result = $flutterwaveService->verifyNigerianBankAccount(
+
+            // Step 1: Verify account details
+            $accountEnquiry = $transferService->accountNameEnquiry(
                 $this->accountNumber,
                 $this->selectedBank['code']
             );
 
-            if ($result['success']) {
-                $this->verifiedAccountName = $result['data']['account_name'];
-                $this->accountNameStatus = $result['data']['account_name'];
+            if (in_array($accountEnquiry['status'], [200, 201])) {
+                $this->verifiedAccountName = $accountEnquiry['json']['data']['accountName'] ?? null;
+                $this->accountNameStatus = $accountEnquiry['json']['data']['accountName'] ?? null;
+                $this->nameEnquiryReference = $accountEnquiry['json']['data']['sessionId'] ?? null;
                 $this->accountVerified = true;
             } else {
                 $this->verifiedAccountName = '';
                 $this->accountNameStatus = '';
                 $this->accountVerified = false;
-                $this->showError($result['message'] ?? 'Unable to verify account');
+                $this->showError('Unable to verify account');
             }
+
         } catch (\Exception $e) {
             $this->showError('An error occurred while verifying the account.');
         } finally {
@@ -180,7 +192,7 @@ class CreateTransfer extends Component
 
         // Record transaction
         $transaction = $user->wallet->transactions()->create([
-            'reference' => 'TRF'.strtoupper(uniqid()),
+            'reference' => 'TRF'.strtoupper(uniqid()).'_'.now()->format('YmdHis'),
             'type' => 'transfer',
             'direction' => 'debit',
             'user_id' => $user->id,
@@ -192,34 +204,52 @@ class CreateTransfer extends Component
             'balance_after' => $user->wallet->balance,
             'metadata' => [
                 'bank' => $this->selectedBank['name'],
+                'bank_code' => $this->selectedBank['code'],
                 'account_number' => $this->accountNumber,
                 'account_name' => $this->verifiedAccountName,
                 'narration' => $this->narration
             ],
         ]);
 
-        // Make transfer via Flutterwave
-        $flutterwaveService = app(FlutterwaveService::class);
-        $transferResult = $flutterwaveService->makeTransfer([
-            'account_bank' => $this->selectedBank['code'],
-            'account_number' => $this->accountNumber,
-            'amount' => $this->amount,
+        //capture the device info and store
+        $deviceInfoService = app(\App\Services\DeviceInfoService::class);
+        $deviceInfo = $deviceInfoService->getDeviceInfo();
+        $transaction->update(['device_info' => json_encode($deviceInfo)]);
+
+        //Initiate transfer
+        $transferData = [
+            'nameEnquiryReference' => $this->nameEnquiryReference,
+            'beneficiaryBankCode' => $this->selectedBank['code'],
+            'debitAccountNumber' => config('safehaven.debit_account_number'),
+            'beneficiaryAccountNumber' => $this->accountNumber,
+            'amount' => (int) $this->amount,
             'narration' => $this->narration,
-            'currency' => 'NGN',
-            'reference' => $transaction->reference,
+            'paymentReference' => $transaction->reference,
+        ];
+
+        $transferResponse = $this->transferService->initiateTransfer($transferData);
+
+        if (!in_array($transferResponse['status'], [200, 201])) {
+            session()->flash('error',
+                'Transfer failed: '.($transferResponse['json']['message'] ?? 'Unknown error'));
+            return null;
+        }
+
+        // Update transaction status
+        $transaction->update([
+            'status' => 'completed'
         ]);
 
-        \Log::info('Flutterwave transfer response', ['response' => $transferResult]);
+        // Store transaction metadata
+        $metadata = $transaction->metadata ?? [];
+        $metadata['transfer_session_id'] = $transferResponse['json']['data']['sessionId'] ?? null;
+        $metadata['transfer_status'] = $transferResponse['json']['data']['status'] ?? null;
+        $metadata['verified_account_name'] = $this->verifiedAccountName;
+        $metadata['transfer_date'] = now()->toDateTimeString();
+        $transaction->metadata = $metadata;
+        $transaction->save();
 
-        if ($transferResult['success']) {
-            $transaction->status = 'pending';
-            $transaction->save();
-        } else {
-            $transaction->status = 'failed';
-            $transaction->save();
-            $this->showError($transferResult['message'] ?? 'Transfer failed');
-            return;
-        }
+
         $this->showConfirmationModal = false;
         $this->showSuccessModal = true;
     }

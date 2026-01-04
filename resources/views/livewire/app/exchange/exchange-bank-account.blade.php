@@ -34,10 +34,11 @@
                 <div class="flex justify-between items-center">
                     <span class="text-gray-400">You Send</span>
                     <span class="font-semibold text-white flex items-center space-x-2">
-                                            <span>{{ number_format($baseAmount, 2) }} {{ $baseCurrencyCode }}</span>
-                                            <img id="selected-flag-base" src="{{ asset('storage/'.$baseCurrencyFlag)}}"
-                                                 class="w-6 h-6 rounded-full" alt="">
-                                        </span>
+                                                    <span>{{ number_format($baseAmount, 2) }} {{ $baseCurrencyCode }}</span>
+                                                    <img id="selected-flag-base"
+                                                         src="{{ asset('storage/'.$baseCurrencyFlag)}}"
+                                                         class="w-6 h-6 rounded-full" alt="">
+                                                </span>
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-400">Exchange Rate</span>
@@ -51,13 +52,12 @@
                 <hr class="border-gray-700">
                 <div class="flex justify-between items-center text-base">
                     <span class="text-gray-300">You Receive</span>
-                    <span
-                        class="font-bold text-lg text-[#E1B362] flex items-center space-x-2">
-                                            <span>{{ number_format($quoteAmount, 2) }} {{ $quoteCurrencyCode }}</span>
-                                            <img id="selected-flag-base"
-                                                 src="{{ asset('storage/' .$quoteCurrencyFlag)}}"
-                                                 class="w-6 h-6 rounded-full" alt="">
-                                        </span>
+                    <span class="font-bold text-lg text-[#E1B362] flex items-center space-x-2">
+                                                    <span>{{ number_format($quoteAmount, 2) }} {{ $quoteCurrencyCode }}</span>
+                                                    <img id="selected-flag-base"
+                                                         src="{{ asset('storage/' .$quoteCurrencyFlag)}}"
+                                                         class="w-6 h-6 rounded-full" alt="">
+                                                </span>
                 </div>
             </div>
             <p class="text-xs text-gray-500 mt-4 text-center">Rates are updated every 30 seconds. Complete your
@@ -83,9 +83,7 @@
                                     <div class="grid gap-4">
                                         <!-- Wallet Bank Details Option -->
                                         <label class="group relative cursor-pointer">
-                                            <input type="radio"
-                                                   wire:model.live="useWalletBankDetails"
-                                                   value="true"
+                                            <input type="radio" wire:model.live="useWalletBankDetails" value="true"
                                                    class="peer sr-only">
 
                                             <div
@@ -112,19 +110,19 @@
                                                     </div>
 
                                                     <p class="text-gray-400 text-sm leading-relaxed">
-                                                        @if(auth()->user()->virtualBankAccount->bank_name)
+                                                        @if(auth()->user()->virtualBankAccount->bank_name ?? false)
                                                             <span class="inline-flex items-center space-x-2">
-                                                               <i data-lucide="building-2" class="w-3 h-3"></i>
-                                                               <span>{{ auth()->user()->virtualBankAccount->bank_name }}</span>
-                                                               <span class="text-gray-500">•</span>
-                                                               <span
-                                                                   class="font-mono">{{ auth()->user()->virtualBankAccount->account_number }}</span>
-                                                           </span>
+                                                                                            <span>{{ auth()->user()->virtualBankAccount->bank_name }}</span>
+                                                                                            <span class="text-gray-500">•</span>
+                                                                                            <span
+                                                                                                class="font-mono">{{ auth()->user()->virtualBankAccount->account_number }}</span>
+                                                                                        </span>
                                                         @else
                                                             <span class="inline-flex items-center space-x-2">
-                                                               <i data-lucide="shield-check" class="w-3 h-3"></i>
-                                                               <span>Your verified linked bank account</span>
-                                                           </span>
+                                                                                            <i data-lucide="shield-check"
+                                                                                               class="w-3 h-3"></i>
+                                                                                            <span>Your verified linked bank account</span>
+                                                                                        </span>
                                                         @endif
                                                     </p>
                                                 </div>
@@ -133,9 +131,7 @@
 
                                         <!-- Manual Entry Option -->
                                         <label class="group relative cursor-pointer">
-                                            <input type="radio"
-                                                   wire:model.live="useWalletBankDetails"
-                                                   value="false"
+                                            <input type="radio" wire:model.live="useWalletBankDetails" value="false"
                                                    class="peer sr-only">
 
                                             <div
@@ -161,10 +157,12 @@
                                                     </div>
 
                                                     <p class="text-gray-400 text-sm leading-relaxed">
-                                                        <span class="inline-flex items-center space-x-2">
-                                                            <i data-lucide="plus-circle" class="w-3 h-3"></i>
-                                                            <span>Manually enter recipient bank details</span>
-                                                        </span>
+                                                                                    <span
+                                                                                        class="inline-flex items-center space-x-2">
+                                                                                        <i data-lucide="plus-circle"
+                                                                                           class="w-3 h-3"></i>
+                                                                                        <span>Manually enter recipient bank details</span>
+                                                                                    </span>
                                                     </p>
                                                 </div>
                                             </div>
@@ -180,22 +178,16 @@
                                 <div x-data="{ open: false, search: '', selectedBank: '' }" class="relative">
                                     <label for="bank" class="block text-gray-400 mb-2">Select Bank</label>
                                     <div class="relative">
-                                        <input
-                                            type="text"
-                                            x-model="search"
-                                            @click="open = true"
-                                            @click.away="open = false"
-                                            placeholder="Select bank..."
-                                            class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
-                                        >
+                                        <input type="text" x-model="search" @click="open = true"
+                                               @click.away="open = false" placeholder="Select bank..."
+                                               class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                         <div x-show="open"
                                              class="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-800 rounded-lg max-h-60 overflow-y-auto">
                                             @foreach($banks as $bank)
                                                 <div
                                                     @click="selectedBank = '{{ $bank->id }}'; $wire.bank = '{{ $bank->id }}'; search = '{{ $bank->name }}'; open = false"
                                                     class="px-4 py-2 cursor-pointer hover:bg-gray-600 text-white"
-                                                    x-show="'{{ strtolower($bank->name) }}'.includes(search.toLowerCase())"
-                                                >
+                                                    x-show="'{{ strtolower($bank->name) }}'.includes(search.toLowerCase())">
                                                     {{ $bank->name }}
                                                 </div>
                                             @endforeach
@@ -228,9 +220,9 @@
 
                                     <div class="bg-gray-900 p-3 rounded-lg text-center mt-4">
                                         <p class="font-semibold {{
-                                                                $accountName === 'Account name will appear here' ? 'text-gray-400' :
-                                                                ($accountName === 'Invalid Account Number' || $accountName === 'Error fetching account name' ? 'text-red-400' : 'text-green-400')
-                                                            }}">
+                                                                        $accountName === 'Account name will appear here' ? 'text-gray-400' :
+                                                                        ($accountName === 'Invalid Account Number' || $accountName === 'Error fetching account name' ? 'text-red-400' : 'text-green-400')
+                                                                    }}">
                                             {{ $accountName ?: 'Account name will appear here' }}
                                         </p>
                                     </div>
@@ -240,22 +232,16 @@
                             <div x-data="{ open: false, search: '', selectedBank: '' }" class="relative">
                                 <label for="bank" class="block text-gray-400 mb-2">Select Bank</label>
                                 <div class="relative">
-                                    <input
-                                        type="text"
-                                        x-model="search"
-                                        @click="open = true"
-                                        @click.away="open = false"
-                                        placeholder="Select bank..."
-                                        class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]"
-                                    >
+                                    <input type="text" x-model="search" @click="open = true" @click.away="open = false"
+                                           placeholder="Select bank..."
+                                           class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                     <div x-show="open"
                                          class="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-800 rounded-lg max-h-60 overflow-y-auto">
                                         @foreach($phpBanks as $bank)
                                             <div
                                                 @click="selectedBank = '{{ $bank['name'] }}'; $wire.bankName = '{{ $bank['name'] }}'; search = '{{ $bank['name'] }}'; open = false"
                                                 class="px-4 py-2 cursor-pointer hover:bg-gray-600 text-white"
-                                                x-show="'{{ strtolower($bank['name']) }}'.includes(search.toLowerCase())"
-                                            >
+                                                x-show="'{{ strtolower($bank['name']) }}'.includes(search.toLowerCase())">
                                                 {{ $bank['name'] }}
                                             </div>
                                         @endforeach
@@ -277,8 +263,7 @@
 
                                 <div class="mt-4">
                                     <label for="accountName" class="block text-gray-400 mb-2">Account Name</label>
-                                    <input type="text" id="accountName" wire:model.live="accountName"
-                                           placeholder=""
+                                    <input type="text" id="accountName" wire:model.live="accountName" placeholder=""
                                            class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                     @error('accountName') <p
                                         class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -305,8 +290,7 @@
 
                                 <div class="mt-4">
                                     <label for="accountName" class="block text-gray-400 mb-2">Account Name</label>
-                                    <input type="text" id="accountName" wire:model.live="accountName"
-                                           placeholder=""
+                                    <input type="text" id="accountName" wire:model.live="accountName" placeholder=""
                                            class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
                                     @error('accountName') <p
                                         class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -314,26 +298,92 @@
                             </div>
                         @endif
 
+                        <!-- Narration Field with Clickable Options -->
+                        <div class="mt-6" x-data="{
+                            selectedNarration: @entangle('narration').live,
+                            showCustom: @entangle('showCustomNarration').live,
+                            customValue: @entangle('customNarration').live
+                        }">
+                            <label class="block text-gray-400 mb-3 flex items-center justify-between">
+                                <span class="flex items-center space-x-2">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                    <span>Purpose of Transfer</span>
+                                </span>
+                                <button type="button"
+                                        @click="showCustom = !showCustom; if(showCustom) { selectedNarration = ''; customValue = ''; }"
+                                        class="text-xs text-[#E1B362] hover:text-[#d4a555] transition-colors flex items-center space-x-1">
+                                    <i :data-lucide="showCustom ? 'list' : 'edit-3'" class="w-3 h-3"></i>
+                                    <span x-text="showCustom ? 'Select from list' : 'Enter custom'"></span>
+                                </button>
+                            </label>
+
+                            <!-- Predefined Options Grid -->
+                            <div x-show="!showCustom" x-transition class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2">
+                                @foreach($this->narrationOptions as $key => $label)
+                                    <button type="button"
+                                            @click="selectedNarration = '{{ $key }}'"
+                                            :class="selectedNarration === '{{ $key }}'
+                                                ? 'bg-[#E1B362] text-gray-900 border-[#E1B362]'
+                                                : 'bg-gray-900 text-gray-300 border-gray-800 hover:border-[#E1B362]/50'"
+                                            class="px-3 py-2.5 rounded-lg border transition-all text-xs font-medium flex items-center justify-center space-x-2">
+                                        <i data-lucide="check-circle"
+                                           x-show="selectedNarration === '{{ $key }}'"
+                                           class="w-3.5 h-3.5"></i>
+                                        <span>{{ $label }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <!-- Custom Narration Input -->
+                            <div x-show="showCustom" x-transition>
+                                <input type="text"
+                                       x-model="customValue"
+                                       wire:model.live="customNarration"
+                                       placeholder="Enter custom purpose (max 20 characters)"
+                                       maxlength="20"
+                                       class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] text-sm">
+                                <p class="text-xs text-gray-500 mt-1" x-show="customValue.length > 0">
+                                    <span x-text="customValue.length"></span>/20 characters
+                                </p>
+                            </div>
+
+                            @error('narration')
+                            <p class="text-red-500 text-xs mt-2 flex items-center space-x-1">
+                                <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                <span>{{ $message }}</span>
+                            </p>
+                            @enderror
+                            @error('customNarration')
+                            <p class="text-red-500 text-xs mt-2 flex items-center space-x-1">
+                                <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                <span>{{ $message }}</span>
+                            </p>
+                            @enderror
+                        </div>
+
                         <!-- Submit Button - Always show when any option is selected -->
                         <div class="pt-6" x-transition>
                             <button type="submit"
                                     class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     @if($quoteCurrencyCode === 'NGN')
                                         @if($useWalletBankDetails === 'true')
-                                            {{-- Wallet bank details selected - button enabled --}}
-                                        @elseif($useWalletBankDetails === 'false')
-                                            @if($accountName === 'Account name will appear here' ||
-                                                $accountName === 'Invalid Account Number' ||
-                                                $accountName === 'Error fetching account name' ||
-                                                empty($accountName) ||
-                                                !$bank || !$accountNumber)
-                                                disabled
+                                            @if((!$showCustomNarration && !$narration) || ($showCustomNarration && !$customNarration)) disabled
+                                    @endif
+                                    @elseif($useWalletBankDetails === 'false')
+                                        @if($accountName === 'Account name will appear here' ||
+                                            $accountName === 'Invalid Account Number' ||
+                                            $accountName === 'Error fetching account name' ||
+                                            empty($accountName) ||
+                                            !$bank || !$accountNumber ||
+                                            ((!$showCustomNarration && !$narration) || ($showCustomNarration && !$customNarration)))
+                                            disabled
                                     @endif
                                     @else
                                         disabled
                                     @endif
                                     @else
-                                        @if(!$accountNumber || !$accountName || !$bankName)
+                                        @if(!$accountNumber || !$accountName || !$bankName ||
+                                            ((!$showCustomNarration && !$narration) || ($showCustomNarration && !$customNarration)))
                                             disabled
                                 @endif
                                 @endif>
@@ -343,8 +393,8 @@
                     </div>
                 </form>
             @else
-                <h4 class="font-bold text-white mb-6"> <span
-                        class="text-[#E1B362]">{{$quoteCurrencyCode}}</span> Crypto Wallet Details</h4>
+                <h4 class="font-bold text-white mb-6"><span class="text-[#E1B362]">{{$quoteCurrencyCode}}</span> Crypto
+                    Wallet Details</h4>
 
                 <form wire:submit.prevent="submit" class="space-y-6 text-sm">
                     <div>
@@ -352,7 +402,7 @@
                             Address</label>
                         <input type="text" id="walletAddress" wire:model.live="walletAddress"
                                placeholder="Enter your {{ $quoteCurrencyCode }} wallet address"
-                               class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
+                               class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] font-mono text-xs">
                         @error('walletAddress') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
@@ -360,17 +410,78 @@
                         <div>
                             <label for="network" class="block text-gray-400 mb-2">Network</label>
                             <select wire:model.live="network" id="network"
-                                    class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362]">
-                                <option value="">Select Network</option>
-                                @if(isset($networks))
-                                    @foreach($networks as $network)
-                                        <option value="{{ $network }}">{{ $network }}</option>
-                                    @endforeach
-                                @endif
+                                    class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] appearance-none cursor-pointer">
+                                <option value="">Select network...</option>
+                                @foreach($networks as $networkOption)
+                                    <option value="{{ $networkOption }}">{{ $networkOption }}</option>
+                                @endforeach
                             </select>
                             @error('network') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     @endif
+
+                    <!-- Narration Field with Clickable Options -->
+                    <div class="mt-6" x-data="{
+                            selectedNarration: @entangle('narration').live,
+                            showCustom: @entangle('showCustomNarration').live,
+                            customValue: @entangle('customNarration').live
+                        }">
+                        <label class="block text-gray-400 mb-3 flex items-center justify-between">
+                                <span class="flex items-center space-x-2">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                    <span>Purpose of Transfer</span>
+                                </span>
+                            <button type="button"
+                                    @click="showCustom = !showCustom; if(showCustom) { selectedNarration = ''; customValue = ''; }"
+                                    class="text-xs text-[#E1B362] hover:text-[#d4a555] transition-colors flex items-center space-x-1">
+                                <i :data-lucide="showCustom ? 'list' : 'edit-3'" class="w-3 h-3"></i>
+                                <span x-text="showCustom ? 'Select from list' : 'Enter custom'"></span>
+                            </button>
+                        </label>
+
+                        <!-- Predefined Options Grid -->
+                        <div x-show="!showCustom" x-transition class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2">
+                            @foreach($this->narrationOptions as $key => $label)
+                                <button type="button"
+                                        @click="selectedNarration = '{{ $key }}'"
+                                        :class="selectedNarration === '{{ $key }}'
+                                                ? 'bg-[#E1B362] text-gray-900 border-[#E1B362]'
+                                                : 'bg-gray-900 text-gray-300 border-gray-800 hover:border-[#E1B362]/50'"
+                                        class="px-3 py-2.5 rounded-lg border transition-all text-xs font-medium flex items-center justify-center space-x-2">
+                                    <i data-lucide="check-circle"
+                                       x-show="selectedNarration === '{{ $key }}'"
+                                       class="w-3.5 h-3.5"></i>
+                                    <span>{{ $label }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <!-- Custom Narration Input -->
+                        <div x-show="showCustom" x-transition>
+                            <input type="text"
+                                   x-model="customValue"
+                                   wire:model.live="customNarration"
+                                   placeholder="Enter custom purpose (max 20 characters)"
+                                   maxlength="20"
+                                   class="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#E1B362] text-sm">
+                            <p class="text-xs text-gray-500 mt-1" x-show="customValue.length > 0">
+                                <span x-text="customValue.length"></span>/20 characters
+                            </p>
+                        </div>
+
+                        @error('narration')
+                        <p class="text-red-500 text-xs mt-2 flex items-center space-x-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                            <span>{{ $message }}</span>
+                        </p>
+                        @enderror
+                        @error('customNarration')
+                        <p class="text-red-500 text-xs mt-2 flex items-center space-x-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                            <span>{{ $message }}</span>
+                        </p>
+                        @enderror
+                    </div>
 
                     <div class="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-4">
                         <div class="flex items-start space-x-2">
@@ -386,9 +497,9 @@
                     <div class="pt-4">
                         <button type="submit"
                                 class="brand-gradient w-full text-white py-3 px-6 rounded-lg font-semibold text-base hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                @if($quoteCurrencyCode !== 'BTC' && (!$walletAddress || !$network))
+                                @if($quoteCurrencyCode !== 'BTC' && (!$walletAddress || !$network || ((!$showCustomNarration && !$narration) || ($showCustomNarration && !$customNarration))))
                                     disabled
-                                @elseif($quoteCurrencyCode === 'BTC' && !$walletAddress)
+                                @elseif($quoteCurrencyCode === 'BTC' && (!$walletAddress || ((!$showCustomNarration && !$narration) || ($showCustomNarration && !$customNarration))))
                                     disabled
                             @endif>
                             Confirm and Proceed
@@ -397,7 +508,7 @@
                 </form>
             @endif
 
-            <div class="mt-6 bg-yellow-900/20  rounded-lg p-0">
+            <div class="mt-6 bg-yellow-900/20 rounded-lg p-0">
                 <div class="flex items-start space-x-3 mb-3">
                     <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0"></i>
                     <h3 class="text-sm font-semibold text-red-400">Important notice</h3>

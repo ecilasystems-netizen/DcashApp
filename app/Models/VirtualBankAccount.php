@@ -18,6 +18,7 @@ class VirtualBankAccount extends Model
         'bank_code',
         'account_name',
         'provider',
+        'meta',
         'trx_ref',
         'order_ref',
         'is_active',
@@ -25,6 +26,7 @@ class VirtualBankAccount extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'meta' => 'array',
     ];
 
     public function user(): BelongsTo

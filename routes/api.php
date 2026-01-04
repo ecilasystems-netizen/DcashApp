@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Flutterwave\FlutterwaveBillsController;
 use App\Http\Controllers\FlutterwaveWebhookController;
+use App\Http\Controllers\SafeHavenWebhookController;
 use App\Http\Controllers\TestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,10 @@ Route::get('/test/create-safe-haven-sub-account', [TestController::class, 'creat
 Route::post('/webhooks/flutterwave',
     [FlutterwaveWebhookController::class, 'handleFlutterwaveWebhook'])->name('webhooks.flutterwave');
 
+
+Route::post('/webhooks/safehaven', [SafeHavenWebhookController::class, 'handle'])
+    ->name('webhooks.safehaven')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 // Safe Haven API Test Routes
 Route::get('/safe-haven/bank-list', [TestController::class, 'getBanks']);

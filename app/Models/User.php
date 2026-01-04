@@ -32,7 +32,11 @@ class User extends Authenticatable
         'referral_code',
         'referred_by',
         'pin',
-        'account_tier_id'
+        'account_tier_id',
+        'bvn',
+        'bvn_verified',
+        'bvn_verified_at',
+        'dob',
     ];
 
     /**

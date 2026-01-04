@@ -28,6 +28,9 @@ class DeviceInfoService
 
         return [
             'browser' => $browser,
+            'os' => $this->agent->platform().' '.$this->agent->version($this->agent->platform()),
+            'device' => $this->agent->device(),
+            'ip_address' => Request::ip(),
             'location' => $location
         ];
     }

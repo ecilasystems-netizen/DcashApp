@@ -6,4 +6,10 @@ return [
     'base_url' => env('SAFEHAVEN_API_URL', 'https://api.safehavenmfb.com'),
     'client_assertion' => env('SAFEHAVEN_API_CLIENT_ASSERTION'),
     'debit_account_number' => env('SAFEHAVEN_API_DEBIT_ACCOUNT_NUMBER'),
+
+
+    // Webhook IP whitelist
+    'webhook_allowed_ips' => array_filter(
+        explode(',', env('SAFEHAVEN_WEBHOOK_IPS', '196.6.103.73,196.6.103.74'))
+    ),
 ];

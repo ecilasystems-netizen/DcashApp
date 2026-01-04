@@ -29,9 +29,10 @@ class ExchangeTransaction extends Model
         'payment_proof',
         'status',
         'note',
+        'narration',
         'cashback',
-        'agent_id'
-
+        'agent_id',
+        'device_info'
     ];
 
     protected $casts = [
@@ -40,6 +41,7 @@ class ExchangeTransaction extends Model
         'rate' => 'decimal:8',
         'status' => 'string',
         'note' => 'array',
+        'device_info' => 'array',
     ];
 
     public function user(): BelongsTo

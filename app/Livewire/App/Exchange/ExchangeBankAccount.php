@@ -4,6 +4,7 @@ namespace App\Livewire\App\Exchange;
 
 use App\Models\SafehavenBank;
 use App\Services\SafeHavenApi\TransfersService;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 
@@ -29,6 +30,8 @@ class ExchangeBankAccount extends Component
     public $phpBanks = [];
 
     public $useWalletBankDetails = false;
+    public bool $showCustomNarration = false;
+    public string $customNarration = '';
 
     // Add these crypto-related properties
     public $walletAddress = '';
@@ -319,10 +322,51 @@ class ExchangeBankAccount extends Component
         $this->dispatch('account-verified');
     }
 
+    private function getBankName($bankId)
+    {
+        $bank = SafehavenBank::find($bankId);
+        return $bank->name ?? 'Unknown Bank';
+    }
+
+    private function getBankCode($bankId)
+    {
+        $bank = SafehavenBank::find($bankId);
+        return $bank->code ?? 'Unknown Bank';
+    }
+
+    public function render()
+    {
+        //get all banks
+        $banks = SafehavenBank::orderBy('name', 'asc')->get(); // Fetch all currencies
+        return view('livewire.app.exchange.exchange-bank-account', compact('banks'))->layout('layouts.app.app',
+            [
+                'title' => 'Enter Bank Account - Dcash Wallet',
+            ]);
+    }
+
+
+    public string $narration = '';
+
+    #[Computed]
+    public function narrationOptions(): array
+    {
+        return [
+            'personal' => 'Personal',
+            'purchase' => 'Purchase',
+            'family' => 'Family Support',
+            'bills' => 'Bills Payment',
+            'gift' => 'Gift',
+            'other' => 'Other',
+        ];
+    }
+
     public function submit()
     {
         $validated = $this->validate();
 
+        $finalNarration = $this->showCustomNarration
+            ? $this->customNarration
+            : ($this->narrationOptions()[$this->narration] ?? $this->narration);
 
         $exchangeData = [
             'baseCurrencyId' => $this->baseCurrencyId,
@@ -335,8 +379,8 @@ class ExchangeBankAccount extends Component
             'processingFee' => $this->processingFee,
             'baseCurrencyFlag' => $this->baseCurrencyFlag,
             'quoteCurrencyFlag' => $this->quoteCurrencyFlag,
+            'narration' => $finalNarration,
         ];
-
 
         if ($this->quoteCurrencyType === 'fiat') {
 
@@ -365,65 +409,42 @@ class ExchangeBankAccount extends Component
         }
 
         session(['exchangeData' => $exchangeData]);
-
         return redirect()->route('exchange.payment');
     }
 
-    private function getBankName($bankId)
+    protected function rules(): array
     {
-        $bank = SafehavenBank::find($bankId);
-        return $bank->name ?? 'Unknown Bank';
-    }
+        $rules = [];
 
-    private function getBankCode($bankId)
-    {
-        $bank = SafehavenBank::find($bankId);
-        return $bank->code ?? 'Unknown Bank';
-    }
+        // Narration validation
+        if ($this->showCustomNarration) {
+            $rules['customNarration'] = ['required', 'string', 'max:20'];
+        } else {
+            $rules['narration'] = ['required', 'string', 'in:'.implode(',', array_keys($this->narrationOptions()))];
+        }
 
-    public function render()
-    {
-        //get all banks
-        $banks = SafehavenBank::orderBy('name', 'asc')->get(); // Fetch all currencies
-        return view('livewire.app.exchange.exchange-bank-account', compact('banks'))->layout('layouts.app.app',
-            [
-                'title' => 'Enter Bank Account - Dcash Wallet',
-            ]);
-    }
-
-    protected function rules()
-    {
         if ($this->quoteCurrencyType === 'fiat') {
             if ($this->quoteCurrencyCode === 'NGN') {
-                // Skip validation if using wallet bank details
                 if ($this->useWalletBankDetails === 'true') {
-                    return [
-                        'useWalletBankDetails' => 'required'
-                    ];
+                    $rules['useWalletBankDetails'] = ['required'];
+                } else {
+                    $rules['bank'] = ['required', 'string'];
+                    $rules['accountNumber'] = ['required', 'digits:10'];
+                    $rules['useWalletBankDetails'] = ['required'];
                 }
-
-                return [
-                    'bank' => 'required|string',
-                    'accountNumber' => 'required|digits:10',
-                    'useWalletBankDetails' => 'required'
-                ];
             } else {
-                return [
-                    'bankName' => 'required|string',
-                    'accountNumber' => 'required|string',
-                    'accountName' => 'required|string',
-                ];
+                $rules['bankName'] = ['required', 'string'];
+                $rules['accountNumber'] = ['required', 'string'];
+                $rules['accountName'] = ['required', 'string'];
             }
         } else {
-            $rules = [
-                'walletAddress' => 'required|string|min:26',
-            ];
+            $rules['walletAddress'] = ['required', 'string', 'min:26'];
 
             if ($this->quoteCurrencyCode !== 'BTC') {
-                $rules['network'] = 'required|string';
+                $rules['network'] = ['required', 'string'];
             }
-
-            return $rules;
         }
+
+        return $rules;
     }
 }

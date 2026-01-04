@@ -130,7 +130,8 @@ class PaymentPage extends Component
     {
 
         if ($this->paymentMethod === 'wallet') {
-            return $this->processWalletPayment();
+            $this->processWalletPayment();
+            return null;
         }
 
         $this->validate([
@@ -145,6 +146,11 @@ class PaymentPage extends Component
             $this->paymentSlips,
             $this->companyBankAccountId
         );
+
+        //i want to capture the device info and store as json in the field 'device_info' of the exchange transaction table
+        $deviceInfoService = app(\App\Services\DeviceInfoService::class);
+        $deviceInfo = $deviceInfoService->getDeviceInfo();
+        $transaction->update(['device_info' => json_encode($deviceInfo)]);
 
         // Optionally clear session or redirect
         session()->forget(['exchangeData', 'exchange_expiration_time']);
@@ -189,7 +195,7 @@ class PaymentPage extends Component
                     'status' => 'pending_confirmation', // Auto-approve wallet payments
                     'cashback' => $this->exchangeData['baseAmount'] * 0.001
                 ]);
-                
+
 
                 // Deduct from wallet
                 $this->userWallet->update([

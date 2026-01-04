@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckKycStatusMiddleware;
 use App\Http\Middleware\EnsureUserIsAdminMiddleware;
 use App\Http\Middleware\EnsureUserIsAgentMiddleware;
 use App\Http\Middleware\EnsureUserIsAuthenticated;
@@ -21,10 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.mustLogin' => EnsureUserIsAuthenticated::class,
             'onlyAdmin' => EnsureUserIsAdminMiddleware::class,
             'onlyAgent' => EnsureUserIsAgentMiddleware::class,
+            'kycMustBeVerified' => CheckKycStatusMiddleware::class,
         ]);
         $middleware->group('authGroup', ['auth.mustLogin']);
         $middleware->group('adminGroup', ['onlyAdmin']);
         $middleware->group('agentGroup', ['onlyAgent']);
+        $middleware->group('kycVerifiedGroup', ['kycMustBeVerified']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dcash-v1';
+const CACHE_NAME = 'dcash-v2';
 
 self.addEventListener('install', event => {
     // Add skipWaiting() to activate the new service worker immediately
@@ -6,7 +6,7 @@ self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             return cache.addAll([
-                '/',
+                '/', // commented to avoid hitting the dashboard component on every page
                 '/offline',
                 '/css/app.css',
                 '/js/app.js',

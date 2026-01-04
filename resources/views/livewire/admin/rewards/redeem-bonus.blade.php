@@ -105,6 +105,7 @@
                     <th class="px-6 py-3">Currency</th>
                     <th class="px-6 py-3">Exchange Rate</th>
                     <th class="px-6 py-3">Details</th>
+                    <th class="px-6 py-3">User Device</th>
                     <th class="px-6 py-3">Status</th>
                     <th class="px-6 py-3">Date</th>
                     <th class="px-6 py-3 text-right">Actions</th>
@@ -191,6 +192,52 @@
                                             <i :data-lucide="copied ? 'check' : 'copy'" class="w-3 h-3"></i>
                                         </button>
                                     </div>
+                                </div>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4">
+                            @php
+                                $deviceData = json_decode($redemption->device_info ?? '{}', true);
+                            @endphp
+
+                            @if($deviceData)
+                                <div class="space-y-1">
+                                    <!-- Browser -->
+                                    @if(!empty($deviceData['browser']))
+                                        <div class="flex items-center gap-1.5 text-xs">
+                                            <i data-lucide="monitor" class="w-3 h-3 text-blue-400 flex-shrink-0"></i>
+                                            <span class="text-gray-400">{{ $deviceData['browser'] }}</span>
+                                        </div>
+                                    @endif
+
+                                    <!-- OS -->
+                                    @if(!empty($deviceData['os']))
+                                        <div class="flex items-center gap-1.5 text-xs">
+                                            <i data-lucide="laptop" class="w-3 h-3 text-green-400 flex-shrink-0"></i>
+                                            <span class="text-gray-400">{{ $deviceData['os'] }}</span>
+                                        </div>
+                                    @endif
+
+                                    <!-- IP Address -->
+                                    @if(!empty($deviceData['ip_address']))
+                                        <div class="flex items-center gap-1.5 text-xs">
+                                            <i data-lucide="wifi" class="w-3 h-3 text-purple-400 flex-shrink-0"></i>
+                                            <span class="text-gray-400 font-mono">{{ $deviceData['ip_address'] }}</span>
+                                        </div>
+                                    @endif
+
+                                    <!-- Location -->
+                                    @if(!empty($deviceData['location']) && $deviceData['location'] !== 'Unknown')
+                                        <div class="flex items-center gap-1.5 text-xs">
+                                            <i data-lucide="map-pin" class="w-3 h-3 text-red-400 flex-shrink-0"></i>
+                                            <span class="text-gray-400">{{ $deviceData['location'] }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <i data-lucide="help-circle" class="w-3 h-3"></i>
+                                    <span>No device info</span>
                                 </div>
                             @endif
                         </td>

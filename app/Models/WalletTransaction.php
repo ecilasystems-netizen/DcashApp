@@ -23,6 +23,8 @@ class WalletTransaction extends Model
         'balance_before',
         'balance_after',
         'metadata',
+        'device_info'
+
     ];
 
     protected $casts = [
@@ -31,6 +33,7 @@ class WalletTransaction extends Model
         'balance_before' => 'decimal:2',
         'balance_after' => 'decimal:2',
         'metadata' => 'array',
+        'device_info' => 'array',
     ];
 
     public function wallet(): BelongsTo

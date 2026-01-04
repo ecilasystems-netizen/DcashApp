@@ -14,6 +14,7 @@ class CreateDeposit extends Component
     public $accountNumber;
     public $accountName;
     public $bankName;
+    public $walletProvider;
 
     public $showLimitIncreaseModal = false;
     public $occupation;
@@ -74,6 +75,7 @@ class CreateDeposit extends Component
         $this->accountName = $virtualAccount->account_name ?? 'John Doe';
         $this->bankName = $virtualAccount->bank_name ?? 'Example Bank';
         $this->currentTier = AccountTier::find(auth()->user()->wallet()->first()->tier);
+        $this->walletProvider = $virtualAccount->provider ?? 'flutterwave';
 
         // Check for existing requests
         $this->hasExistingRequest = AccountLimitUpgradeRequest::where('user_id', auth()->id())

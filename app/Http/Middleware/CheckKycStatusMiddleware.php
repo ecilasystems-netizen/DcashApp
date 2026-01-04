@@ -5,25 +5,23 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 
-class EnsureUserIsAuthenticated
+class CheckKycStatusMiddleware
 {
     public function handle($request, Closure $next)
     {
-
         if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'You must be logged in to access this page.');
         }
 
-        //check if the user is suspended
         $user = Auth::user();
 
-        // Check if user is suspended
-        if ($user->status === 'suspended') {
-            Auth::logout();
-            return redirect()->route('login')->with('error',
-                'Your account has been suspended. Please contact support.');
+        // Check if user has completed KYC verification
+        if ($user->kyc_status !== 'verified') {
+            return redirect()->route('kyc.start')
+                ->with('error', 'Please complete your KYC verification to access this feature.');
         }
 
         return $next($request);
     }
+
 }

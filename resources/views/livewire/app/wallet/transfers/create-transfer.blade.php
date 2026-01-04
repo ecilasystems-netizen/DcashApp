@@ -39,9 +39,9 @@
                             class="w-full bg-gray-800/2 border-2 border-gray-700 rounded-lg px-4 py-3 text-white flex items-center justify-between focus:outline-none focus:border-[#E1B362]">
                                             <span class="flex items-center gap-3">
                                                 @if($selectedBank)
-                                                    <img src="{{ $selectedBank['logo'] }}"
-                                                         class="h-6 w-6 object-contain rounded-full bg-white p-0.5"
-                                                         onerror="this.style.display='none'">
+                                                    {{--                                                    <img src="{{ $selectedBank['logo'] }}"--}}
+                                                    {{--                                                         class="h-6 w-6 object-contain rounded-full bg-white p-0.5"--}}
+                                                    {{--                                                         onerror="this.style.display='none'">--}}
                                                 @else
                                                     <i data-lucide="landmark" class="text-gray-400"></i>
                                                 @endif
@@ -55,9 +55,9 @@
                             @foreach($banks as $index => $bank)
                                 <div wire:click="selectBank({{ $index }})"
                                      class="bank-item cursor-pointer hover:bg-gray-800 p-3 flex items-center gap-3">
-                                    <img src="{{ $bank['logo'] }}" alt="{{ $bank['name'] }}"
-                                         class="h-6 w-6 object-contain rounded-full bg-white p-0.5"
-                                         onerror="this.style.display='none'">
+                                    {{--                                    <img src="{{ $bank['logo'] }}" alt="{{ $bank['name'] }}"--}}
+                                    {{--                                         class="h-6 w-6 object-contain rounded-full bg-white p-0.5"--}}
+                                    {{--                                         onerror="this.style.display='none'">--}}
                                     <span>{{ $bank['name'] }}</span>
                                 </div>
                             @endforeach
@@ -142,9 +142,9 @@
                         <span class="text-gray-400">Bank:</span>
                         <span class="font-bold text-white flex items-center gap-2">
                             @if($selectedBank)
-                                <img src="{{ $selectedBank['logo'] }}" alt="{{ $selectedBank['name'] }}"
-                                     class="h-5 w-5 object-contain rounded-full bg-white p-0.5"
-                                     onerror="this.style.display='none'">
+                                {{--                                <img src="{{ $selectedBank['logo'] }}" alt="{{ $selectedBank['name'] }}"--}}
+                                {{--                                     class="h-5 w-5 object-contain rounded-full bg-white p-0.5"--}}
+                                {{--                                     onerror="this.style.display='none'">--}}
                                 {{ $selectedBank['name'] }}
                             @endif
                         </span>

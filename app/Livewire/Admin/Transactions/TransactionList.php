@@ -122,7 +122,7 @@ class TransactionList extends Component
                 'debitAccountNumber' => config('safehaven.debit_account_number'),
                 'beneficiaryAccountNumber' => $transaction->recipient_account_number,
                 'amount' => (int) $transaction->amount_to,
-                'narration' => 'transfer-'.$transaction->reference ?? '',
+                'narration' => $transaction->narration,
                 'paymentReference' => now()->format('YmdHis'),
 
             ];

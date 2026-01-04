@@ -21,13 +21,15 @@ class RedemptionRequest extends Model
         'bank_details',
         'wallet_details',
         'processed_at',
-        'notes'
+        'notes',
+        'device_info'
     ];
 
     protected $casts = [
         'bank_details' => 'array',
         'wallet_details' => 'array',
-        'processed_at' => 'datetime'
+        'processed_at' => 'datetime',
+        'device_info' => 'array',
     ];
 
     public function user(): BelongsTo

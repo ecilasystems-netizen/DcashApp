@@ -136,16 +136,21 @@ class AccountsService
     {
         $payload = [
             'emailAddress' => $data['email'] ?? null,
-            'phoneNumber' => $data['phone'] ?? null,
+            'phoneNumber' => $data['phone'] ? '+234'.ltrim($data['phone'], '0') : null,
             'externalReference' => $data['externalReference'] ?? uniqid('ref_'),
             'identityType' => 'BVN',
-            'autoSweep' => false,
-            'identityId' => $data['identityId'] ?? null,
             'identityNumber' => $data['identityNumber'] ?? null,
+            'dateOfBirth' => $data['dateOfBirth'] ?? null,
+            'booleanMatch' => $data['booleanMatch'] ?? true,
+            'autoSweep' => true,
+            'autoSweepDetails' => [
+                'schedule' => 'Instant',
+                'accountNumber' => $this->debitAccountNumber,
+            ],
         ];
 
         Log::info('AccountsService - creating subaccount', [
-            'payload' => array_merge($payload, ['identityNumber' => '***masked***'])
+            'payload' => array_merge($payload, ['identityNumber' => $data['identityNumber']])
         ]);
 
         return $this->sendPost('/accounts/v2/subaccount', $payload);

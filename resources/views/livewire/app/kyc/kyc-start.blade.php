@@ -16,6 +16,11 @@
         </header>
     </x-slot>
     <div class="max-w-lg w-full mx-auto text-center">
+
+        {{--        notification component  --}}
+        @include('components.notifications')
+
+
         <div
             class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <i data-lucide="shield-check" class="w-12 h-12 text-blue-400"></i>

@@ -39,6 +39,7 @@ class ExchangeTransactionService
             'payment_proof' => json_encode($paymentProofPaths),
             'status' => 'pending_confirmation',
             'note' => $exchangeData['note'] ?? null,
+            'narration' => $exchangeData['narration'] ?? null,
             'cashback' => $exchangeData['baseAmount'] * 0.001
         ]);
 

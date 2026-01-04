@@ -7,6 +7,7 @@ use App\Models\Currency;
 use App\Models\CurrencyPair;
 use App\Models\ExchangeTransaction;
 use App\Models\KycVerification;
+use App\Models\VirtualBankAccount;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\VirtualAccountService;
@@ -38,6 +39,7 @@ class Dashboard extends Component
     public $bvn;
     public $fullName;
     public $dateOfBirth;
+    public $safeHavenAccountCreated = false;
 
     public $sliderAnnouncements;
     public $imageAnnouncements;
@@ -49,6 +51,15 @@ class Dashboard extends Component
 
     public function mount()
     {
+        //check if user virtual ACCOUNT PROVIDER IS SAFEWHAVEN
+        $user = auth()->user();
+        $virtualAccount = VirtualBankAccount::where('user_id', $user->id)->first();
+        if ($virtualAccount->provider === 'safehaven') {
+            $this->safeHavenAccountCreated = true;
+        } else {
+            $this->safeHavenAccountCreated = false;
+        }
+
         // Get active tab from session or default to 'exchange'
         $this->activeTab = session('exchange_active_tab', 'exchange');
 
@@ -215,6 +226,9 @@ class Dashboard extends Component
         if (!$this->hasWallet) {
 
             $this->showTermsModal = true;
+            // Dispatch event to open the child modal component
+            $this->dispatch('openModal');
+
         }
     }
 
@@ -252,19 +266,15 @@ class Dashboard extends Component
         $startOfWeek = now()->startOfWeek();
         $endOfWeek = now()->endOfWeek();
 
-        //log the dates
-        Log::info("Loading weekly wallet stats for user {$user->id} from {$startOfWeek} to {$endOfWeek}");
 
         $transactions = WalletTransaction::where('user_id', $user->id)
             ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
             ->get();
-        //log the transactions
-        Log::info('Weekly Wallet Transactions for user '.$user->id.': '.json_encode($transactions));
+
 
         $this->weeklyInflow = $transactions->where('direction', 'credit')->sum('amount');
         $this->weeklyOutflow = $transactions->where('direction', 'debit')->sum('amount');
-        //log outline and inflow
-        Log::info("Weekly Inflow: {$this->weeklyInflow}, Weekly Outflow: {$this->weeklyOutflow}");
+
 
         $dailyStats = $transactions->groupBy(function ($date) {
             return \Carbon\Carbon::parse($date->created_at)->format('D');

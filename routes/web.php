@@ -104,12 +104,6 @@ Route::middleware('adminGroup')->group(function () {
 
 });
 
-//ROUTE WALLET TRANSACTIONS
-Route::get('/wallet/transactions/receipt/{ref}', Receipt::class)->name('wallet.transactions.receipt');
-
-//REWARDS
-Route::get('/rewards/transactions/receipt/{ref}', ViewBonusTransaction::class)->name('rewards.transactions.receipt');
-
 //USer Authentication Routes
 Route::get('/login', Login::class)->name('login');
 Route::get('/reset-password', ResetPassword::class)->name('reset-password');
@@ -125,20 +119,45 @@ Route::get('/success', SuccessPage::class)->name('success');
 Route::middleware('authGroup')->group(function () {
     Route::get('/', Dashboard::class)->name('dashboard')->middleware('auth.mustLogin');
 
-    //exchange
-    Route::get('/exchange/enter-bank-account', ExchangeBankAccount::class)->name('exchange.enter-bank-account');
-    Route::get('/exchange/payment', PaymentPage::class)->name('exchange.payment');
-    Route::get('/exchange/completed/{ref}', ExchangeCompleted::class)->name('exchange.completed');
-    Route::get('/exchange/receipt/{ref}', ExchangeReceipt::class)->name('exchange.receipt');
-    Route::get('/exchange/transactions', Transactions::class)->name('exchange.transactions');
+    //kycVerifiedGroup
+    Route::middleware('kycVerifiedGroup')->group(function () {
+
+        //exchange
+        Route::get('/exchange/enter-bank-account', ExchangeBankAccount::class)->name('exchange.enter-bank-account');
+        Route::get('/exchange/payment', PaymentPage::class)->name('exchange.payment');
+        Route::get('/exchange/completed/{ref}', ExchangeCompleted::class)->name('exchange.completed');
+        Route::get('/exchange/receipt/{ref}', ExchangeReceipt::class)->name('exchange.receipt');
+        Route::get('/exchange/transactions', Transactions::class)->name('exchange.transactions');
+
+        //rewards
+        Route::get('/rewards', IndexRewards::class)->name('rewards');
+        Route::get('/rewards/referrals', IndexReferrals::class)->name('rewards.referrals');
+        Route::get('/rewards/cashbacks', IndexCashbacks::class)->name('rewards.cashbacks');
+        Route::get('/rewards/redeem', RedeemBonus::class)->name('rewards.redeem');
+
+        //wallet transaction receipt
+        Route::get('/wallet/transactions/receipt/{ref}', Receipt::class)->name('wallet.transactions.receipt');
+        //rewards transaction receipt
+        Route::get('/rewards/transactions/receipt/{ref}',
+            ViewBonusTransaction::class)->name('rewards.transactions.receipt');
+        //airtime route
+        Route::get('/wallet/airtime', IndexAirtime::class)->name('wallet.airtime');
+        //mobile data route
+        Route::get('/wallet/mobile-data', IndexMobileData::class)->name('wallet.mobile-data');
+        //make transfer
+        Route::get('/wallet/transfers/create', CreateTransfer::class)->name('wallet.transfers.create');
+        //deposit fund
+        Route::get('/wallet/deposits', CreateDeposit::class)->name('wallet.deposit.create');
+        //buy power
+        Route::get('/wallet/buy-power', CreateBuyPower::class)->name('wallet.buy-power');
+        //pay cable tv
+        Route::get('/wallet/cable-tv', CreateCableTv::class)->name('wallet.cable-tv');
+
+    });
+
 
     Route::get('/profile', Profile::class)->name('profile');
 
-    //rewards
-    Route::get('/rewards', IndexRewards::class)->name('rewards');
-    Route::get('/rewards/referrals', IndexReferrals::class)->name('rewards.referrals');
-    Route::get('/rewards/cashbacks', IndexCashbacks::class)->name('rewards.cashbacks');
-    Route::get('/rewards/redeem', RedeemBonus::class)->name('rewards.redeem');
 
     //KYC
     Route::get('/kyc/start', KycStart::class)->name('kyc.start');
@@ -151,23 +170,7 @@ Route::middleware('authGroup')->group(function () {
     //terms and conditions
     Route::get('/wallet/terms-and-conditions', IndexTermsConditions::class)->name('wallet.terms-and-conditions');
 
-    //airtime route
-    Route::get('/wallet/airtime', IndexAirtime::class)->name('wallet.airtime');
 
-    //mobile data route
-    Route::get('/wallet/mobile-data', IndexMobileData::class)->name('wallet.mobile-data');
-
-    //make transfer
-    Route::get('/wallet/transfers/create', CreateTransfer::class)->name('wallet.transfers.create');
-
-    //deposit fund
-    Route::get('/wallet/deposits', CreateDeposit::class)->name('wallet.deposit.create');
-
-    //buy power
-    Route::get('/wallet/buy-power', CreateBuyPower::class)->name('wallet.buy-power');
-
-    //pay cable tv
-    Route::get('/wallet/cable-tv', CreateCableTv::class)->name('wallet.cable-tv');
 });
 
 

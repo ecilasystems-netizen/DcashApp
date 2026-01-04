@@ -212,6 +212,8 @@
         }
     </style>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
     @livewireStyles
@@ -249,45 +251,6 @@
 </div>
 
 
-<script type="text/javascript">
-    // Zoho SalesIQ configuration
-    window.$zoho = window.$zoho || {};
-    $zoho.salesiq = $zoho.salesiq || {
-        widgetcode: "siq51f05af08ede1ce8f9d01bd2e895d43046f039e0d2129498c89fa3fb2251ab81",
-        values: {},
-        ready: function () {
-            // Hide the default Zoho floating chat button
-            $zoho.salesiq.floatbutton.visible('hide');
-
-            // ✅ Suppress Zoho’s cookie consent popup (you take responsibility for compliance)
-            if ($zoho.salesiq.set === undefined) {
-                $zoho.salesiq.set = {};
-            }
-            $zoho.salesiq.set.cookieconsent = "accepted";
-
-            // Find your custom buttons
-            const chatButton = document.getElementById('openZohoChat');
-            const chatButtonDesktop = document.getElementById('openZohoChatDesktop');
-
-            // Add click event listeners to your custom buttons
-            [chatButton, chatButtonDesktop].forEach(btn => {
-                if (btn) {
-                    btn.addEventListener('click', function () {
-                        // API call to open the chat window
-                        $zoho.salesiq.floatwindow.visible('show');
-                    });
-                }
-            });
-        }
-    };
-
-
-</script>
-{{-- The main Zoho SalesIQ script --}}
-<script id="zsiqscript"
-        src="https://salesiq.zoho.com/widget?wc=siq51f05af08ede1ce8f9d01bd2e895d43046f039e0d2129498c89fa3fb2251ab81"
-        defer></script>
-
 @if (isset($scripts))
     {{ $scripts }}
 @endif
@@ -317,20 +280,20 @@
 
 
 <script>
-(function (d, t) {
-    var BASE_URL = "https://app.hoory.com";
-    var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
-    g.src = BASE_URL + "/packs/js/sdk.js";
-    g.defer = true;
-    g.async = true;
-    s.parentNode.insertBefore(g, s);
-    g.onload = function () {
-        window.hoorySDK.run({
-            websiteToken: 'Tndv2XnLrKXcSmrnJRRScnA6',
-            baseUrl: BASE_URL
-        });
-    }
-})(document, "script");
+    (function (d, t) {
+        var BASE_URL = "https://app.hoory.com";
+        var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+        g.src = BASE_URL + "/packs/js/sdk.js";
+        g.defer = true;
+        g.async = true;
+        s.parentNode.insertBefore(g, s);
+        g.onload = function () {
+            window.hoorySDK.run({
+                websiteToken: 'Tndv2XnLrKXcSmrnJRRScnA6',
+                baseUrl: BASE_URL
+            });
+        }
+    })(document, "script");
 </script>
 
 </body>
