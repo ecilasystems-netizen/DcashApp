@@ -41,7 +41,7 @@ class SafeHavenWebhookController extends Controller
             // 1. Verify webhook source (IP whitelisting)
             $this->verifyWebhookSource($request);
 
-            // 2. Get the payload
+            // 2. Get the payloademented
             $payload = $request->all();
             $type = $payload['type'] ?? null;
             $data = $payload['data'] ?? null;
