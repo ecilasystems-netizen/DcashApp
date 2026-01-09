@@ -51,16 +51,29 @@
                     </button>
                     @if($showBankDropdown)
                         <div wire:click.away="$set('showBankDropdown', false)"
-                             class="absolute z-20 w-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto custom-scrollbar">
-                            @foreach($banks as $index => $bank)
-                                <div wire:click="selectBank({{ $index }})"
-                                     class="bank-item cursor-pointer hover:bg-gray-800 p-3 flex items-center gap-3">
-                                    {{--                                    <img src="{{ $bank['logo'] }}" alt="{{ $bank['name'] }}"--}}
-                                    {{--                                         class="h-6 w-6 object-contain rounded-full bg-white p-0.5"--}}
-                                    {{--                                         onerror="this.style.display='none'">--}}
-                                    <span>{{ $bank['name'] }}</span>
-                                </div>
-                            @endforeach
+                             class="absolute z-20 w-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg">
+                            <!-- Search Box -->
+                            <div class="p-3 border-b border-gray-700 sticky top-0 bg-gray-800">
+                                <input type="text"
+                                       wire:model.live="bankSearch"
+                                       placeholder="Search banks..."
+                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-base text-white focus:outline-none focus:border-[#E1B362]"
+                                       autocomplete="off">
+                            </div>
+
+                            <!-- Banks List -->
+                            <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                                @forelse($this->filteredBanks as $index => $bank)
+                                    <div wire:click="selectBank('{{ $bank['code'] }}')"
+                                         class="bank-item cursor-pointer hover:bg-gray-700 p-3 flex items-center gap-3">
+                                        <span>{{ $bank['name'] }}</span>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-gray-400 text-sm">
+                                        No banks found
+                                    </div>
+                                @endforelse
+                            </div>
                         </div>
                     @endif
                 </div>

@@ -31,6 +31,41 @@ class CreateTransfer extends Component
     protected $listeners = ['processTransfer'];
     protected TransfersService $transferService;
 
+    public string $bankSearch = '';
+
+    public function getFilteredBanksProperty(): array
+    {
+        if (empty($this->bankSearch)) {
+            return $this->banks;
+        }
+
+        return collect($this->banks)
+            ->filter(fn($bank) => str_contains(
+                strtolower($bank['name']),
+                strtolower($this->bankSearch)
+            )
+            )
+            ->values()
+            ->toArray();
+    }
+
+    public function selectBank(string $bankCode): void
+    {
+        $this->selectedBank = collect($this->banks)
+            ->firstWhere('code', $bankCode);
+
+        $this->showBankDropdown = false;
+        $this->bankSearch = ''; // Reset search when bank is selected
+    }
+
+    public function toggleBankDropdown(): void
+    {
+        $this->showBankDropdown = !$this->showBankDropdown;
+
+        if ($this->showBankDropdown) {
+            $this->bankSearch = ''; // Reset search when opening dropdown
+        }
+    }
 
     public function mount()
     {
@@ -116,16 +151,16 @@ class CreateTransfer extends Component
         }
     }
 
-    public function toggleBankDropdown()
-    {
-        $this->showBankDropdown = !$this->showBankDropdown;
-    }
+//    public function toggleBankDropdown()
+//    {
+//        $this->showBankDropdown = !$this->showBankDropdown;
+//    }
 
-    public function selectBank($bankIndex)
-    {
-        $this->selectedBank = $this->banks[$bankIndex];
-        $this->showBankDropdown = false;
-    }
+//    public function selectBank($bankIndex)
+//    {
+//        $this->selectedBank = $this->banks[$bankIndex];
+//        $this->showBankDropdown = false;
+//    }
 
     public function selectAmount($value)
     {

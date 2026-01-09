@@ -31,31 +31,18 @@ class SafeHavenWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         try {
-            // Log incoming webhook
-            Log::info('SafeHaven Webhook: Received webhook request', [
-                'ip' => $request->ip(),
-                'payload' => $request->all(),
-                'timestamp' => now()->toDateTimeString()
-            ]);
 
             // 1. Verify webhook source (IP whitelisting)
             $this->verifyWebhookSource($request);
 
-            // 2. Get the payloademented
+            // 2. Get the payload
             $payload = $request->all();
             $type = $payload['type'] ?? null;
             $data = $payload['data'] ?? null;
 
             if (!$type || !$data) {
-                Log::warning('SafeHaven Webhook: Missing type or data.', $payload);
                 return response()->json(['status' => 'error', 'message' => 'Invalid payload'], 400);
             }
-
-            Log::info("SafeHaven Webhook: Processing {$type} event.", [
-                'type' => $type,
-                'session_id' => $data['sessionId'] ?? null,
-                'amount' => $data['amount'] ?? null
-            ]);
 
             // 3. Process based on transaction type
             if ($type === 'transfer') {
@@ -71,18 +58,11 @@ class SafeHavenWebhookController extends Controller
             ], 200);
 
         } catch (WebhookValidationException $e) {
-            Log::error('SafeHaven Webhook: Validation failed.', [
-                'error' => $e->getMessage(),
-                'ip' => $request->ip()
-            ]);
+
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
 
         } catch (\Throwable $e) {
-            Log::error('SafeHaven Webhook: Processing failed.', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'payload' => $request->all()
-            ]);
+
             return response()->json(['status' => 'error', 'message' => 'Processing failed'], 500);
         }
     }
@@ -97,13 +77,11 @@ class SafeHavenWebhookController extends Controller
 
         // Skip verification in local development
         if (app()->environment('local')) {
-            Log::info("SafeHaven Webhook: IP verification skipped in local environment.", ['ip' => $requestIp]);
             return;
         }
 
         // Check if wildcard is enabled (accept all IPs)
         if (in_array('*', $allowedIps, true)) {
-            Log::info("SafeHaven Webhook: Wildcard IP verification enabled.", ['ip' => $requestIp]);
             return;
         }
 
@@ -112,7 +90,6 @@ class SafeHavenWebhookController extends Controller
             throw new WebhookValidationException("Unauthorized IP address: {$requestIp}");
         }
 
-        Log::info("SafeHaven Webhook: IP verification passed.", ['ip' => $requestIp]);
     }
 
     /**
@@ -127,16 +104,9 @@ class SafeHavenWebhookController extends Controller
         $status = $data['status'] ?? null;
 
         if (!$sessionId) {
-            Log::warning('SafeHaven Webhook: Transfer missing sessionId.', $data);
             return;
         }
 
-        Log::info("SafeHaven Webhook: Processing {$transferType} transfer.", [
-            'session_id' => $sessionId,
-            'amount' => $amount,
-            'status' => $status,
-            'response_code' => $responseCode
-        ]);
 
         // Process based on transfer direction
         match ($transferType) {
@@ -159,17 +129,12 @@ class SafeHavenWebhookController extends Controller
         $responseCode = $data['responseCode'] ?? null;
 
         if (!$creditAccountNumber || !$sessionId || $amount <= 0) {
-            Log::warning('SafeHaven Webhook: Invalid inward transfer data.', $data);
             return;
         }
 
         // Only process completed transactions
         if ($status !== 'completed' && $responseCode !== '00') {
-            Log::info("SafeHaven Webhook: Ignoring non-completed inward transfer.", [
-                'session_id' => $sessionId,
-                'status' => $status,
-                'response_code' => $responseCode
-            ]);
+
             return;
         }
 
@@ -178,7 +143,6 @@ class SafeHavenWebhookController extends Controller
 
         // Prevent duplicate processing
         if (WalletTransaction::where('reference', $sessionId)->exists()) {
-            Log::info("SafeHaven Webhook: Inward transfer {$sessionId} already processed.");
             return;
         }
 
@@ -190,10 +154,7 @@ class SafeHavenWebhookController extends Controller
         })->first();
 
         if (!$user) {
-            Log::warning("SafeHaven Webhook: User not found for account {$creditAccountNumber}", [
-                'account_number' => $creditAccountNumber,
-                'session_id' => $sessionId
-            ]);
+
             return;
         }
 
@@ -241,13 +202,7 @@ class SafeHavenWebhookController extends Controller
                 ]
             ]);
 
-            Log::info("SafeHaven Webhook: Inward transfer processed successfully.", [
-                'user_id' => $user->id,
-                'session_id' => $sessionId,
-                'amount' => $amount,
-                'balance_before' => $balanceBefore,
-                'balance_after' => $wallet->balance
-            ]);
+
         });
     }
 
@@ -261,17 +216,13 @@ class SafeHavenWebhookController extends Controller
         $status = strtolower($data['status'] ?? '');
 
         if (!$sessionId) {
-            Log::warning('SafeHaven Webhook: Outward transfer missing sessionId.', $data);
             return;
         }
 
         $transaction = WalletTransaction::where('reference', $sessionId)->first();
 
         if (!$transaction) {
-            Log::warning("SafeHaven Webhook: Outward transfer transaction not found.", [
-                'session_id' => $sessionId,
-                'response_code' => $responseCode
-            ]);
+
             return;
         }
 
@@ -309,19 +260,10 @@ class SafeHavenWebhookController extends Controller
                     $wallet->balance += $refundAmount;
                     $wallet->save();
 
-                    Log::info("SafeHaven Webhook: Refunded failed outward transfer.", [
-                        'session_id' => $sessionId,
-                        'amount' => $transaction->amount,
-                        'charge' => $transaction->charge,
-                        'total_refund' => $refundAmount
-                    ]);
+
                 }
 
-                Log::info("SafeHaven Webhook: Outward transfer status updated.", [
-                    'session_id' => $sessionId,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus
-                ]);
+
             });
         }
     }

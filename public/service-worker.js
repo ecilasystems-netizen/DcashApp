@@ -1,39 +1,74 @@
-const CACHE_NAME = 'dcash-v2';
+const CACHE_VERSION = 'v5'; // bump this on every deploy
+const CACHE_NAME = `dcash-${CACHE_VERSION}`;
+const OFFLINE_URL = '/offline';
 
 self.addEventListener('install', event => {
-    // Add skipWaiting() to activate the new service worker immediately
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll([
-                '/', // commented to avoid hitting the dashboard component on every page
-                '/offline',
-                '/css/app.css',
-                '/js/app.js',
+        caches.open(CACHE_NAME).then(cache =>
+            cache.addAll([
+                OFFLINE_URL,
                 '/manifest.json'
-            ]);
-        })
+            ])
+        )
     );
 });
 
 self.addEventListener('activate', event => {
-    // Add clients.claim() to take control of open pages
     event.waitUntil(
-        clients.claim().then(() => {
-            return caches.keys().then(cacheNames => {
-                return Promise.all(
-                    cacheNames.filter(name => name !== CACHE_NAME)
-                        .map(name => caches.delete(name))
-                );
-            });
-        })
+        Promise.all([
+            self.clients.claim(),
+            caches.keys().then(cacheNames =>
+                Promise.all(
+                    cacheNames.map(cache => {
+                        if (cache !== CACHE_NAME) {
+                            return caches.delete(cache);
+                        }
+                    })
+                )
+            )
+        ])
     );
 });
 
 self.addEventListener('fetch', event => {
+    const { request } = event;
+
+    // 🟢 HTML: Network First (always get latest UI)
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+                    return response;
+                })
+                .catch(() => caches.match(OFFLINE_URL))
+        );
+        return;
+    }
+
+    // 🟡 JS / CSS: Stale-While-Revalidate
+    if (
+        request.destination === 'script' ||
+        request.destination === 'style'
+    ) {
+        event.respondWith(
+            caches.match(request).then(cached => {
+                const networkFetch = fetch(request).then(response => {
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(request, response.clone());
+                    });
+                    return response;
+                });
+                return cached || networkFetch;
+            })
+        );
+        return;
+    }
+
+    // 🔵 Everything else
     event.respondWith(
-        caches.match(event.request)
-            .then(response => response || fetch(event.request))
-            .catch(() => caches.match('/offline'))
+        fetch(request).catch(() => caches.match(request))
     );
 });

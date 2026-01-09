@@ -54,10 +54,8 @@ class Dashboard extends Component
         //check if user virtual ACCOUNT PROVIDER IS SAFEWHAVEN
         $user = auth()->user();
         $virtualAccount = VirtualBankAccount::where('user_id', $user->id)->first();
-        if ($virtualAccount->provider === 'safehaven') {
+        if ($virtualAccount && $virtualAccount->provider === 'safehaven') {
             $this->safeHavenAccountCreated = true;
-        } else {
-            $this->safeHavenAccountCreated = false;
         }
 
         // Get active tab from session or default to 'exchange'
@@ -480,6 +478,11 @@ class Dashboard extends Component
 
     public function exchangeNow()
     {
+
+        // Clear old session data first
+        session()->forget(['exchangeData', 'exchange_expiration_time']);
+
+
         $kycVerification = KycVerification::where('user_id', auth()->id())
             ->latest()
             ->first();
@@ -496,8 +499,9 @@ class Dashboard extends Component
         if ($this->baseAmount < $minAmount) {
             $this->modalMessage = "The minimum amount for {$this->baseCurrency} is {$minAmount}. Please enter a valid amount.";
             $this->showErrorModal = true;
-            return;
+            return null;
         }
+
 
         // Direct redirect checks in the action method
         if (!$kycVerification) {
@@ -530,7 +534,7 @@ class Dashboard extends Component
         ];
 
         session(['exchangeData' => $exchangeData]);
-        session()->forget('exchange_expiration_time');
+//        session()->forget('exchange_expiration_time');
 
         return $this->redirect(route('exchange.enter-bank-account'), navigate: true);
     }

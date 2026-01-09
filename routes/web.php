@@ -200,6 +200,9 @@ Route::post('/create-safehaven-subaccount',
 
 Route::get('/safehaven', CreateSafeHavenSubAccount::class)->name('test-safehaven-account');
 
+Route::get('/offline', function () {
+    return view('offline');
+})->name('offline');
 
 //test route
 Route::get('/test', function () {
