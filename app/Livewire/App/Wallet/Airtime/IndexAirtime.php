@@ -2,9 +2,15 @@
 
 namespace App\Livewire\App\Wallet\Airtime;
 
+use App\Jobs\SafeHaven\SafeHavenProcessAirtimePurchaseJob;
+use App\Models\SafehavenAirtimeProvider;
 use App\Models\WalletTransaction;
 use App\Services\FlutterwaveBillsService;
+use App\Services\SafeHavenApi\SafehavenBillsPaymentService;
+use App\Services\SafeHavenApi\TransfersService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class IndexAirtime extends Component
@@ -13,47 +19,42 @@ class IndexAirtime extends Component
     public $phoneNumber = '';
     public $selectedAmount = null;
     public $customAmount = '';
-    public $predefinedAmounts = [100, 200, 500, 1000, 2000, 5000];
+    public $predefinedAmounts = [50, 100, 200, 500, 1000, 2000];
     public $networks = [];
     public $showConfirmModal = false;
     public $pin = '';
     public $showSuccessModal = false;
     public $processing = false;
     public int $userBalance;
+    public $pinError = null; // Add this property for PIN validation errors
+
     protected $rules = [
         'selectedNetwork' => 'required',
         'phoneNumber' => 'required|min:10|max:11',
         'pin' => 'required|digits:4'
     ];
+    protected $networkeds = [];
+
+    protected SafehavenBillsPaymentService $billsService;
+
+    public function boot(SafehavenBillsPaymentService $billsService)
+    {
+        $this->billsService = $billsService;
+    }
 
     public function mount()
     {
-        $this->networks = [
-            [
-                'code' => 'BIL099',
-                'name' => 'MTN VTU',
-                'short_name' => 'MTN VTU',
-                'logo' => asset('storage/mobile_networks/mtn.png')
-            ],
-            [
-                'code' => 'BIL102',
-                'name' => 'GLO VTU',
-                'short_name' => 'GLO VTU',
-                'logo' => asset('storage/mobile_networks/glo.png')
-            ],
-            [
-                'code' => 'BIL100',
-                'name' => 'AIRTEL VTU',
-                'short_name' => 'AIRTEL VTU',
-                'logo' => asset('storage/mobile_networks/airtel.png')
-            ],
-            [
-                'code' => 'BIL103',
-                'name' => '9MOBILE VTU',
-                'short_name' => '9MOBILE VTU',
-                'logo' => asset('storage/mobile_networks/9mobile.png')
-            ]
-        ];
+        //get the safehaven networks for airtime purchase
+        $getNetworks = SafehavenAirtimeProvider::all();
+
+        foreach ($getNetworks as $network) {
+            $this->networks[] = [
+                'code' => $network->_id,
+                'name' => $network->name,
+                'short_name' => $network->name,
+                'logo' => $network->logoUrl
+            ];
+        }
 
         $this->userBalance = auth()->user()->wallet->balance ?? 0;
     }
@@ -86,6 +87,12 @@ class IndexAirtime extends Component
         }
     }
 
+    public function updatedPin()
+    {
+        // Clear PIN error when user starts typing
+        $this->pinError = null;
+    }
+
     public function openConfirmationModal()
     {
         if (!$this->canProceed()) {
@@ -93,6 +100,7 @@ class IndexAirtime extends Component
         }
 
         $this->showConfirmModal = true;
+        $this->pinError = null; // Clear any previous PIN errors
     }
 
     public function canProceed()
@@ -115,6 +123,7 @@ class IndexAirtime extends Component
     {
         $this->showConfirmModal = false;
         $this->pin = '';
+        $this->pinError = null;
     }
 
     public function confirmPurchase()
@@ -122,52 +131,46 @@ class IndexAirtime extends Component
         $this->validate();
 
         $this->processing = true;
+        $this->pinError = null; // Clear any previous errors
 
         try {
-            $flutterwave = new FlutterwaveBillsService();
             $reference = 'airtime_'.time().'_'.auth()->id();
 
-            // verify PIN against user's stored PIN first
+            // Verify PIN
             if (!Hash::check($this->pin, auth()->user()->pin)) {
-                session()->flash('error', 'Invalid PIN');
-                $this->processing = false;
-                return;
-            }
-
-            //validate customer details, Get the item code for the selected network (AT099, etc.)
-            $itemCode = $this->getItemCodeForNetwork($this->selectedNetwork);
-            $validationResponse = $flutterwave->validateCustomer($itemCode, $this->phoneNumber);
-            if (isset($validationResponse['status']) && $validationResponse['status'] !== 'success') {
-                session()->flash('error', 'Customer validation failed: '.$validationResponse['message']);
-                $this->showConfirmModal = false;
+                $this->pinError = 'Invalid PIN. Please try again.';
                 $this->processing = false;
                 return;
             }
 
             $user = auth()->user();
-
-            // Atomically reserve funds and create a pending transaction
             $amount = $this->getSelectedAmountProperty();
             $wallet = $user->wallet;
             $balanceBefore = $wallet->balance;
 
-            // Attempt atomic decrement to avoid race conditions
-            $updated = \DB::table('wallets')
+            // Check for sufficient balance
+            if ($balanceBefore < $amount) {
+                $this->pinError = 'Insufficient balance. Please fund your wallet.';
+                $this->processing = false;
+                return;
+            }
+
+            // Atomically reserve funds
+            $updated = DB::table('wallets')
                 ->where('id', $wallet->id)
                 ->where('balance', '>=', $amount)
                 ->decrement('balance', $amount);
 
             if (!$updated) {
-                $this->showError('error', 'Insufficient balance');
+                $this->pinError = 'Insufficient balance. Please try again.';
                 $this->processing = false;
                 return;
             }
 
             $balanceAfter = $balanceBefore - $amount;
-            $user->refresh(); // ensure relations reflect updated balance
 
-            // Record pending transaction
-            $user->wallet->transactions()->create([
+            // Create pending transaction
+            $transaction = $user->wallet->transactions()->create([
                 'reference' => $reference,
                 'type' => 'airtime',
                 'direction' => 'debit',
@@ -179,73 +182,47 @@ class IndexAirtime extends Component
                 'balance_before' => $balanceBefore,
                 'balance_after' => $balanceAfter,
                 'metadata' => [
-                    'phone_number' => $this->phoneNumber
+                    'phone_number' => $this->phoneNumber,
+                    'network' => $this->selectedNetwork,
+                    'queued_at' => now()->toDateTimeString()
                 ],
             ]);
 
-            // Create the bill payment
-            $response = $flutterwave->createBillPayment(
-                $this->selectedNetwork, // biller_code
-                $itemCode, // item_code
-                'NG', // country code
-                $this->phoneNumber, // customer phone number
-                $this->getSelectedAmountProperty(), // amount
-                $reference // unique reference
-            );
+            // Dispatch job to queue
+            SafeHavenProcessAirtimePurchaseJob::dispatch(
+                $reference,
+                $user->id,
+                $this->phoneNumber,
+                $amount,
+                $this->selectedNetwork
+            )->onQueue('high');
 
-            if (isset($response['status']) && $response['status'] === 'success') {
+            // Show immediate success feedback
+            $this->showConfirmModal = false;
+            session()->flash('success',
+                'Your airtime purchase is being processed. You will receive a notification shortly.');
 
-                // Update transaction status to completed
-                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
-                if ($transaction) {
-                    $transaction->status = 'completed';
-                    $transaction->metadata = array_merge((array) $transaction->metadata, [
-                        'tx_ref' => $response['data']['tx_ref'] ?? null,
-                        'flw_ref' => $response['data']['reference'] ?? null,
-                        'network' => $response['data']['network'] ?? null,
-                    ]);
-                    $transaction->save();
-                }
+            $this->reset(['selectedNetwork', 'phoneNumber', 'selectedAmount', 'customAmount', 'pin', 'pinError']);
+            $this->showSuccessModal = true;
 
-                $this->showConfirmModal = false;
-                $this->showSuccessModal = true;
-
-            } else {
-                // On failed payment (after createBillPayment returns non-success) — refund and mark transaction failed
-                // get the pending transaction
-                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
-                if ($transaction) {
-                    $transaction->status = 'failed';
-                    $transaction->metadata = array_merge((array) $transaction->metadata, [
-                        'failure_reason' => $response['message'] ?? 'Payment failed',
-                    ]);
-                    $transaction->save();
-                }
-                // refund wallet
-                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $amount);
-
-                $user->refresh();
-
-                session()->flash('error', $response['message'] ?? 'Transaction failed');
-                $this->showConfirmModal = false;
-            }
         } catch (\Exception $e) {
-            // attempt to find and mark pending transaction as failed and refund
-            $transaction = WalletTransaction::where('reference', $reference ?? null)->first();
-            if ($transaction && $transaction->status === 'pending') {
-                $transaction->status = 'failed';
-                $transaction->metadata = array_merge((array) $transaction->metadata, [
-                    'exception' => $e->getMessage(),
-                ]);
-                $transaction->save();
+            Log::error('IndexAirtime - confirmPurchase exception', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
 
-                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $transaction->amount);
-            }
-            session()->flash('error', 'Airtime purchase failed: '.$e->getMessage());
+            $this->pinError = 'An error occurred. Please try again.';
         }
 
         $this->processing = false;
-        $this->pin = '';
+    }
+
+    public function closeSuccessModal()
+    {
+        $this->showSuccessModal = false;
+        $this->reset(['selectedNetwork', 'phoneNumber', 'selectedAmount', 'customAmount']);
+        //redirect to dashboard route
+        return redirect()->route('dashboard');
     }
 
     private function getItemCodeForNetwork($billerCode)
@@ -258,13 +235,5 @@ class IndexAirtime extends Component
         ];
 
         return $itemCodes[$billerCode] ?? null;
-    }
-
-    public function closeSuccessModal()
-    {
-        $this->showSuccessModal = false;
-        $this->reset(['selectedNetwork', 'phoneNumber', 'selectedAmount', 'customAmount']);
-        //redirect to dashboard route
-        return redirect()->route('dashboard');
     }
 }

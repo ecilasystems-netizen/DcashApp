@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SafehavenTvBundle;
 use App\Services\SafeHavenApi\AccountsService;
 use App\Services\SafeHavenApi\TransfersService;
 use App\Services\SafeHavenService;
@@ -292,5 +293,24 @@ class TestController extends Controller
 
         return response()->json([$response]);
 
+    }
+
+    public function importSafehavenDataBundles(){
+        $safeHaven = new SafeHavenService();
+//        $safeHaven->importSafehavenDataBundles();
+
+        return response()->json([
+            'message' => 'Data bundles imported successfully',
+            'imported' => true
+        ]);
+    }
+
+    public function getTest()
+    {
+        $TvBills = SafehavenTvBundle::get();
+        //return json
+        return response()->json([
+            'data' => $TvBills
+        ]);
     }
 }

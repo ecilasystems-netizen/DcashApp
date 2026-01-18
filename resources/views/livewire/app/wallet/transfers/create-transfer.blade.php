@@ -32,52 +32,98 @@
         <!-- Transfer Details -->
         <div class="bg-gray-950 p-0 rounded-lg space-y-4">
             <!-- Custom Bank Dropdown -->
-            <div>
-                <label class="font-semibold text-sm text-gray-300 mb-2 block">Bank</label>
-                <div class="relative">
-                    <button type="button" wire:click="toggleBankDropdown"
-                            class="w-full bg-gray-800/2 border-2 border-gray-700 rounded-lg px-4 py-3 text-white flex items-center justify-between focus:outline-none focus:border-[#E1B362]">
-                                            <span class="flex items-center gap-3">
-                                                @if($selectedBank)
-                                                    {{--                                                    <img src="{{ $selectedBank['logo'] }}"--}}
-                                                    {{--                                                         class="h-6 w-6 object-contain rounded-full bg-white p-0.5"--}}
-                                                    {{--                                                         onerror="this.style.display='none'">--}}
-                                                @else
-                                                    <i data-lucide="landmark" class="text-gray-400"></i>
-                                                @endif
-                                                <span>{{ $selectedBank ? $selectedBank['name'] : 'Select a bank' }}</span>
-                                            </span>
-                        <i data-lucide="chevron-down" class="{{ $showBankDropdown ? 'rotate-180' : '' }}"></i>
-                    </button>
-                    @if($showBankDropdown)
-                        <div wire:click.away="$set('showBankDropdown', false)"
-                             class="absolute z-20 w-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg">
-                            <!-- Search Box -->
-                            <div class="p-3 border-b border-gray-700 sticky top-0 bg-gray-800">
-                                <input type="text"
-                                       wire:model.live="bankSearch"
-                                       placeholder="Search banks..."
-                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-base text-white focus:outline-none focus:border-[#E1B362]"
-                                       autocomplete="off">
-                            </div>
+           <div>
+               <label class="font-semibold text-sm text-gray-300 mb-2 block">Bank</label>
+               <div class="relative" x-data="{ isOpen: @entangle('showBankDropdown') }">
+                   <button type="button"
+                           @click="isOpen = !isOpen"
+                           class="w-full bg-gray-800/2 border-2 border-gray-700 rounded-lg px-4 py-3 text-white flex items-center justify-between focus:outline-none focus:border-[#E1B362]">
+                       <span class="flex items-center gap-3">
+                           @if($selectedBank)
+                               <i data-lucide="building-2" class="text-gray-400 w-5 h-5"></i>
+                           @else
+                               <i data-lucide="landmark" class="text-gray-400 w-5 h-5"></i>
+                           @endif
+                           <span class="truncate">{{ $selectedBank ? $selectedBank['name'] : 'Select a bank' }}</span>
+                       </span>
+                       <i data-lucide="chevron-down"
+                          :class="isOpen ? 'rotate-180' : ''"
+                          class="transition-transform duration-200 flex-shrink-0"></i>
+                   </button>
 
-                            <!-- Banks List -->
-                            <div class="max-h-60 overflow-y-auto custom-scrollbar">
-                                @forelse($this->filteredBanks as $index => $bank)
-                                    <div wire:click="selectBank('{{ $bank['code'] }}')"
-                                         class="bank-item cursor-pointer hover:bg-gray-700 p-3 flex items-center gap-3">
-                                        <span>{{ $bank['name'] }}</span>
-                                    </div>
-                                @empty
-                                    <div class="p-4 text-center text-gray-400 text-sm">
-                                        No banks found
-                                    </div>
-                                @endforelse
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
+                   <div x-show="isOpen"
+                        x-cloak
+                        @click.away="isOpen = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        class="absolute z-20 w-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl">
+
+                       <!-- Search Box -->
+                       <div class="p-3 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
+                           <div class="relative">
+                               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                               <input type="text"
+                                      wire:model.live.debounce.300ms="bankSearch"
+                                      placeholder="Search banks..."
+                                      class="w-full bg-gray-900 border border-gray-600 rounded-lg pl-10 pr-3 py-2 text-sm text-white focus:outline-none focus:border-[#E1B362]"
+                                      autocomplete="off"
+                                      @keydown.escape="isOpen = false">
+                           </div>
+                       </div>
+
+                       <!-- Banks List with Intersection Observer -->
+                       <div class="max-h-60 overflow-y-auto custom-scrollbar"
+                            x-data="{
+                                init() {
+                                    const observer = new IntersectionObserver((entries) => {
+                                        entries.forEach(entry => {
+                                            if (entry.isIntersecting) {
+                                                $wire.loadMoreBanks();
+                                            }
+                                        });
+                                    });
+
+                                    const sentinel = this.$refs.sentinel;
+                                    if (sentinel) observer.observe(sentinel);
+                                }
+                            }">
+
+                           @forelse($this->filteredBanks as $bank)
+                               <button type="button"
+                                       wire:key="bank-{{ $bank['code'] }}"
+                                       wire:click="selectBank('{{ $bank['code'] }}')"
+                                       @click="isOpen = false"
+                                       class="w-full text-left bank-item cursor-pointer hover:bg-gray-700 p-3 flex items-center gap-3 transition-colors duration-150">
+                                   <i data-lucide="building-2" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+                                   <span class="text-sm truncate">{{ $bank['name'] }}</span>
+                               </button>
+                           @empty
+                               <div class="p-4 text-center text-gray-400 text-sm">
+                                   <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-2 text-gray-500"></i>
+                                   <p>No banks found</p>
+                               </div>
+                           @endforelse
+
+                           <!-- Load More Sentinel -->
+                           @if(count($this->filteredBanks) >= $bankListLimit && empty($bankSearch))
+                               <div x-ref="sentinel" class="p-3 text-center">
+                                   <div class="inline-flex items-center gap-2 text-xs text-gray-400">
+                                       <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                       </svg>
+                                       <span>Loading more...</span>
+                                   </div>
+                               </div>
+                           @endif
+                       </div>
+                   </div>
+               </div>
+           </div>
             <div>
                 <label for="account-number" class="font-semibold text-sm text-gray-300 mb-2 block">Account
                     Number</label>
@@ -196,15 +242,30 @@
                 </div>
 
                 @if($userBalance >= ($amount + $transferFee))
-                    <div class="grid grid-cols-2 gap-4">
-                        <button wire:click="$set('showConfirmationModal', false)"
-                                class="bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600">
-                            Cancel
-                        </button>
-                        <button wire:click="processTransfer"
-                                class="brand-gradient text-white py-3 rounded-lg font-semibold hover:opacity-90">
-                            Send Money
-                        </button>
+                    <div x-data="{ isProcessing: false }"
+                         x-init="$watch('$wire.showErrorModal', value => { if (!value) isProcessing = false })"
+                         @reset-processing.window="isProcessing = false">
+                        <div x-show="!isProcessing" class="grid grid-cols-2 gap-4">
+                            <button wire:click="$set('showConfirmationModal', false)"
+                                    class="bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600">
+                                Cancel
+                            </button>
+                            <button @click="isProcessing = true; $wire.processTransfer()"
+                                    class="brand-gradient text-white py-3 rounded-lg font-semibold hover:opacity-90">
+                                Send Money
+                            </button>
+                        </div>
+
+                        <div x-show="isProcessing" x-cloak class="grid grid-cols-1 gap-4">
+                            <button disabled
+                                    class="brand-gradient text-white py-3 rounded-lg font-semibold opacity-75 cursor-not-allowed flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                <span>Processing...</span>
+                            </button>
+                        </div>
                     </div>
                 @else
                     <div class="grid grid-cols-1 gap-4">
@@ -230,7 +291,7 @@
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Error</h2>
             <p class="text-gray-400 mb-6">{{ $errorMessage }}</p>
-            <button wire:click="$set('showErrorModal', false)"
+            <button @click="$wire.set('showErrorModal', false); $dispatch('reset-processing')"
                     class="bg-gray-700 w-full text-white py-3 px-6 rounded-xl font-semibold text-lg hover:bg-gray-600">
                 Close
             </button>
@@ -257,7 +318,7 @@
     </div>
 @endif
 
-@push('styles')
+    @push('styles')
     <style>
         .brand-gradient {
             background: linear-gradient(135deg, #e1b362 0, #d4a55a 100%);
@@ -290,16 +351,24 @@
             border-color: #e1b362;
             background-color: rgba(225, 179, 98, 0.1);
         }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .bank-item:active {
+            transform: scale(0.98);
+        }
     </style>
 @endpush
 
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-        });
-    </script>
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+        </script>
     @endpush
-    </div>
+

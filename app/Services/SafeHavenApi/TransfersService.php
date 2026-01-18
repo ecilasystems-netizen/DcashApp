@@ -23,11 +23,6 @@ class TransfersService
 
     protected function sendPost(string $endpoint, array $payload, bool $retry = true): array
     {
-        Log::info('TransfersService - request', [
-            'endpoint' => $endpoint,
-            'payload' => $payload,
-            'retry' => $retry
-        ]);
 
         try {
             $response = Http::withHeaders($this->headers)
@@ -52,11 +47,6 @@ class TransfersService
                 $status = (int) $json['statusCode'];
             }
 
-            Log::info('TransfersService - response', [
-                'status' => $status,
-                'body' => $body,
-                'json' => $json
-            ]);
 
             if ($status === 403 && $retry) {
                 Log::warning('TransfersService - token expired, refreshing');
@@ -64,14 +54,10 @@ class TransfersService
                 try {
                     $this->authService->refreshToken();
                     $this->headers = $this->authService->getHeaders();
-                    Log::info('TransfersService - retrying request with new token');
 
                     return $this->sendPost($endpoint, $payload, false);
 
                 } catch (\Exception $e) {
-                    Log::error('TransfersService - token refresh failed', [
-                        'error' => $e->getMessage()
-                    ]);
 
                     return [
                         'status' => 500,
@@ -79,15 +65,6 @@ class TransfersService
                         'json' => ['error' => $e->getMessage()]
                     ];
                 }
-            }
-
-            if ($status >= 400) {
-                Log::error('TransfersService - request failed', [
-                    'status' => $status,
-                    'endpoint' => $endpoint,
-                    'response_body' => $body,
-                    'response_json' => $json,
-                ]);
             }
 
             return [
@@ -124,24 +101,7 @@ class TransfersService
             $payload['debitAccountNumber'] = $debitAccountNumber;
         }
 
-        Log::info('TransfersService - name enquiry', [
-            'accountNumber' => $accountNumber,
-            'bankCode' => $bankCode
-        ]);
-
         $response = $this->sendPost('/transfers/name-enquiry', $payload);
-
-        if (in_array($response['status'], [200, 201]) && isset($response['json']['data'])) {
-            Log::info('TransfersService - name enquiry successful', [
-                'accountName' => $response['json']['data']['accountName'] ?? null,
-                'kycLevel' => $response['json']['data']['kycLevel'] ?? null
-            ]);
-        } else {
-            Log::error('TransfersService - name enquiry failed', [
-                'status' => $response['status'],
-                'message' => $response['json']['message'] ?? 'Unknown error'
-            ]);
-        }
 
         return $response;
     }
@@ -167,26 +127,8 @@ class TransfersService
             $payload['beneficiaryName'] = $data['beneficiaryName'];
         }
 
-        Log::info('TransfersService - initiating transfer', [
-            'debitAccount' => $data['debitAccountNumber'],
-            'amount' => $data['amount'],
-            'nameEnquiryRef' => $data['nameEnquiryReference']
-        ]);
 
         $response = $this->sendPost('/transfers', $payload);
-
-        if (in_array($response['status'], [200, 201]) && isset($response['json']['data'])) {
-            Log::info('TransfersService - transfer successful', [
-                'sessionId' => $response['json']['data']['sessionId'] ?? null,
-                'status' => $response['json']['data']['status'] ?? null,
-                'amount' => $response['json']['data']['amount'] ?? null
-            ]);
-        } else {
-            Log::error('TransfersService - transfer failed', [
-                'status' => $response['status'],
-                'message' => $response['json']['message'] ?? 'Unknown error'
-            ]);
-        }
 
         return $response;
     }
@@ -195,21 +137,12 @@ class TransfersService
     {
         $endpoint = "/transfers/{$sessionId}";
 
-        Log::info('TransfersService - getting transfer status', [
-            'sessionId' => $sessionId
-        ]);
-
         try {
             $response = Http::withHeaders($this->headers)
                 ->get($this->baseApi.$endpoint);
 
             $status = $response->status();
             $json = $response->json();
-
-            Log::info('TransfersService - transfer status response', [
-                'status' => $status,
-                'transferStatus' => $json['data']['status'] ?? null
-            ]);
 
             return [
                 'status' => $status,

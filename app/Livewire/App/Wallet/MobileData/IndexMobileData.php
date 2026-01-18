@@ -1,325 +1,299 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\App\Wallet\MobileData;
 
-use App\Models\WalletTransaction;
-use App\Services\FlutterwaveBillsService;
+use App\Models\SafehavenDataBundle;
+use App\Services\SafeHavenApi\SafehavenDataBundleService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class IndexMobileData extends Component
 {
-    public $selectedNetwork = '';
-    public $mobileNumber = '';
-    public $selectedPlan = '';
-    public $dataPlans = [];
-    public $networkNames = [
-        'BIL108' => 'MTN',
-        'BIL109' => 'GLO',
-        'BIL110' => 'AIRTEL',
-        'BIL111' => '9MOBILE'
-    ];
-    public $processing = false;
-    public $showConfirmModal = false;
-    public $pin = '';
-    public $showSuccessModal = false;
-    public $showErrorModal = false;
-    public $currentTab = 'daily';
+    public ?string $selectedNetwork = null;
+    public string $phoneNumber = '';
+    public ?int $selectedBundleId = null; // Changed from selectedBundleCode
+    public string $currentTab = 'daily';
+    public array $availableBundles = [];
+    public array $networks = [];
     public int $userBalance;
+    public bool $showConfirmModal = false;
+    public bool $showSuccessModal = false;
+    public bool $processing = false;
+    public ?string $pin = null;
+    public ?string $pinError = null;
+
+    protected SafehavenDataBundleService $dataBundleService;
+
     protected $rules = [
-        'selectedNetwork' => 'required',
-        'mobileNumber' => 'required|digits:11',
-        'selectedPlan' => 'required',
-        'pin' => 'required|digits:4',
+        'selectedNetwork' => 'required|string',
+        'phoneNumber' => 'required|string|min:10|max:11',
+        'selectedBundleId' => 'required|integer|exists:safehaven_data_bundles,id',
+        'pin' => 'required|digits:4'
     ];
 
-    public function mount()
-    {
-        $this->dataPlans = collect();
-        $this->userBalance = auth()->user()->wallet->balance ?? 0;
+    protected $messages = [
+        'selectedNetwork.required' => 'Please select a network provider',
+        'phoneNumber.required' => 'Please enter a phone number',
+        'phoneNumber.min' => 'Phone number must be at least 10 digits',
+        'phoneNumber.max' => 'Phone number must not exceed 11 digits',
+        'selectedBundleId.required' => 'Please select a data bundle',
+        'selectedBundleId.exists' => 'Invalid data bundle selected',
+        'pin.required' => 'Please enter your 4-digit PIN',
+        'pin.digits' => 'PIN must be exactly 4 digits',
+    ];
 
+    public function boot(SafehavenDataBundleService $dataBundleService): void
+    {
+        $this->dataBundleService = $dataBundleService;
     }
 
-    public function render()
+    public function mount(): void
     {
-        return view('livewire.app.wallet.mobile-data.index-mobile-data')
-            ->layout('layouts.app.app')
-            ->title('Buy Mobile Data');
+        $providers = $this->dataBundleService->getSupportedProviders();
+        $logos = $this->dataBundleService->getNetworkLogos();
+
+        foreach ($providers as $code => $name) {
+            $this->networks[] = [
+                'code' => $code,
+                'name' => $name,
+                'logo' => $logos[$code] ?? null
+            ];
+        }
+
+        $this->userBalance = (int) (auth()->user()->wallet->balance ?? 0);
     }
 
-    public function selectNetwork($network)
+    public function selectNetwork(string $networkCode): void
     {
-        $this->selectedNetwork = $network;
-        $this->loadDataPlans();
-        $this->dispatch('plansLoaded');
+        $this->selectedNetwork = $networkCode;
+        $this->loadDataBundles();
+        $this->reset(['selectedBundleId']);
     }
 
-    public function loadDataPlans()
+    public function loadDataBundles(): void
     {
-        if (empty($this->selectedNetwork)) {
-            $this->dataPlans = collect();
-            $this->selectedPlan = '';
+        if (!$this->selectedNetwork) {
+            $this->availableBundles = [];
             return;
         }
 
-        try {
-            $flutterwave = new FlutterwaveBillsService();
-            $response = $flutterwave->getBillerItems($this->selectedNetwork);
+        $bundles = $this->dataBundleService->getBundlesForProvider($this->selectedNetwork);
 
-            if (isset($response['data']) && is_array($response['data'])) {
-                // Filter for data plans only (is_data = true)
-                // Remove duplicate item_codes by using unique() on the collection
-                $filteredPlans = collect($response['data'])->filter(function ($plan) {
-                    return isset($plan['is_data']) && $plan['is_data'] === true;
-                })->unique('item_code');
-
-                // Group plans by validity period
-                $this->dataPlans = $filteredPlans->groupBy(function ($plan) {
-                    $validity = (int) ($plan['validity_period'] ?? null);
-                    if ($validity === 1 or $validity === '1s') {
-                        return 'daily';
-                    }
-                    if ($validity === 7 or $validity === '7s') {
-                        return 'weekly';
-                    }
-                    if ($validity === 30 or $validity === '30s' or $validity === 31 or $validity === '31s') {
-                        return 'monthly';
-                    }
-
-                    return 'others';
-                });
-            } else {
-                $this->dataPlans = collect();
-            }
-
-            $this->selectedPlan = '';
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to load data plans: '.$e->getMessage());
-            $this->dataPlans = collect();
-        }
+        $this->availableBundles = [
+            'daily' => $bundles->get('daily', collect())->map(fn($bundle) => [
+                'id' => $bundle->id,
+                'bundle_code' => $bundle->bundle_code,
+                'data_size' => $bundle->data_size,
+                'duration_days' => $bundle->duration_days,
+                'amount' => $bundle->amount,
+            ])->toArray(),
+            'weekly' => $bundles->get('weekly', collect())->map(fn($bundle) => [
+                'id' => $bundle->id,
+                'bundle_code' => $bundle->bundle_code,
+                'data_size' => $bundle->data_size,
+                'duration_days' => $bundle->duration_days,
+                'amount' => $bundle->amount,
+            ])->toArray(),
+            'monthly' => $bundles->get('monthly', collect())->map(fn($bundle) => [
+                'id' => $bundle->id,
+                'bundle_code' => $bundle->bundle_code,
+                'data_size' => $bundle->data_size,
+                'duration_days' => $bundle->duration_days,
+                'amount' => $bundle->amount,
+            ])->toArray(),
+            'others' => $bundles->get('others', collect())->map(fn($bundle) => [
+                'id' => $bundle->id,
+                'bundle_code' => $bundle->bundle_code,
+                'data_size' => $bundle->data_size,
+                'duration_days' => $bundle->duration_days,
+                'amount' => $bundle->amount,
+            ])->toArray(),
+        ];
     }
 
-    public function selectTab($tab)
+    public function selectTab(string $tab): void
     {
         $this->currentTab = $tab;
     }
 
-    public function selectPlan($planCode)
+    public function selectBundle(int $bundleId): void
     {
-        $this->selectedPlan = $planCode;
+        $this->selectedBundleId = $bundleId;
     }
 
-    public function openConfirmationModal()
+    public function canProceed(): bool
+    {
+        return $this->selectedNetwork &&
+            $this->phoneNumber &&
+            strlen($this->phoneNumber) >= 10 &&
+            $this->selectedBundleId !== null;
+    }
+
+    public function updatedPin(): void
+    {
+        $this->pinError = null;
+    }
+
+    public function openConfirmationModal(): void
     {
         $this->validate([
-            'selectedNetwork' => 'required',
-            'mobileNumber' => 'required|digits:11',
-            'selectedPlan' => 'required',
+            'selectedNetwork' => 'required|string',
+            'phoneNumber' => 'required|string|min:10|max:11',
+            'selectedBundleId' => 'required|integer|exists:safehaven_data_bundles,id',
         ]);
 
-        $this->pin = '';
         $this->showConfirmModal = true;
+        $this->pinError = null;
+        $this->pin = null;
     }
 
-    public function cancelPurchase()
+    public function cancelPurchase(): void
     {
         $this->showConfirmModal = false;
+        $this->pin = null;
+        $this->pinError = null;
     }
 
-    public function confirmPurchase()
+    public function confirmPurchase(): void
     {
         $this->validate();
 
         $this->processing = true;
+        $this->pinError = null;
 
         try {
-            // Get all plans from all categories
-            $allPlans = collect();
-            foreach ($this->dataPlans as $categoryPlans) {
-                $allPlans = $allPlans->merge($categoryPlans);
-            }
+            $reference = 'data_bundle_'.time().'_'.auth()->id();
 
-            // Find the selected plan
-            $planDetails = $allPlans->firstWhere('item_code', $this->selectedPlan);
-
-            if (!$planDetails) {
-                session()->flash('error', 'Selected plan not found');
-                $this->showConfirmModal = false;
+            if (!Hash::check($this->pin, auth()->user()->pin)) {
+                $this->pinError = 'Invalid PIN. Please try again.';
+                $this->processing = false;
                 return;
             }
-
-            // Process payment using Flutterwave
-            $flutterwave = new FlutterwaveBillsService();
-            $reference = 'data_'.time().'_'.auth()->id();
 
             $user = auth()->user();
+            $bundle = $this->getSelectedBundle();
 
-            // verify PIN against user's stored PIN first
-            if (!Hash::check($this->pin, $user->pin)) {
-                session()->flash('error', 'Invalid PIN');
+            if (!$bundle) {
+                $this->pinError = 'Selected bundle not found. Please try again.';
                 $this->processing = false;
                 return;
             }
 
-            //validate customer details
-            $validationResponse = $flutterwave->validateCustomer($planDetails['item_code'], $this->mobileNumber);
-            if (isset($validationResponse['status']) && $validationResponse['status'] !== 'success') {
-                session()->flash('error', 'Customer validation failed: '.$validationResponse['message']);
-                $this->processing = false;
-                $this->showConfirmModal = false;
-                return;
-            }
-
-            // Atomically reserve funds and create a pending transaction
-            $amount = $planDetails['amount'];
+            $amount = (int) $bundle->amount_in_naira;
             $wallet = $user->wallet;
             $balanceBefore = $wallet->balance;
 
-            // Attempt atomic decrement to avoid race conditions
-            $updated = \DB::table('wallets')
+            if ($balanceBefore < $amount) {
+                $this->pinError = 'Insufficient balance. Please fund your wallet.';
+                $this->processing = false;
+                return;
+            }
+
+            $updated = DB::table('wallets')
                 ->where('id', $wallet->id)
                 ->where('balance', '>=', $amount)
                 ->decrement('balance', $amount);
 
             if (!$updated) {
-                session()->flash('error', 'Insufficient balance');
-                $this->showErrorModal = true;
+                $this->pinError = 'Insufficient balance. Please try again.';
                 $this->processing = false;
-                $this->showConfirmModal = false;
                 return;
             }
 
             $balanceAfter = $balanceBefore - $amount;
-            $user->refresh(); // ensure relations reflect updated balance
 
-            // Record transaction
-            $user->wallet->transactions()->create([
+            $transaction = $user->wallet->transactions()->create([
                 'reference' => $reference,
                 'type' => 'data',
                 'direction' => 'debit',
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'charge' => 0,
-                'description' => 'Data purchase to '.$this->mobileNumber,
+                'description' => "Data bundle ({$bundle->data_size}) to {$this->phoneNumber}",
                 'status' => 'pending',
                 'balance_before' => $balanceBefore,
                 'balance_after' => $balanceAfter,
                 'metadata' => [
-                    'phone_number' => $this->mobileNumber,
-                    'network' => $this->networkNames[$this->selectedNetwork] ?? $this->selectedNetwork,
-                    'plan' => $planDetails['name'] ?? 'N/A',
-                    'item_code' => $planDetails['item_code'] ?? 'N/A',
-                    'biller_code' => $planDetails['biller_code'] ?? 'N/A'
+                    'phone_number' => $this->phoneNumber,
+                    'network' => $this->selectedNetwork,
+                    'bundle_id' => $this->selectedBundleId,
+                    'bundle_code' => $bundle->bundle_code,
+                    'data_size' => $bundle->data_size,
+                    'validity' => $bundle->validity,
+                    'queued_at' => now()->toDateTimeString()
                 ],
             ]);
 
-            // Create bill payment
-            $response = $flutterwave->createBillPayment(
-                $planDetails['biller_code'],
-                $planDetails['item_code'],
-                'NG', // Country code for Nigeria
-                $this->mobileNumber,
-                $planDetails['amount'],
+            // Dispatch job to process the purchase
+            \App\Jobs\SafeHaven\SafeHavenProcessDataBundlePurchaseJob::dispatch(
                 $reference,
-                $planDetails['name'],
-                true // isDataPurchase
+                $user->id,
+                $this->phoneNumber,
+                $this->selectedBundleId,
+                $this->selectedNetwork,
+                $amount
             );
 
-            if (isset($response['status']) && $response['status'] === 'success') {
-
-                //log the response
-                Log::info('Data purchase successful:', ['response' => $response]);
-
-                // Update transaction status to completed
-                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
-                if ($transaction) {
-                    $transaction->status = 'completed';
-                    $transaction->metadata = array_merge((array) $transaction->metadata, [
-                        'tx_ref' => $response['data']['tx_ref'] ?? null,
-                        'flw_ref' => $response['data']['reference'] ?? null,
-                    ]);
-                    $transaction->save();
-                }
-
-                $this->showConfirmModal = false;
-                $this->showSuccessModal = true;
-
-            } else {
-                // On failed payment (after createBillPayment returns non-success) — refund and mark transaction failed
-                // get the pending transaction
-                $transaction = $user->wallet->transactions()->where('reference', $reference)->first();
-                if ($transaction) {
-                    $transaction->status = 'failed';
-                    $transaction->metadata = array_merge((array) $transaction->metadata, [
-                        'failure_reason' => $response['message'] ?? 'Payment failed',
-                    ]);
-                    $transaction->save();
-                }
-                // refund wallet
-                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $amount);
-
-                $user->refresh();
-
-                // Handle failed transaction - show error modal
-                $this->showConfirmModal = false;
-                $this->showErrorModal = true;
-            }
+            $this->showConfirmModal = false;
+            $this->showSuccessModal = true;
+            session()->flash('success', 'Data bundle purchase is being processed!');
 
         } catch (\Exception $e) {
-
-            // attempt to find and mark pending transaction as failed and refund
-            $transaction = WalletTransaction::where('reference', $reference ?? null)->first();
-            if ($transaction && $transaction->status === 'pending') {
-                $transaction->status = 'failed';
-                $transaction->metadata = array_merge((array) $transaction->metadata, [
-                    'exception' => $e->getMessage(),
-                ]);
-                $transaction->save();
-
-                \DB::table('wallets')->where('id', $wallet->id)->increment('balance', $transaction->amount);
-            }
-
-            // Handle exceptions - show error modal
-            $this->showConfirmModal = false;
-            $this->showErrorModal = true;
-
-            // Log the exception
-            Log::error('Exception during data purchase: '.$e->getMessage(), [
-                'exception' => $e,
-                'user' => auth()->id()
+            Log::error('IndexMobileData - confirmPurchase exception', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
             ]);
+
+            $this->pinError = 'An error occurred. Please try again.';
         }
+
         $this->processing = false;
-        $this->pin = '';
     }
 
-    public function closeErrorModal()
+    public function getSelectedBundle(): ?SafehavenDataBundle
     {
-        $this->showErrorModal = false;
-        $this->reset(['pin']);
-    }
-
-    public function closeSuccessModal()
-    {
-        $this->showSuccessModal = false;
-        $this->reset(['selectedNetwork', 'mobileNumber', 'selectedPlan', 'dataPlans']);
-        //redirect to dashboard route
-        return redirect()->route('dashboard');
-    }
-
-    public function getPlanDetails()
-    {
-        if (empty($this->selectedPlan)) {
+        if (!$this->selectedBundleId) {
             return null;
         }
 
-        // Get all plans from all categories
-        $allPlans = collect();
-        foreach ($this->dataPlans as $categoryPlans) {
-            $allPlans = $allPlans->merge($categoryPlans);
+        return SafehavenDataBundle::find($this->selectedBundleId);
+    }
+
+    public function closeSuccessModal(): void
+    {
+        $this->showSuccessModal = false;
+        $this->reset(['selectedNetwork', 'phoneNumber', 'selectedBundleId', 'pin', 'pinError']);
+        $this->availableBundles = [];
+
+        $this->redirect(route('dashboard'));
+    }
+
+    #[Computed]
+    public function selectedNetworkRecord(): ?array
+    {
+        if (!$this->selectedNetwork) {
+            return null;
         }
 
-        return $allPlans->firstWhere('item_code', $this->selectedPlan);
+        return collect($this->networks)->firstWhere('code', $this->selectedNetwork);
+    }
+
+    #[Computed]
+    public function selectedAmount(): int
+    {
+        $bundle = $this->getSelectedBundle();
+        return $bundle ? (int) $bundle->amount / 100 : 0;
+    }
+
+    public function render()
+    {
+        return view('livewire.app.wallet.mobile-data.index-mobile-data')
+            ->layout('layouts.app.app')
+            ->title('Buy Data Bundle');
     }
 }

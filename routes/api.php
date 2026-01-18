@@ -41,7 +41,7 @@ Route::get('/safe-haven/bank-list', [TestController::class, 'getBanks']);
 Route::get('/safe-haven/bank-list/sync', [TestController::class, 'syncSafeHavenBankList']);
 Route::post('/safe-haven/verify-account', [TestController::class, 'verifyAccountDetails']);
 
-Route::get('/safe-haven/test-route', [TestController::class, 'safeHaveApiTestRoute']);
+Route::get('/safe-haven/test-link', [TestController::class, 'getTest']);
 
 // Currency Rate API Routes (no authentication required)
 Route::prefix('currency')->group(function () {

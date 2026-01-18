@@ -1,253 +1,532 @@
-<div>
+<div x-data="{
+    showNetworkModal: false,
+    showConfirmationModal: @entangle('showConfirmModal').live,
+    showSuccessModal: @entangle('showSuccessModal').live
+}">
+
     <x-slot name="header">
-        <!-- Header -->
-        <header class="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-700/80">
-            <div class="px-4 lg:px-0 py-4 flex items-center gap-4">
-                <a href="{{route('dashboard')}}" class="p-2 rounded-full hover:bg-gray-800">
-                    <i data-lucide="arrow-left"></i>
+        <header
+            class="bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-xl sticky top-0 z-10 border-b border-gray-700/50 shadow-xl">
+            <div class="px-4 py-3.5 flex justify-between items-center">
+                <a href="{{ route('dashboard') }}" wire:navigate
+                   class="text-gray-300 hover:text-white transition-colors p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
                 </a>
-                <div>
-                    <p class="text-xs text-gray-400">Buy</p>
-                    <h2 class="font-bold text-xl text-white">Mobile Data</h2>
-                </div>
+                <h1 class="text-lg font-semibold text-white">Buy Data Bundle</h1>
+                <div class="w-6"></div>
             </div>
         </header>
     </x-slot>
 
-    <div>
-        <!-- Data Purchase Form -->
-        <div class="p-1 lg:p-0 lg:py-8 space-y-6">
-            <!-- Network Selection -->
-            <div>
-                <h3 class="font-semibold text-white mb-4">1. Select Network</h3>
-                <div class="grid grid-cols-4 gap-4">
-                    <div wire:click="selectNetwork('BIL108')"
-                         class="cursor-pointer bg-gray-800 p-3 rounded-lg border-2 border-gray-700 flex justify-center items-center transition-all duration-200 {{ $selectedNetwork === 'BIL108' ? 'network-selected' : '' }}">
-                        <img
-                            src="{{asset('storage/mobile_networks/mtn.png')}}"
-                            alt="MTN" class="h-10 object-contain rounded">
-                    </div>
-                    <div wire:click="selectNetwork('BIL109')"
-                         class="cursor-pointer bg-gray-800 p-3 rounded-lg border-2 border-gray-700 flex justify-center items-center transition-all duration-200 {{ $selectedNetwork === 'BIL109' ? 'network-selected' : '' }}">
-                        <img src="{{asset('storage/mobile_networks/glo.png')}}" alt="Glo"
-                             class="h-10 object-contain">
-                    </div>
-                    <div wire:click="selectNetwork('BIL110')"
-                         class="cursor-pointer bg-gray-800 p-3 rounded-lg border-2 border-gray-700 flex justify-center items-center transition-all duration-200 {{ $selectedNetwork === 'BIL110' ? 'network-selected' : '' }}">
-                        <img
-                            src="{{asset('storage/mobile_networks/airtel.png')}}"
-                            alt="Airtel" class="h-8 object-contain">
-                    </div>
-                    <div wire:click="selectNetwork('BIL111')"
-                         class="cursor-pointer bg-gray-800 p-3 rounded-lg border-2 border-gray-700 flex justify-center items-center transition-all duration-200 {{ $selectedNetwork === 'BIL111' ? 'network-selected' : '' }}">
-                        <img
-                            src="{{asset('storage/mobile_networks/9mobile.png')}}"
-                            alt="9mobile" class="h-8 object-contain">
-                    </div>
+    <div class="p-2 sm:p-4 space-y-4 pb-safe">
+        <!-- Flash Messages -->
+        @if (session()->has('success'))
+            <div
+                class="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-300 px-4 py-3 rounded-xl shadow-lg backdrop-blur-sm">
+                <div class="flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                    <p class="flex-1">{{ session('success') }}</p>
                 </div>
             </div>
+        @endif
 
-            <!-- Phone Number -->
-            <div>
-                <label for="mobileNumber" class="font-semibold text-white mb-2 block">2. Enter Phone Number</label>
-                <input type="tel" wire:model.live="mobileNumber" id="mobileNumber" placeholder="Enter phone number"
-                       class="w-full bg-gray-800 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#E1B362] transition-colors">
-                @error('mobileNumber') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
-            </div>
+        <!-- Promotional Slider -->
+        <div
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-800/50 backdrop-blur-xl border border-gray-700/50 shadow-2xl"
+            x-data="{
+                currentSlide: 0,
+                slides: [
+                    {
+                        title: 'Fast & Reliable Data',
+                        subtitle: 'Get instant data delivery to any network',
+                        image: '{{ asset('images/data-promo-1.jpg') }}',
+                        bgColor: 'from-blue-600/20 to-indigo-600/20'
+                    },
+                    {
+                        title: 'Best Rates Guaranteed',
+                        subtitle: 'Enjoy competitive prices on all bundles',
+                        image: '{{ asset('images/data-promo-2.jpg') }}',
+                        bgColor: 'from-purple-600/20 to-pink-600/20'
+                    },
+                    {
+                        title: '24/7 Support',
+                        subtitle: 'Always here to help with your data needs',
+                        image: '{{ asset('images/data-promo-3.jpg') }}',
+                        bgColor: 'from-green-600/20 to-emerald-600/20'
+                    }
+                ],
+                autoplay: null,
+                init() {
+                    this.startAutoplay();
+                },
+                startAutoplay() {
+                    this.autoplay = setInterval(() => {
+                        this.next();
+                    }, 7000);
+                },
+                stopAutoplay() {
+                    if (this.autoplay) {
+                        clearInterval(this.autoplay);
+                    }
+                },
+                next() {
+                    this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+                },
+                prev() {
+                    this.currentSlide = this.currentSlide === 0 ? this.slides.length - 1 : this.currentSlide - 1;
+                },
+                goTo(index) {
+                    this.currentSlide = index;
+                    this.stopAutoplay();
+                    this.startAutoplay();
+                }
+            }"
+            @mouseenter="stopAutoplay()"
+            @mouseleave="startAutoplay()">
 
-            <!-- Data Plans -->
-            @if($selectedNetwork && !$dataPlans->isEmpty())
-                <div>
-                    <h3 class="font-semibold text-white mb-4">3. Select Data Plan</h3>
-                    <!-- Tabs -->
-                    <div class="flex bg-gray-800 rounded-lg p-1 mb-4">
-                        <button wire:click="selectTab('daily')"
-                                class="flex-1 p-2 rounded-md font-semibold transition-colors duration-200 {{ $currentTab === 'daily' ? 'tab-active' : '' }}">
-                            Daily
-                        </button>
-                        <button wire:click="selectTab('weekly')"
-                                class="flex-1 p-2 rounded-md font-semibold transition-colors duration-200 {{ $currentTab === 'weekly' ? 'tab-active' : '' }}">
-                            Weekly
-                        </button>
-                        <button wire:click="selectTab('monthly')"
-                                class="flex-1 p-2 rounded-md font-semibold transition-colors duration-200 {{ $currentTab === 'monthly' ? 'tab-active' : '' }}">
-                            Monthly
-                        </button>
-                    </div>
+            <!-- Slides Container -->
+            <div class="relative h-32 sm:h-36 overflow-hidden">
+                <template x-for="(slide, index) in slides" :key="index">
+                    <div x-show="currentSlide === index"
+                         x-transition:enter="transition ease-out duration-500"
+                         x-transition:enter-start="opacity-0 translate-x-full"
+                         x-transition:enter-end="opacity-100 translate-x-0"
+                         x-transition:leave="transition ease-in duration-500"
+                         x-transition:leave-start="opacity-100 translate-x-0"
+                         x-transition:leave-end="opacity-0 -translate-x-full"
+                         class="absolute inset-0 flex items-center"
+                         :class="'bg-gradient-to-br ' + slide.bgColor">
 
-                    <!-- Plan Cards Container -->
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        @if(isset($dataPlans[$currentTab]))
-                            @foreach($dataPlans[$currentTab] as $plan)
-                                <div wire:click="selectPlan('{{ $plan['item_code'] }}')"
-                                     class="cursor-pointer bg-gray-800 p-4 rounded-lg border-2 {{ $selectedPlan === $plan['item_code'] ? 'plan-selected' : 'border-gray-700' }} text-center transition-all">
-                                    <p class="font-bold text-sm text-white">{{ $plan['biller_name'] }}</p>
-                                    <p class="font-semibold text-[#E1B362]">₦{{ number_format($plan['amount']) }}</p>
-                                    <p class="text-xs text-gray-400 mt-1">{{ $plan['validity_period'] }} day(s)</p>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="col-span-full text-center py-6 text-gray-400">
-                                No {{ $currentTab }} plans available for this network
+                        <div class="w-full px-6 py-6 flex items-center justify-between">
+                            <div class="flex-1 space-y-1.5">
+                                <h3 class="text-lg sm:text-xl font-bold text-white" x-text="slide.title"></h3>
+                                <p class="text-xs sm:text-sm text-gray-300" x-text="slide.subtitle"></p>
                             </div>
-                        @endif
+
+                            <!-- Optional: Add icon or illustration -->
+                            <div
+                                class="hidden sm:flex items-center justify-center w-20 h-20 bg-white/10 rounded-full backdrop-blur-sm">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Dot Indicators -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <template x-for="(slide, index) in slides" :key="index">
+                    <button @click="goTo(index)"
+                            class="w-2 h-2 rounded-full transition-all duration-300 touch-manipulation"
+                            :class="currentSlide === index ? 'bg-[#e1b362] w-6' : 'bg-white/40 hover:bg-white/60'">
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div
+            class="bg-gradient-to-br from-gray-800/80 to-gray-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50">
+            <div class="p-4 space-y-4">
+                <!-- Network Selection -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-300">
+                        Network Provider <span class="text-red-400">*</span>
+                    </label>
+                    <button type="button" @click="showNetworkModal = true"
+                            class="w-full flex items-center justify-between px-3.5 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-left hover:bg-gray-700/70 active:scale-[0.98] transition-all duration-200">
+                        <span class="text-gray-200 flex items-center gap-2.5 text-sm">
+                            @if ($this->selectedNetworkRecord)
+                                <img src="{{ $this->selectedNetworkRecord['logo'] }}"
+                                     alt="{{ $this->selectedNetworkRecord['name'] }}"
+                                     class="w-5 h-5 object-contain rounded">
+                                {{ $this->selectedNetworkRecord['name'] }}
+                            @else
+                                Select Network
+                            @endif
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    @error('selectedNetwork')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Phone Number -->
+                <div class="space-y-2">
+                    <label for="phoneNumber" class="block text-sm font-medium text-gray-300">
+                        Phone Number <span class="text-red-400">*</span>
+                    </label>
+                    <input
+                        type="tel"
+                        id="phoneNumber"
+                        wire:model.live="phoneNumber"
+                        placeholder="Enter phone number"
+                        class="w-full px-3.5 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-gray-200 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e1b362]/50 focus:border-[#e1b362]/50 transition-all"
+                        maxlength="11"
+                        inputmode="numeric"
+                    >
+                    @error('phoneNumber')
+                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Data Bundles -->
+                @if($selectedNetwork && !empty($availableBundles))
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium text-gray-300">
+                            Select Data Bundle <span class="text-red-400">*</span>
+                        </label>
+
+                        <!-- Tabs -->
+                        <div class="flex bg-gray-700/30 rounded-xl p-1 gap-1">
+                            @foreach(['daily', 'weekly', 'monthly'] as $tab)
+                                <button type="button" wire:click="selectTab('{{ $tab }}')"
+                                        class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-all active:scale-95 {{ $currentTab === $tab ? 'bg-[#e1b362] text-gray-900' : 'text-gray-300 hover:bg-gray-700/50' }}">
+                                    {{ ucfirst($tab) }}
+                                    @if(!empty($availableBundles[$tab]))
+                                        <span class="ml-0.5 text-[10px] opacity-70">({{ count($availableBundles[$tab]) }})</span>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <!-- Bundle Cards -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                            @if(!empty($availableBundles[$currentTab]))
+                                @foreach($availableBundles[$currentTab] as $bundle)
+                                    <div wire:click="selectBundle({{ $bundle['id'] }})"
+                                         class="cursor-pointer p-2.5 sm:p-3 bg-gray-700/30 border border-gray-600/30 rounded-lg active:scale-[0.98] transition-all touch-manipulation {{ $selectedBundleId === $bundle['id'] ? 'bg-[#e1b362]/20 border-[#e1b362]/50 ring-1 ring-[#e1b362]/30' : '' }}">
+                                        <div class="space-y-1.5 sm:space-y-1 text-center">
+                                            <div class="space-y-1">
+                                                <h4 class="font-medium text-white text-sm sm:text-xs">{{ $bundle['data_size'] ?? 'N/A' }}</h4>
+                                                <div class="flex justify-center">
+                                                    <span
+                                                        class="text-[10px] sm:text-[9px] px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded-full whitespace-nowrap">
+                                                        {{ $bundle['duration_days'].' Day(s)' ?? 'N/A' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-center gap-1">
+                                                <p class="text-sm font-bold text-[#e1b362]">
+                                                    ₦{{ number_format($bundle['amount'] / 100, 2) }}</p>
+                                                @if($selectedBundleId === $bundle['id'])
+                                                    <svg class="w-4 h-4 sm:w-3 sm:h-3 text-[#e1b362] flex-shrink-0"
+                                                         fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd"
+                                                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                              clip-rule="evenodd"/>
+                                                    </svg>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="col-span-2 sm:col-span-3 text-center py-6">
+                                    <svg class="w-10 h-10 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                    </svg>
+                                    <p class="text-gray-400 text-sm">No {{ $currentTab }} plans</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Selected Bundle Display -->
+                @if($this->selectedAmount > 0)
+                    <div
+                        class="p-3.5 bg-gradient-to-br from-[#e1b362]/10 to-[#d4a55a]/10 border border-[#e1b362]/20 rounded-xl">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-gray-300 text-xs">Total Amount</span>
+                            <span
+                                class="text-xl font-bold text-white">₦{{ number_format($this->selectedAmount) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-400 text-[10px]">Service Fee</span>
+                            <span class="text-xs text-gray-400 line-through">₦0</span>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Purchase Button -->
+            <div class="p-4 pt-0">
+                <button type="button" wire:click="openConfirmationModal" wire:loading.attr="disabled"
+                        class="w-full py-3.5 bg-gradient-to-r from-[#e1b362] to-[#d4a55a] text-gray-900 font-semibold rounded-xl hover:from-[#d4a55a] hover:to-[#c59952] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#e1b362]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
+                    {{ !$this->canProceed() ? 'disabled' : '' }}>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span wire:loading.remove wire:target="openConfirmationModal">Continue to Payment</span>
+                    <span wire:loading wire:target="openConfirmationModal">Loading...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Selection Modal -->
+    <div x-show="showNetworkModal" x-transition.opacity x-cloak
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-backdrop">
+        <div @click.away="showNetworkModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="translate-y-full opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-y-0 opacity-100"
+             x-transition:leave-end="translate-y-full opacity-0"
+             class="bg-gradient-to-br from-gray-800 to-gray-800/95 backdrop-blur-xl rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-gray-700/50 shadow-2xl safe-bottom">
+            <div class="p-4 space-y-4">
+                <!-- Header with drag indicator -->
+                <div class="flex flex-col items-center gap-2">
+                    <div class="w-12 h-1 bg-gray-600 rounded-full"></div>
+                    <div class="w-full flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-white">Select Network</h3>
+                        <button @click="showNetworkModal = false" class="text-gray-400 hover:text-white p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-            @endif
 
-
-            <!-- Proceed Button -->
-            <button wire:click="openConfirmationModal"
-                    class="brand-gradient w-full text-white py-4 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-all mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
-                {{ !$selectedNetwork || !$selectedPlan || !$mobileNumber ? 'disabled' : '' }}>
-                <span wire:loading.remove wire:target="openConfirmationModal">Proceed</span>
-                <span wire:loading wire:target="openConfirmationModal">Processing...</span>
-            </button>
+                <div class="space-y-2 max-h-[60vh] overflow-y-auto">
+                    @foreach ($networks as $network)
+                        <button type="button" wire:click="selectNetwork('{{ $network['code'] }}')"
+                                @click="showNetworkModal = false"
+                                class="w-full flex items-center justify-between p-3.5 bg-gray-700/30 hover:bg-gray-700/50 active:scale-[0.98] border border-gray-600/30 hover:border-[#e1b362]/50 rounded-xl transition-all">
+                            <div class="flex items-center gap-2.5">
+                                <img src="{{ $network['logo'] }}" alt="{{ $network['name'] }}"
+                                     class="w-7 h-7 object-contain rounded">
+                                <span class="text-gray-200 font-medium text-sm">{{ $network['name'] }}</span>
+                            </div>
+                            @if ($selectedNetwork === $network['code'])
+                                <svg class="w-5 h-5 text-[#e1b362]" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clip-rule="evenodd"/>
+                                </svg>
+                            @endif
+                        </button>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Confirmation Modal -->
-    <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop {{ $showConfirmModal ? '' : 'hidden' }}"
-    >
-        <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-6 border border-gray-700 shadow-xl">
-            <h2 class="text-2xl font-bold text-center text-white mb-2">Confirm Purchase</h2>
-            <div class="space-y-3 text-sm my-6">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400">Network:</span>
-                    <span class="font-bold text-white flex items-center gap-2">
-                        @if($selectedNetwork)
-                            <img
-                                src="{{asset('storage/mobile_networks/' . strtolower($networkNames[$selectedNetwork]) . '.png')}}"
-                                class="h-5 w-5 object-contain rounded-full"
-                                alt="{{ $networkNames[$selectedNetwork] }}">
-                            {{ $networkNames[$selectedNetwork] }}
-                        @endif
-                    </span>
+    <div x-show="showConfirmationModal" x-transition.opacity x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+        <div x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             class="bg-gradient-to-br from-gray-800 to-gray-800/95 backdrop-blur-xl rounded-2xl w-full max-w-sm border border-gray-700/50 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-5 space-y-5">
+                <div class="text-center">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-1">Confirm Data Purchase</h3>
+                    <p class="text-gray-400 text-xs">Review your transaction</p>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Phone:</span>
-                    <span class="font-bold text-white">{{ $mobileNumber }}</span>
-                </div>
-                <!-- Plan details -->
-                @if($selectedPlan)
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Plan:</span>
-                        <span class="font-bold text-white">{{ $this->getPlanDetails()['biller_name'] ?? '' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Amount:</span>
-                        <span
-                            class="font-bold text-red-400">₦{{ number_format($this->getPlanDetails()['amount'] ?? 0) }}</span>
-                    </div>
-                    <hr class="border-gray-700 !my-4">
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Service Fee:</span>
-                        <span class="font-bold text-gray-400 line-through"
-                              style="text-decoration: line-through !important;">₦0.00</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Current Balance:</span>
-                        <span class="font-bold text-white">₦{{ number_format($userBalance) }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Balance After:</span>
-                        <span
-                            class="font-bold {{ ($userBalance - ($this->getPlanDetails()['amount'] ?? 0)) >= 0 ? 'text-green-500' : 'text-red-500' }}">
-                            ₦{{ number_format($userBalance - ($this->getPlanDetails()['amount'] ?? 0)) }}
-                        </span>
-                    </div>
-                @endif
-            </div>
-            <div class="mb-6">
-                <label for="pin" class="font-semibold text-white mb-2 block text-center">Enter your 4-digit PIN</label>
-                <input type="password" wire:model.live="pin" id="pin" maxlength="4"
-                       class="w-full bg-gray-900 border-2 border-gray-700 rounded-lg px-4 py-3 text-white text-center text-2xl tracking-[1em] focus:outline-none focus:border-[#E1B362]">
 
-                @error('pin') <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span> @enderror
-                @if(session()->has('error'))
-                    <p class="text-red-500 text-sm mt-1 block text-center">
-                        {{ session('error') }}
-                    </p>
+                @if($this->getSelectedBundle())
+                    <div class="space-y-3 bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                        <div class="flex justify-between items-start text-xs">
+                            <span class="text-gray-400">Network</span>
+                            <div class="flex items-center gap-1.5 text-right">
+                                @if($this->selectedNetworkRecord)
+                                    <img src="{{ $this->selectedNetworkRecord['logo'] }}"
+                                         alt="{{ $this->selectedNetworkRecord['name'] }}"
+                                         class="w-4 h-4 object-contain rounded">
+                                    <span
+                                        class="text-white font-medium">{{ $this->selectedNetworkRecord['name'] }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-start text-xs">
+                            <span class="text-gray-400">Phone</span>
+                            <span class="text-white font-medium">{{ $phoneNumber }}</span>
+                        </div>
+                        <div class="flex justify-between items-start text-xs">
+                            <span class="text-gray-400">Bundle</span>
+                            <div class="text-right">
+                                <span class="text-white font-medium">{{ $this->getSelectedBundle()->data_size }}</span>
+                                <p class="text-[10px] text-gray-400">{{ $this->getSelectedBundle()->validity }}</p>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-gray-600/50">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-gray-300 font-medium text-sm">Total</span>
+                                <span
+                                    class="text-xl font-bold text-[#e1b362]">₦{{ number_format($this->selectedAmount) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-400">Balance After</span>
+                                <span
+                                    class="font-medium {{ ($userBalance - $this->selectedAmount) >= 0 ?
+                                    'text-[#ffffff]' :
+                                    'text-red-400' }}">
+                                    ₦{{ number_format($userBalance - $this->selectedAmount) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 @endif
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button wire:click="cancelPurchase"
-                        @click="intentionallyCancelling = true"
-                        class="bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-600">
-                    Cancel
-                </button>
-                <button wire:click="confirmPurchase" wire:loading.attr="disabled"
-                        class="brand-gradient text-white py-3 rounded-lg font-semibold hover:opacity-90">
-                    <span wire:loading.remove wire:target="confirmPurchase">Confirm</span>
-                    <span wire:loading wire:target="confirmPurchase">Processing...</span>
-                </button>
+
+                <!-- PIN Input -->
+                <div class="space-y-3">
+                    <label class="text-xs font-medium text-gray-300 block text-center">Enter 4-digit PIN</label>
+                    <input
+                        type="password"
+                        wire:model.live="pin"
+                        placeholder="••••"
+                        maxlength="4"
+                        inputmode="numeric"
+                        class="w-full px-4 py-3.5 bg-gray-700/50 border {{ $pinError ? 'border-red-500/50' : 'border-gray-600/50' }} rounded-xl text-gray-200 text-center text-xl font-bold tracking-widest placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e1b362]/50 transition-all"
+                        x-on:input="$event.target.value = $event.target.value.replace(/[^0-9]/g, '')"
+                    >
+                    @if($pinError)
+                        <div
+                            class="bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 text-red-300 px-3 py-2 rounded-xl text-center">
+                            <p class="text-xs">{{ $pinError }}</p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="flex gap-2.5">
+                    <button type="button"
+                            wire:click="cancelPurchase"
+                            wire:loading.class="hidden"
+                            wire:target="confirmPurchase"
+                            class="flex-1 px-4 py-3 bg-gray-700/50 text-gray-300 font-medium text-sm rounded-xl hover:bg-gray-700/70 active:scale-[0.98] transition-all">
+                        Cancel
+                    </button>
+                    <button type="button"
+                            wire:click="confirmPurchase"
+                            wire:loading.attr="disabled"
+                            wire:loading.class="hidden"
+                            wire:target="confirmPurchase"
+                            class="flex-1 px-4 py-3 bg-gradient-to-r from-[#e1b362] to-[#e1b362] text-white font-semibold text-sm rounded-xl hover:from-[#e1b362] hover:to-[#e1b362] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-1.5"
+                            :disabled="!$wire.pin || $wire.pin.length !== 4">
+                        Pay
+                    </button>
+                    <button type="button"
+                            wire:loading.class.remove="hidden"
+                            wire:target="confirmPurchase"
+                            disabled
+                            class="hidden w-full px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold text-sm rounded-xl disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Success Modal -->
-    <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop {{ $showSuccessModal ? '' : 'hidden' }}">
-        <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-8 text-center border border-gray-700 shadow-xl">
-            <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="check" class="text-green-400 w-12 h-12"></i>
+    <div x-show="showSuccessModal" x-transition.opacity x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+        <div x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             class="bg-gradient-to-br from-gray-800 to-gray-800/95 backdrop-blur-xl rounded-2xl w-full max-w-xs border border-gray-700/50 shadow-2xl">
+            <div class="p-6 text-center space-y-5">
+                <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-1">Success!</h3>
+                    <p class="text-gray-400 text-sm">Data bundle purchased</p>
+                </div>
+                <button wire:click="closeSuccessModal"
+                        class="w-full py-3.5 bg-gradient-to-r from-[#e1b362] to-[#d4a55a] text-gray-900 font-semibold text-sm rounded-xl active:scale-[0.98] transition-all shadow-lg">
+                    Done
+                </button>
             </div>
-            <h2 class="text-2xl font-bold text-white mb-2">Success!</h2>
-            <p class="text-gray-400 mb-6">Your data purchase was successful.</p>
-            <button wire:click="closeSuccessModal"
-                    class="brand-gradient w-full text-white py-3 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-all">
-                Done
-            </button>
         </div>
     </div>
-
-    <!-- error Modal -->
-    <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop {{ $showErrorModal ? '' : 'hidden' }}">
-        <div class="bg-gray-800 rounded-2xl w-full max-w-sm p-8 text-center border border-gray-700 shadow-xl">
-            <div class="w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="x-circle" class="text-red-600 w-12 h-12"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-2">Error Occured!</h2>
-
-            @if(session()->has('error'))
-                <p class="text-gray-400 mb-6">
-                    {{ session('error') }}
-                </p>
-            @else
-                <p class="text-gray-400 mb-6">Your data purchase was not successful, please try again later.</p>
-
-            @endif
-            <button wire:click="closeErrorModal"
-                    class="brand-gradient w-full text-white py-3 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-all">
-                Okay
-            </button>
-        </div>
-    </div>
-
 
     @push('styles')
         <style>
-            .network-selected {
-                transform: scale(1.05);
-                border-color: #e1b362;
-                box-shadow: 0 0 15px rgba(225, 179, 98, 0.3);
-            }
-
             .modal-backdrop {
-                background-color: rgba(0, 0, 0, 0.7);
-                backdrop-filter: blur(5px);
+                background: rgba(0, 0, 0, 0.9);
+                backdrop-filter: blur(8px);
             }
 
-            .tab-active {
-                background-color: #e1b362;
-                color: #1f2937;
+            [x-cloak] {
+                display: none !important;
             }
 
-            .plan-selected {
-                border-color: #e1b362;
-                background-color: rgba(225, 179, 98, 0.1);
+            .pb-safe {
+                padding-bottom: env(safe-area-inset-bottom, 1rem);
+            }
+
+            .safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+
+            /* Custom scrollbar for mobile */
+            @media (max-width: 640px) {
+                ::-webkit-scrollbar {
+                    width: 4px;
+                }
+
+                ::-webkit-scrollbar-track {
+                    background: rgba(75, 85, 99, 0.2);
+                    border-radius: 10px;
+                }
+
+                ::-webkit-scrollbar-thumb {
+                    background: rgba(156, 163, 175, 0.3);
+                    border-radius: 10px;
+                }
+
+                ::-webkit-scrollbar-thumb:hover {
+                    background: rgba(156, 163, 175, 0.5);
+                }
+            }
+
+            /* Prevent iOS zoom on input focus */
+            @media screen and (max-width: 768px) {
+                input[type="tel"],
+                input[type="password"],
+                select {
+                    font-size: 16px !important;
+                }
+            }
+
+            /* Smooth scrolling for overscroll */
+            .overscroll-contain {
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
             }
         </style>
     @endpush

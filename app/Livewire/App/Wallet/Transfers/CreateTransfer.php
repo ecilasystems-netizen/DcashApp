@@ -4,7 +4,9 @@ namespace App\Livewire\App\Wallet\Transfers;
 
 use App\Models\SafehavenBank;
 use App\Services\SafeHavenApi\TransfersService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class CreateTransfer extends Component
@@ -27,6 +29,7 @@ class CreateTransfer extends Component
     public $errorMessage = '';
     public $isVerifyingAccount = false;
     public $showSuccessModal = false;
+    public int $bankListLimit = 50; // Initial load limit
 
     protected $listeners = ['processTransfer'];
     protected TransfersService $transferService;
@@ -35,18 +38,19 @@ class CreateTransfer extends Component
 
     public function getFilteredBanksProperty(): array
     {
-        if (empty($this->bankSearch)) {
-            return $this->banks;
-        }
+        $banks = collect($this->banks);
 
-        return collect($this->banks)
-            ->filter(fn($bank) => str_contains(
+        if (!empty($this->bankSearch)) {
+            $banks = $banks->filter(fn($bank) =>
+            str_contains(
                 strtolower($bank['name']),
                 strtolower($this->bankSearch)
             )
-            )
-            ->values()
-            ->toArray();
+            );
+        }
+
+        // Return limited results for faster rendering
+        return $banks->take($this->bankListLimit)->values()->toArray();
     }
 
     public function selectBank(string $bankCode): void
@@ -58,12 +62,24 @@ class CreateTransfer extends Component
         $this->bankSearch = ''; // Reset search when bank is selected
     }
 
+    public function loadMoreBanks(): void
+    {
+        $this->bankListLimit += 50;
+    }
+
+    public function updatedBankSearch(): void
+    {
+        // Reset limit when searching
+        $this->bankListLimit = 50;
+    }
+
     public function toggleBankDropdown(): void
     {
         $this->showBankDropdown = !$this->showBankDropdown;
 
         if ($this->showBankDropdown) {
-            $this->bankSearch = ''; // Reset search when opening dropdown
+            $this->bankSearch = '';
+            $this->bankListLimit = 50;
         }
     }
 
@@ -182,7 +198,7 @@ class CreateTransfer extends Component
             $this->selectedBank !== null;
     }
 
-    public function processTransfer()
+   public function processTransfer()
     {
         if (strlen($this->pin) !== 4) {
             $this->showError('Please enter your 4-digit PIN');
@@ -206,87 +222,91 @@ class CreateTransfer extends Component
 
         $user = auth()->user();
 
-        // verify PIN against user's stored PIN first
+        // Verify PIN against user's stored PIN first
         if (!Hash::check($this->pin, $user->pin)) {
             $this->showError('Invalid PIN');
             return;
         }
 
-        $user->refresh();
-        if ($user->wallet->balance < ($this->amount + $this->transferFee)) {
-            $this->showError('Insufficient balance');
-            return;
+        try {
+            DB::transaction(function () use ($user) {
+                $user->refresh();
+                $wallet = $user->wallet;
+                $totalDebit = $this->amount + $this->transferFee;
+
+                // Atomically reserve funds with optimistic locking
+                $updated = DB::table('wallets')
+                    ->where('id', $wallet->id)
+                    ->where('balance', '>=', $totalDebit)
+                    ->decrement('balance', $totalDebit);
+
+                if (!$updated) {
+                    throw new \Exception('Insufficient balance');
+                }
+
+                $balanceBefore = $this->userBalance;
+                $balanceAfter = $balanceBefore - $totalDebit;
+
+                // Create pending transaction
+                $transaction = $user->wallet->transactions()->create([
+                    'reference' => 'TRF' . strtoupper(uniqid()) . '_' . now()->format('YmdHis'),
+                    'type' => 'transfer',
+                    'direction' => 'debit',
+                    'user_id' => $user->id,
+                    'amount' => $this->amount,
+                    'charge' => $this->transferFee,
+                    'description' => 'Bank transfer to ' . $this->verifiedAccountName,
+                    'status' => 'pending',
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $balanceAfter,
+                    'metadata' => [
+                        'bank' => $this->selectedBank['name'],
+                        'bank_code' => $this->selectedBank['code'],
+                        'account_number' => $this->accountNumber,
+                        'account_name' => $this->verifiedAccountName,
+                        'narration' => $this->narration,
+                        'queued_at' => now()->toDateTimeString()
+                    ],
+                ]);
+
+                // Capture device info
+                $deviceInfoService = app(\App\Services\DeviceInfoService::class);
+                $deviceInfo = $deviceInfoService->getDeviceInfo();
+                $transaction->update(['device_info' => json_encode($deviceInfo)]);
+
+                // Dispatch job to queue
+                \App\Jobs\SafeHaven\SafeHavenProcessBankTransferJob::dispatch(
+                    $transaction->reference,
+                    $user->id,
+                    $this->nameEnquiryReference,
+                    $this->selectedBank['code'],
+                    $this->accountNumber,
+                    (int) $this->amount,
+                    $this->narration
+                )->onQueue('high');
+            });
+
+            // Show immediate success feedback
+//            $this->showConfirmationModal = false;
+            session()->flash('success', 'Your transfer is being processed. You will receive a notification shortly.');
+
+            // Reset form
+            $this->reset(['selectedBank', 'accountNumber', 'amount', 'narration', 'verifiedAccountName', 'pin']);
+
+
+            $this->showConfirmationModal = false;
+            $this->showSuccessModal = true;
+
+        } catch (\Exception $e) {
+            Log::error('CreateTransfer - processTransfer exception', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
+
+            $this->showError($e->getMessage() === 'Insufficient balance'
+                ? 'Insufficient balance'
+                : 'An error occurred. Please try again.');
         }
-
-        //$this->showError('We are currently upgrading the wallet system, please try again later. Thank you');
-        //return;
-
-        // Debit wallet
-        $user->wallet->balance -= ($this->amount + $this->transferFee);
-        $user->wallet->save();
-
-        // Record transaction
-        $transaction = $user->wallet->transactions()->create([
-            'reference' => 'TRF'.strtoupper(uniqid()).'_'.now()->format('YmdHis'),
-            'type' => 'transfer',
-            'direction' => 'debit',
-            'user_id' => $user->id,
-            'amount' => $this->amount,
-            'charge' => $this->transferFee,
-            'description' => 'Bank transfer to '.$this->verifiedAccountName,
-            'status' => 'pending',
-            'balance_before' => $this->userBalance,
-            'balance_after' => $user->wallet->balance,
-            'metadata' => [
-                'bank' => $this->selectedBank['name'],
-                'bank_code' => $this->selectedBank['code'],
-                'account_number' => $this->accountNumber,
-                'account_name' => $this->verifiedAccountName,
-                'narration' => $this->narration
-            ],
-        ]);
-
-        //capture the device info and store
-        $deviceInfoService = app(\App\Services\DeviceInfoService::class);
-        $deviceInfo = $deviceInfoService->getDeviceInfo();
-        $transaction->update(['device_info' => json_encode($deviceInfo)]);
-
-        //Initiate transfer
-        $transferData = [
-            'nameEnquiryReference' => $this->nameEnquiryReference,
-            'beneficiaryBankCode' => $this->selectedBank['code'],
-            'debitAccountNumber' => config('safehaven.debit_account_number'),
-            'beneficiaryAccountNumber' => $this->accountNumber,
-            'amount' => (int) $this->amount,
-            'narration' => $this->narration,
-            'paymentReference' => $transaction->reference,
-        ];
-
-        $transferResponse = $this->transferService->initiateTransfer($transferData);
-
-        if (!in_array($transferResponse['status'], [200, 201])) {
-            session()->flash('error',
-                'Transfer failed: '.($transferResponse['json']['message'] ?? 'Unknown error'));
-            return null;
-        }
-
-        // Update transaction status
-        $transaction->update([
-            'status' => 'completed'
-        ]);
-
-        // Store transaction metadata
-        $metadata = $transaction->metadata ?? [];
-        $metadata['transfer_session_id'] = $transferResponse['json']['data']['sessionId'] ?? null;
-        $metadata['transfer_status'] = $transferResponse['json']['data']['status'] ?? null;
-        $metadata['verified_account_name'] = $this->verifiedAccountName;
-        $metadata['transfer_date'] = now()->toDateTimeString();
-        $transaction->metadata = $metadata;
-        $transaction->save();
-
-
-        $this->showConfirmationModal = false;
-        $this->showSuccessModal = true;
     }
 
     public function render()
